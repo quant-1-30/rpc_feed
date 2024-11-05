@@ -1,0 +1,15 @@
+{"namespace": "ticker.avro",
+ "type": "record",
+ "name": "ticker",
+ "fields": [
+     {"name": "sid", "type": "string"},
+     {"name": "ticker", "type": ["string", "null"]},
+     {"name": "date", "type": ["string", "null"]},
+     {"name": "open", "type": "int"},
+     {"name": "high", "type": "int"},
+     {"name": "low", "type": "int"},
+     {"name": "close",  "type": "int"},
+     {"name": "volume", "type": "int"}
+     {"name": "amount", "type": "int"}
+ ]
+}

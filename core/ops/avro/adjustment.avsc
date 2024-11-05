@@ -1,0 +1,11 @@
+{"namespace": "adjustment.avro",
+ "type": "record",
+ "name": "adjustment",
+ "fields": [
+     {"name": "sid", "type": "string"},
+     {"name": "bonus",  "type": ["int", "null"]},
+     {"name": "share_bonue", "type": ["int", "null"]}
+     {"name": "register_date", "type": ["string", "null"]}
+     {"name": "ex_date", "type": ["string", "null"]}
+ ]
+}

@@ -1,0 +1,78 @@
+// idl file
+
+namespace Flat;
+
+// base frame
+
+table Calendar {
+    tz_info: string (id: 0);
+    date: [int] (id: 1);
+}
+
+table Instrument {
+  sid: string (id: 0);
+  region: string (id: 1);
+  first_trading: int (id: 2);
+  delist: int (id: 3);
+}
+
+table Line {
+  sid: string (id: 0);
+  open: int (id: 1);
+  high: int (id: 2);
+  low: int (id: 3);
+  close: int (id: 4);
+  volume: int (id: 5);
+  amount: int (id: 6);
+}
+
+table Adjustment {
+    sid: string (id: 0);
+    register_date: int (id: 1);
+    ex_date: int (id: 2);
+    share: int (id: 3);
+    transfer: int (id: 4);
+    interest: int (id: 5);
+}
+
+table  Rights {
+  sid: string (id: 0);
+  register_data: int (id: 1);
+  ex_date: int (id:2);
+  effective_date: int (id: 3);
+  price: int(id: 4);
+  ratio: int (id: 5);
+}
+
+// struct frame 
+
+table TickFrame {
+  ticker: int (id: 0);
+  frame: [Line] (id: 1);
+}
+
+table  AdjFrame {
+  ticker: int (id: 0);
+  adj: [AdjFrame] (id: 1);
+}
+
+table  RightsFrame {
+  ticker: int (id: 0);
+  rgts: [RightsFrame] (id: 1);
+}
+
+table QuoteRequest {
+  start_date: int (id: 0);
+  end_date: int (id: 1);
+  freq: string (id: 2);
+}
+
+// api
+
+rpc_service  btDataFeed {
+    get_calendar (QuoteRequest): Calendar; 
+    replay_assets (QuoteRequest): Instrument(streaming);
+    replay_datasets (QuoteRequest): TickerFrame(streaming);
+    replay_adjs (QuoteRequest): AdjFrame(streaming);
+    replay_rights (QuoteRequest): RightsFrame(streaming);
+}

@@ -1,0 +1,10 @@
+{"namespace": "instrument.avro",
+ "type": "record",
+ "name": "instrument",
+ "fields": [
+     {"name": "sid", "type": "string"},
+     {"name": "name", "type": "string"},
+     {"name": "withdraw_date",  "type": ["string", "null"]},
+     {"name": "first_trading_date", "type": ["string", "null"]}
+ ]
+}

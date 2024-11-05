@@ -1,0 +1,14 @@
+[tool.poetry]
+name = "bt-feed"
+version = "0.1.0"
+description = "backtrader feed module"
+authors = ["hengxin.liu <hengxin.liu@inceptio.ai>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.9"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

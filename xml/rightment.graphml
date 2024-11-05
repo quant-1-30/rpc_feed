@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<graphml xmlns="http://graphml.graphdrawing.org/xmlns"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://graphml.graphdrawing.org/xmlns
+         http://graphml.graphdrawing.org/xmlns/1.0/graphml.xsd">
+    <graph id="G" edgedefault="directed">
+        <node id="TextLoader"/>
+        <node id="UTC"/>
+        <node id="ProcessNa"/>
+        <node id="ProcessInf"/>
+        <node id="Multiply"/>
+        <node id="DatabaseWriter"/>
+        <edge source="TextLoader" target="UTC"/>
+        <edge source="UTC" target="ProcessNa"/>
+        <edge source="ProcessNa" target="ProcessInf"/>
+        <edge source="ProcessInf" target="Multiply"/>
+        <edge source="Multiply" target="DatabaseWriter"/>
+    </graph>
+</graphml>
