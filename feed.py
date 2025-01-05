@@ -6,32 +6,37 @@ import re
 from typing import Dict,Any
 from meta import SingletonMeta
 
-from utils.io import build_from_cfg, recursive_glob
+from utils.io import recursive_glob
 from utils.loader import get_module_by_module_path
+from utils.cache import lazyproperty
 from core.model import Request
 from quandl.graph import Pipeline
 
 
 class Feed(metaclass=SingletonMeta):
 
-    providers = {}
-    pipeline = Pipeline()
-
-    def __init__(self):
-        self.build_dataset()
-
     params = (
         ("alias", "feed"),
-        ("filter", True)
+        ("filter", True),
+        ("pipeline", Pipeline())
     )
+
+    def __init__(self):
+        self.providers = self._build_dataset()
     
-    @property
-    def trading_calendar(self):
-        return self.provider["calendar"].calendar
+    @staticmethod
+    def _build_dataset():
+        current_path = os.path.join(os.getcwd(), "core", "datasets.py")
+        module = get_module_by_module_path(current_path)
+        return module.Providers
+
+    # @lazyproperty
+    # def trading_calendar(self):
+    #     return self.provider["calendar"].get_data()
     
-    @property
-    def instruments(self):
-        return self.provider["instrument"].instruments
+    # @lazyproperty
+    # def instruments(self):
+    #     return self.provider["instrument"].get_data()
 
     @classmethod
     def filter(cls, paths):
@@ -44,14 +49,10 @@ class Feed(metaclass=SingletonMeta):
                 filtered_paths.append(p)
         return filtered_paths
     
-    @classmethod
-    def build_dataset(self):
-        current_path = os.path.join(os.getcwd(), "core", "datasets.py")
-        module = get_module_by_module_path(current_path)
-        self.providers = module.Providers
-
     async def replay(self, dataset, request: Request):
-        return await self.providers[dataset].get_data(request)
+         iterator = self.providers[dataset].get_data(request)
+         async for item in iterator:
+             yield item
     
     def add_data(self, dataset, xml, dataset_path, prefix, filter=False):
         '''

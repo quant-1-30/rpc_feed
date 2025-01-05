@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 import sys
+import asyncio
 import grpc
 import signal
 import logging
@@ -11,6 +12,7 @@ from google.protobuf.json_format import MessageToDict
 from google.protobuf import empty_pb2
 from core.serialize.pb import service_pb2, service_pb2_grpc
 from feed import bt_feed
+from core.model import Request
 
 
 class QuoteServer(service_pb2_grpc.btDataFeedServicer):
@@ -22,9 +24,10 @@ class QuoteServer(service_pb2_grpc.btDataFeedServicer):
     # def _clean_call_session(self, call_info: service_pb2.CallInfo) -> None:
     #     logging.info("Call session cleaned [%s]", MessageToJson(call_info))
         
-    def CalendarCall(
+    async def CalendarCall(
         self,
-        request: empty_pb2.Empty,
+        # request: empty_pb2.Empty,
+        request: service_pb2.QuoteRequest,
         context: grpc.ServicerContext,
     ) -> service_pb2.Calendar: # type: ignore
         
@@ -51,14 +54,22 @@ class QuoteServer(service_pb2_grpc.btDataFeedServicer):
         )
 
         # context.add_callback(lambda: self._clean_call_session(call_info))
-        trading_days = [c.trading_date for c in bt_feed.trading_calendar] 
+        # trading_days = [c.trading_date for c in bt_feed.get] 
         response = service_pb2.Calendar()
         response.tz_info = "Asia/shanghai"
+        obj_map = MessageToDict(request, preserving_proto_field_name=True)
+        print("obj_map ", obj_map)
+        response_iterator = bt_feed.replay("calendar", Request(**obj_map))
+        # import pdb; pdb.set_trace()
+        trading_days = []
+        async for resp in response_iterator:
+            print("resp ", resp)
+            trading_days.append(resp.trading_date)
         response.date.extend(trading_days)
         print("calendar repsonse ", response)
-        return response
+        yield response
 
-    def InstrumentCall(
+    async def InstrumentCall(
         self,
         request: service_pb2.QuoteRequest,
         context: grpc.ServicerContext,
@@ -68,36 +79,39 @@ class QuoteServer(service_pb2_grpc.btDataFeedServicer):
 
         response = service_pb2.InstFrame()
         # context.add_callback(lambda: self._clean_call_session(call_info))
-        instruments = bt_feed.instruments
-        if len(instruments):
-            assets = [service_pb2.Instrument(**item) for item in instruments]
-            response.assets.extend(assets)
-            print("instrument repsonse ", response)
-            print("InstrumentCall repsonse size ", response.ByteSize())
-        return response
+        obj_map = MessageToDict(request, preserving_proto_field_name=True)
+        response_iterator = bt_feed.replay("asset", Request(**obj_map))
+        assets = []
+        async for resp in response_iterator:
+            obj = service_pb2.Instrument(**resp)
+            assets.append(obj)
+        response.asset.extend(assets)
+        print("instrument repsonse ", response)
+        print("InstrumentCall repsonse size ", response.ByteSize())
+        yield response
     
-    def LineStreamCall(
+    async def LineStreamCall(
         self,
         request: service_pb2.QuoteRequest,
         context: grpc.ServicerContext,
     ) -> service_pb2.TickFrame: # type: ignore
         
         logging.info("Received dataset")
-        req = MessageToDict(request, preserving_proto_field_name=True)
-        response_iterator = bt_feed.replay("line",req)
+        obj_map = MessageToDict(request, preserving_proto_field_name=True)
+        response_iterator = bt_feed.replay("line", Request(**obj_map))
         # context.add_callback(lambda: self._clean_call_session(call_info))
-        for resp in response_iterator:
+        async for resp in response_iterator:
             # pdb.set_trace()
-            response = service_pb2.TickerFrame()
-            response.ticker = resp.pop("utc")
-            lines = service_pb2.Line(**resp)
+            response = service_pb2.TickFrame()  
+            response.tick = resp.pop("tick")
+            line = service_pb2.Line(**resp)
             # lines = [service_pb2.Line(**item) for item in lines]
-            response.line.extend([lines])
+            response.line.extend([line])
             print("dataset repsonse ", response)
             print("DatasetStreamCall ticker repsonse size ", response.ByteSize())
             yield response
 
-    def AdjustmentStreamCall(
+    async def AdjustmentStreamCall(
         self,
         request: service_pb2.QuoteRequest,
         context: grpc.ServicerContext,
@@ -105,10 +119,10 @@ class QuoteServer(service_pb2_grpc.btDataFeedServicer):
         
         # context.set_compression(grpc.Compression.NoCompression)
         logging.info("Received adjustment")
-        req = MessageToDict(request, preserving_proto_field_name=True)
-        response_iterator = bt_feed.replay("adjustment", req)
+        obj_map = MessageToDict(request, preserving_proto_field_name=True)
+        response_iterator = await bt_feed.replay("adjustment", Request(**obj_map))
         # context.add_callback(lambda: self._clean_call_session(call_info))
-        for adjs in response_iterator:
+        async for adjs in response_iterator:
             response = service_pb2.AdjFrame()
             response.date = adjs.pop("date")
             adjustments = service_pb2.Adjustment(**adjs)
@@ -117,17 +131,17 @@ class QuoteServer(service_pb2_grpc.btDataFeedServicer):
             print("AdjustmentStreamCall ticker repsonse size ", response.ByteSize())
             yield response
 
-    def RightStreamCall(
+    async def RightStreamCall(
         self,
         request: service_pb2.QuoteRequest,
         context: grpc.ServicerContext,
     ) -> service_pb2.RightmentFrame: # type: ignore
         
         logging.info("Received right")
-        req = MessageToDict(request, preserving_proto_field_name=True)
-        response_iterator = bt_feed.replay("right", req)
+        obj_map = MessageToDict(request, preserving_proto_field_name=True)
+        response_iterator = bt_feed.replay("right", Request(**obj_map))
         # context.add_callback(lambda: self._clean_call_session(call_info))
-        for rgts in response_iterator:
+        async for rgts in response_iterator:
             response = service_pb2.RightmentFrame()
             response.date = rgts.pop("date")
             rights = service_pb2.Rightment(**rgts)
@@ -137,7 +151,7 @@ class QuoteServer(service_pb2_grpc.btDataFeedServicer):
             yield response
 
   
-def serve(address: str, MAX_MESSAGE_LENGTH=1024 * 1024 * 1024) -> None:
+async def serve(address: str, MAX_MESSAGE_LENGTH=1024 * 1024 * 1024) -> None:
     """
     grpc.keepalive_time_ms: The period (in milliseconds) after which a keepalive ping is
         sent on the transport.
@@ -170,23 +184,35 @@ def serve(address: str, MAX_MESSAGE_LENGTH=1024 * 1024 * 1024) -> None:
         ('grpc.max_receive_message_length', MAX_MESSAGE_LENGTH),
     ]
 
-    server = grpc.server(ThreadPoolExecutor(), compression=grpc.Compression.Gzip, options=server_options)
+    server = grpc.aio.server(ThreadPoolExecutor(), compression=grpc.Compression.Gzip, options=server_options)
     service_pb2_grpc.add_btDataFeedServicer_to_server(QuoteServer(), server)
     server.add_insecure_port(address)
-    server.start()
+    await server.start()
     logging.info("Server serving at %s", address)
-    server.wait_for_termination()
 
+    stop_event = asyncio.Event()
 
-def handler(signum, frame):
-    print("ctrl + c value", signal.SIGINT.value)
-    sys.exit(0)
+    async def shutdown():
+        await server.stop(0)    
+        stop_event.set()
 
+    loop = asyncio.get_running_loop()
+    
+    def handle_signal():
+        print("Received signal", signal.SIGINT)
+        asyncio.create_task(shutdown())
 
-# ctrl + c
-signal.signal(signal.SIGINT, handler)
+    loop.add_signal_handler(signal.SIGINT, handle_signal)
+    loop.add_signal_handler(signal.SIGTERM, handle_signal)
+
+    await stop_event.wait()
+    logging.info("Server has been shut down.")
+
+    await server.wait_for_termination()
 
 
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
-    serve("[::]:50051")
+    # loop = asyncio.get_event_loop()
+    # loop.add_signal_handler(signal.SIGINT, handler)
+    asyncio.run(serve("localhost:50051"))

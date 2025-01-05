@@ -1,15 +1,16 @@
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT License.
 
-import numpy as np
+import datetime
 import pandas as pd
-from sqlalchemy import select
-from sqlalchemy.orm import Session
-from typing import List, Union, Optional, Dict
+from sqlalchemy import select, text
+from sqlalchemy import and_, or_
 from meta import with_metaclass, MetaBase
 from utils.cache import lazyproperty
 from core.model import *
-
+from core.ops.operator import async_ops
+from utils.wrapper import async_method_warning
+from utils.dt_utilty import locate_index
 
 class BaseProvider(with_metaclass(MetaBase, object)):
     """Client Provider
@@ -31,18 +32,31 @@ class BaseProvider(with_metaclass(MetaBase, object)):
 
     To keep compatible with old qlib provider.
     """
+    execution_options = {"timeout": 60, 
+                         "stream_results": True, 
+                         "stream_chunk_size": 1000}
     
     def get_data(self, req):
         raise NotImplementedError("implement get_data method")
 
+    @async_method_warning
     def __len__(self):
         raise NotImplementedError("length")
     
+    @async_method_warning
     def __getitem__(self, index):
         raise NotImplementedError("getitem")
-    
 
-class Calendar(BaseProvider):
+    async def alen(self):
+        """Async version of __len__"""
+        raise NotImplementedError("implement alen method")
+
+    async def aget(self, index):
+        """Async version of __getitem__"""
+        raise NotImplementedError("implement aget method")
+  
+
+class TradingCalendar(BaseProvider):
     """Calendar provider base class
 
     Provide calendar data.
@@ -51,29 +65,15 @@ class Calendar(BaseProvider):
         ("table", "calendar"),
     )
 
-    @lazyproperty
-    def calendar(self):
-        """
-            Get calendar of certain market in given time range. 
-        """
-        calendar = []
-        cal = self.tables[self.p.table]
-        with Session(bind=self.engine) as session:
-            # stmt = select(cal).execution_options(**self.options)
-            stmt = select(cal.c.trading_date)
-            for trading_dt in session.scalars(stmt).yield_per(10):
-            # for trading_dt in session.execute(stmt).yield_per(10):
-            # for trading_dt in session.query(cal).all():
-                calendar.append(Calendar(trading_dt))
-        return calendar
+    async def alen(self):
+        calendar = await self.get_data(Request())
+        return len(calendar)
     
-    def __len__(self):
-        return len(self.calendar)
-    
-    def __getitem__(self, index):
-        return self.calendar[index]
-    
-    def get_data(self, request: Request):
+    async def aget(self, index):
+        calendar = await self.get_data(Request())
+        return calendar[index]
+
+    async def get_data(self, req: Request):
         """Get calendar of certain market in given time range.
 
         Parameters
@@ -92,26 +92,31 @@ class Calendar(BaseProvider):
         list
             calendar list
         """
-        start_time, end_time = request.range.serialize()
-        if start_time == "None":
-            start_time = None
-        if end_time == "None":
-            end_time = None
-        # strip
-        if start_time:
-            start_time = pd.Timestamp(start_time)
-            if start_time > self.calendar[-1].trading_date:
-                return np.array([])
-        else:
-            start_time = self.calendar[0]
-        if end_time:
-            end_time = pd.Timestamp(end_time)
-            if end_time < self.calendar[0].trading_date:
-                return np.array([])
-        else:
-            end_time = self.calendar[-1]
-        _, _, si, ei = self.locate_index(start_time, end_time)
-        return self.calendar[si : ei + 1]
+        calendar = []
+        objs = await async_ops.get_tables()
+
+        # stmt = text("select trading_date from calendar")
+        stmt = select(objs[self.p.table].c.trading_date)
+        async for trading_dt in async_ops.on_query(stmt):
+            calendar.append(Calendar(trading_dt[0]))
+
+        calendar.sort(key=lambda x: x.trading_date)
+        start_time, end_time = req.range()
+        if isinstance(start_time, (pd.Timestamp, datetime.datetime)):
+            start_time = int(start_time.strftime("%Y%m%d"))
+        
+        if isinstance(end_time, (pd.Timestamp, datetime.datetime)):
+            end_time = int(end_time.strftime("%Y%m%d"))
+            
+        if start_time > int(calendar[-1].trading_date):
+                yield np.array([])
+
+        if end_time < calendar[0].trading_date:
+                yield np.array([])
+
+        si, ei = locate_index(calendar, start_time, end_time) 
+        for item in calendar[si:ei]:
+            yield item
 
 
 class Instrument(BaseProvider):
@@ -120,27 +125,8 @@ class Instrument(BaseProvider):
     Provide instrument data.
     """
     params = (
-        ("table", "instrument"),
+        ("table", "asset"),
     )
-
-    @lazyproperty
-    def instruments(self):
-        """List the overall instruments.
-
-        Returns
-        -------
-        dict or list
-            instruments list or dictionary with time spans
-        """
-        assets = list()
-        inst = self.tables[self.p.table]
-        with Session(self.engine) as session:
-            # stmt = select(inst).execution_options(**self.options)
-            stmt = select(inst)
-            # for sid in self.session.scalars(stmt).yield_per(10):
-            for sid in session.execute(stmt).yield_per(10):
-                assets.append(Asset(*sid[1:]).serialize())
-        return assets
 
     def __len__(self):
         return len(self.instruments)
@@ -148,18 +134,30 @@ class Instrument(BaseProvider):
     def __getitem__(self, sid):
         item = [sid for sid in self.instruments if sid.sid == sid]
         return item[0]
-
-    def get_data(self, message: Dict[str, Union[str, int]]):
+    
+    async def get_data(self, req: Request):
         """Get the existiongconfig dictionary for a base market adding several dynamic filters.
         """
-        req = self.trans2Req(message)
-        assets = [sid for sid in self.instruments if sid.first_trading_date >= req.start 
-                        and sid.first_trading_date <= req.end]
-        assets = [sid for sid in assets if sid.delist > req.end]
-        return assets
+        assets = []
+        objs = await async_ops.get_tables()
+
+        stmt = select(objs[self.p.table]).execution_options(**self.execution_options)
+        async for item in async_ops.on_query(stmt):
+            assets.append(Asset(*item[1:]))
+
+        # filter by time range
+        assets = [asset for asset in assets if asset.first_trading >= req.start_date
+                  and asset.first_trading <= req.end_date]
+        # filter by sids
+        if req.sids:
+            assets = [asset for asset in assets if asset.sid in req.sids]
+        print("assets ", assets)
+
+        for item in assets:
+            yield item.serialize()
     
     
-class Line(BaseProvider):
+class Tick(BaseProvider):
     """Dataset provider class
     Provide Dataset data.
     """
@@ -167,7 +165,7 @@ class Line(BaseProvider):
         ("table", "minute"),
     )
 
-    def get_data(self, req: Request):
+    async def get_data(self, req: Request):
         """Get dataset data.
 
         Parameters
@@ -179,15 +177,22 @@ class Line(BaseProvider):
         pd.DataFrame
             a pandas dataframe with <instrument, datetime> index.
         """
-        dataset = self.tables[self.p.table]
-        with Session(self.engine) as session:
-            # stmt = select(dataset).where(dataset.utc.between(*request.range)).execution_options(**self.options)
-            stmt = select(dataset).where(dataset.c.tick.between(req.start, req.end))
-            # session.scalars(stmt).yield_per(10):
-            for line in session.execute(stmt).yield_per(10):
-                meta = Line(*line[1:]).serialize()
-                yield meta
-    
+        objs = await async_ops.get_tables()
+        model = objs[self.p.table]
+        # relationship
+        # from sqlalchemy.orm import selectinload
+        # stmt = select(table).options(selectinload(table.c.sid))
+        stmt = select(model).where(
+            and_(
+                # model.c.sid.in_(req.sids),
+                model.c.tick > req.start_date,
+                model.c.tick < req.end_date
+            )
+        ).execution_options(**self.execution_options)
+
+        async for item in async_ops.on_query(stmt):
+            yield Line(*item[1:]).serialize()
+
 
 class Adjustment(BaseProvider):
     """
@@ -198,7 +203,7 @@ class Adjustment(BaseProvider):
         ("table", "adjustment"),
     )
 
-    def get_data(self, req: Request):
+    async def get_data(self, req: Request):
         """Get dvidends of certain asset in given time range.
 
         Parameters
@@ -209,12 +214,16 @@ class Adjustment(BaseProvider):
         Returns
         ----------
         """
-        adj = self.tables[self.p.table]
-        with Session(self.engine) as session:
-            stmt = select(adj).where(adj.c.ex_date.between(req.start, req.end))
-            for data in session.execute(stmt).yield_per(10):
-                meta = Dividend(*data[1:]).serialize()
-                yield meta 
+        objs = await async_ops.get_tables()
+        stmt = select(objs[self.p.table]).where(
+            and_(
+                objs[self.p.table].c.trading_date.between(req.start_date, req.end_date),
+                objs[self.p.table].c.sid.in_(req.sids),
+                # or_()
+            )   
+        )
+        async for item in async_ops.on_query(stmt):
+            yield Adjustment(*item[1:]).serialize()
 
 
 class Right(BaseProvider):
@@ -226,7 +235,7 @@ class Right(BaseProvider):
         ("table", "rightment"),
     )
 
-    def get_data(self, req: Request):
+    async def get_data(self, req: Request):
         """Get dvidends of certain asset in given time range.
 
         Parameters
@@ -237,18 +246,22 @@ class Right(BaseProvider):
         Returns
         ----------
         """
-        rgt = self.tables[self.p.table]
-        with Session(self.engine) as session:
-            stmt = select(rgt).where(rgt.c.ex_date.between(req.start, req.end))
-            for data in session.execute(stmt).yield_per(10):
-                meta = Rightment(*data[1:]).serialize()
-                yield meta 
+        objs = await async_ops.get_tables()
+        stmt = select(objs[self.p.table]).where(
+            and_(
+                objs[self.p.table].c.ex_date.between(req.start_date, req.end_date),
+                objs[self.p.table].c.sid.in_(req.sids),
+                # or_()
+            )   
+        )
+        async for item in async_ops.on_query(stmt):
+            yield Right(*item[1:]).serialize()
 
 
 Providers = dict(
-    (("calendar", Calendar()),
-    ("instrument", Instrument()),
-    ("line", Line()),
+    (("calendar", TradingCalendar()),
+    ("asset", Instrument()),
+    ("line", Tick()),
     ("adjustment", Adjustment()),
     ("right", Right()),
     ))

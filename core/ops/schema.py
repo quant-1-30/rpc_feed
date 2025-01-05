@@ -74,8 +74,6 @@ class Line(Base):
                 setattr(self, key, value)
 
 
-
-
 class Adjustment(Base):
 
     # register_date:登记日 ; ex_date:除权除息日 ; pay_date:除权除息日 ; effective_date:上市日期

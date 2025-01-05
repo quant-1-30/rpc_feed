@@ -51,22 +51,13 @@ def locate_index(calendar, start_time, end_time):
         int
             the index of end time.
         """
-        start_time = pd.Timestamp(start_time.trading_date)
-        end_time = pd.Timestamp(end_time.trading_date)
-        calendar_index = {x.trading_date: i for i, x in enumerate(calendar)}
-        if start_time not in calendar_index:
-            try:
-                start_time = calendar[bisect.bisect_left(calendar, start_time)]
-            except IndexError as index_e:
-                raise IndexError(
-                    "`start_time` uses a future date, if you want to get future trading days, you can use: `future=True`"
-                )
-        start_index = calendar_index[start_time]
-        if end_time not in calendar_index:
-            end_time = calendar[bisect.bisect_right(calendar, end_time) - 1]
-            # loc = np.searchsorted(data["date"], cur_time_int, side="right")
-        end_index = calendar_index[end_time]
-        return start_time, end_time, start_index, end_index
+        # start_time = pd.Timestamp(start_time.trading_date)
+        # end_time = pd.Timestamp(end_time.trading_date)
+        trading_days = [x.trading_date for x in calendar]
+        s = bisect.bisect_left(trading_days, start_time)
+        e = bisect.bisect_right(trading_days, end_time) -1 
+        # loc = np.searchsorted(data["date"], cur_time_int, side="right")
+        return s, e
     
 
 def date2utc(date, tzinfo="Asia/Shanghai"):
@@ -100,7 +91,7 @@ def calc_distance(tick, _format="%Y%m%d%H%M"):
     return delta.seconds, formate_date
     
 
-def loc2ticker(dt, loc, _format="%Y%m%d"):
+def loc2tick(dt, loc, _format="%Y%m%d"):
     struct_date = datetime.datetime.strptime(str(dt), _format)
     loc_date = struct_date + datetime.timedelta(hours=9, minutes=30) + datetime.timedelta(seconds=loc * 3)
     return loc_date 
@@ -155,22 +146,6 @@ def ensure_utc(time, tz='UTC'):
     if not time.tzinfo:
         time = time.replace(tzinfo=pytz.timezone(tz))
     return time.replace(tzinfo=pytz.utc)
-
-
-def normalize_date(frame):
-    frame['year'] = frame['dates'] // 2048 + 2004
-    frame['month'] = (frame['dates'] % 2048) // 100
-    frame['day'] = (frame['dates'] % 2048) % 100
-    frame['hour'] = frame['sub_dates'] // 60
-    frame['minutes'] = frame['sub_dates'] % 60
-    frame['ticker'] = frame.apply(lambda x: pd.Timestamp(
-        datetime.datetime(int(x['year']), int(x['month']), int(x['day']),
-                          int(x['hour']), int(x['minutes']))),
-                            axis=1)
-    # raw['timestamp'] = raw['ticker'].apply(lambda x: x.timestamp())
-    # return frame.loc[:, ['ticker', 'open', 'high', 'low', 'close', 'amount', 'volume']]
-    return frame
-
 
 def _out_of_range_error(a, b=None, var='offset'):
     start = 0

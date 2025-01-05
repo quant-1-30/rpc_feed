@@ -6,12 +6,14 @@ from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
 from sqlalchemy.ext.automap import automap_base
 from sqlalchemy.orm import sessionmaker
 from typing import Union, List, Iterable
+from contextlib import asynccontextmanager
+from functools import lru_cache
 from meta import with_metaclass, MetaBase
 from .schema import Base
-from contextlib import asynccontextmanager
+from utils.wrapper import singleton
 
 
-
+@singleton
 class AsyncOps(with_metaclass(MetaBase, object)):
     """Local provider class
     It is a set of interface that allow users to access data.
@@ -32,6 +34,21 @@ class AsyncOps(with_metaclass(MetaBase, object)):
         ("echo", True)
     )
 
+    def __init__(self):
+        self._initialized = False
+    
+    async def initialize(self):
+        """Async initialization method"""
+        if self._initialized:
+            return
+        await self._build_engine()
+        self._initialized = True
+    
+    async def _ensure_initialized(self):
+        """Helper method to ensure initialization"""
+        if not self._initialized:
+            await self.initialize()
+
     # @staticmethod
     @classmethod
     async def _build_engine(cls):
@@ -45,9 +62,7 @@ class AsyncOps(with_metaclass(MetaBase, object)):
         # postgresql+asyncpg://me@localhost/mydb
         print("builder ", cls)
         url = f"postgresql+{cls.p.engine}://{cls.p.user}:{cls.p.pwd}@{cls.p.host}:{cls.p.port}/{cls.p.db}"
-        # pdb.set_trace()
         # isolation_level="AUTOCOMMIT"
-        # engine = create_engine(url, 
         engine = create_async_engine(url, 
                                pool_size=cls.p.pool_size, 
                                max_overflow=cls.p.max_overflow,
@@ -55,46 +70,66 @@ class AsyncOps(with_metaclass(MetaBase, object)):
                                pool_recycle=3600, 
                                # 使用 ping 检查连接有效性 
                                pool_pre_ping=cls.p.pool_pre_ping,
-                               echo=cls.p.echo)
+                               echo=cls.p.echo).execution_options(compiled_cache={})
         
         # Create tables and reflect schema asynchronously
         async with engine.begin() as conn:
             await conn.run_sync(Base.metadata.create_all)
             await conn.run_sync(Base.metadata.reflect)
-        
-        # Reflect ORM objects
-        MapBase = automap_base(metadata=Base.metadata)
-        async with engine.begin() as conn:
+            # Reflect ORM objects
+            MapBase = automap_base(metadata=Base.metadata)
             await conn.run_sync(MapBase.prepare)
         
         setattr(cls, "engine", engine)
-        # setattr(cls, "tables", Base.metadata.tables)
-        setattr(cls, "orm_map", MapBase.classes)
+        setattr(cls, "_tables", Base.metadata.tables)
+        setattr(cls, "_orm_map", MapBase.classes)
+
+    async def get_tables(self):
+        await self._ensure_initialized()
+        return self._tables
 
     @classmethod
     @asynccontextmanager
     async def get_db(cls):
-            print("doinit")
-            await cls._build_engine()
-            AsyncSessionLocal = sessionmaker(
-                bind=cls.engine,
-                class_=AsyncSession,
-                expire_on_commit=False
-            )
-            session = AsyncSessionLocal()
-            print("session", session)
-            try:
-                 yield session
-            finally:
-                 await session.close()
+        if isinstance(cls, type):
+            # If called on class, ensure instance is initialized
+            instance = cls()
+            await instance._ensure_initialized()
+        else:
+            # If called on instance
+            await cls._ensure_initialized()        
+             
+        AsyncSessionLocal = sessionmaker(
+            bind=cls.engine,
+            class_=AsyncSession,
+            expire_on_commit=False
+        )
+        session = AsyncSessionLocal()
+        print("session", session)
+        try:
+                yield session
+        finally:
+                await session.close()
     
     async def on_query(self, query):
-        with self.get_db() as session:
+        await self._ensure_initialized()
+        async with self.get_db() as session:
             async with session.begin():
-                    result = await session.execute(query)
-                    return result.scalars().all()
+                    # stmt = select(cal).execution_options(**self.options)
+                    # AsyncSession not support query 
+                    # result = await session.execute(query)
+                    # yield result.scalars().all()
+                    # in asynchronous mode, the synchronous yield_per isn't directly applicable. 
+                    # Instead, you can use the stream() method, which allows streaming query results asynchronously.
+                    stream = await session.stream(query)
+                    # stream.scalars() return one field
+                    # async for row in stream.scalars():
+                    async for row in stream:
+                        # Use `scalars()` for ORM-mapped rows
+                        yield row
 
     async def on_insert(self, table_name: str, data: Union[pd.DataFrame, List[dict], dict]):
+        await self._ensure_initialized()
         async with self.get_db() as session:
             async with session.begin():
                 if isinstance(data, pd.DataFrame):
@@ -104,7 +139,7 @@ class AsyncOps(with_metaclass(MetaBase, object)):
                     inserts = data
                 else:
                     inserts = [data]
-                base_obj = self.orm_map[table_name]
+                base_obj = self._orm_map[table_name]
                 # 只设置模型中定义的字段
                 inserts = [base_obj(**self.filter_valid_keys(base_obj, insert)) for insert in inserts]
                 session.add_all(inserts)

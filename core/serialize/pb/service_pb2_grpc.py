@@ -3,7 +3,6 @@
 import grpc
 import warnings
 
-from google.protobuf import empty_pb2 as google_dot_protobuf_dot_empty__pb2
 from . import service_pb2 as service__pb2
 
 GRPC_GENERATED_VERSION = '1.68.1'
@@ -37,12 +36,12 @@ class btDataFeedStub(object):
         Args:
             channel: A grpc.Channel.
         """
-        self.CalendarCall = channel.unary_unary(
+        self.CalendarCall = channel.unary_stream(
                 '/btDataFeed/CalendarCall',
-                request_serializer=google_dot_protobuf_dot_empty__pb2.Empty.SerializeToString,
+                request_serializer=service__pb2.QuoteRequest.SerializeToString,
                 response_deserializer=service__pb2.Calendar.FromString,
                 _registered_method=True)
-        self.InstrumentCall = channel.unary_unary(
+        self.InstrumentCall = channel.unary_stream(
                 '/btDataFeed/InstrumentCall',
                 request_serializer=service__pb2.QuoteRequest.SerializeToString,
                 response_deserializer=service__pb2.InstFrame.FromString,
@@ -70,7 +69,8 @@ class btDataFeedServicer(object):
     """
 
     def CalendarCall(self, request, context):
-        """Missing associated documentation comment in .proto file."""
+        """rpc CalendarCall(google.protobuf.Empty) returns (Calendar);
+        """
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
@@ -102,12 +102,12 @@ class btDataFeedServicer(object):
 
 def add_btDataFeedServicer_to_server(servicer, server):
     rpc_method_handlers = {
-            'CalendarCall': grpc.unary_unary_rpc_method_handler(
+            'CalendarCall': grpc.unary_stream_rpc_method_handler(
                     servicer.CalendarCall,
-                    request_deserializer=google_dot_protobuf_dot_empty__pb2.Empty.FromString,
+                    request_deserializer=service__pb2.QuoteRequest.FromString,
                     response_serializer=service__pb2.Calendar.SerializeToString,
             ),
-            'InstrumentCall': grpc.unary_unary_rpc_method_handler(
+            'InstrumentCall': grpc.unary_stream_rpc_method_handler(
                     servicer.InstrumentCall,
                     request_deserializer=service__pb2.QuoteRequest.FromString,
                     response_serializer=service__pb2.InstFrame.SerializeToString,
@@ -151,11 +151,11 @@ class btDataFeed(object):
             wait_for_ready=None,
             timeout=None,
             metadata=None):
-        return grpc.experimental.unary_unary(
+        return grpc.experimental.unary_stream(
             request,
             target,
             '/btDataFeed/CalendarCall',
-            google_dot_protobuf_dot_empty__pb2.Empty.SerializeToString,
+            service__pb2.QuoteRequest.SerializeToString,
             service__pb2.Calendar.FromString,
             options,
             channel_credentials,
@@ -178,7 +178,7 @@ class btDataFeed(object):
             wait_for_ready=None,
             timeout=None,
             metadata=None):
-        return grpc.experimental.unary_unary(
+        return grpc.experimental.unary_stream(
             request,
             target,
             '/btDataFeed/InstrumentCall',

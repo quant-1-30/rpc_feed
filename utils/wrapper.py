@@ -12,6 +12,30 @@ from functools import wraps
 from contextlib import contextmanager
 import sys, weakref
 
+import threading
+
+
+def singleton(cls):
+    """线程安全的单例装饰器"""
+    instances = {}
+    lock = threading.Lock()
+
+    def get_instance(*args, **kwargs):
+        with lock:
+            if cls not in instances:
+                instances[cls] = cls(*args, **kwargs)
+        return instances[cls]
+
+    return get_instance
+
+
+def async_method_warning(sync_method):
+    @wraps(sync_method)
+    async def async_method(*args, **kwargs):
+        warnings.warn(f"{sync_method.__name__} is sync method, please use a{sync_method.__name__} instead.")
+        return sync_method(*args, **kwargs)
+    return async_method
+
 
 def _deprecated_getitem_method(name, attrs):
     """Create a deprecated ``__getitem__`` method that tells users to use

@@ -11,15 +11,18 @@ from typing import List, Union, Optional, Dict
 
 class Request(BaseModel):
 
-    start: int = Field(default=-np.inf)
-    end: int = Field(..., gt=0)
+    start_date: int = Field(default=-np.inf)
+    end_date: int = Field(gt=0, default=np.inf)
     sids: List[str]=[]
 
     def serialize(self) -> str:
-        return {"start": self.start, "end": self.end, "sids": self.sids}
+        return {"start_date": self.start_date, "end_date": self.end_date, "sids": self.sids}
+    
+    def range(self) -> List[int]:
+        return [self.start_date, self.end_date]
 
     def __lt__(self, other):
-        return True if max(other.start) <= max(self.start) else False
+        return True if max(other.start_date) <= max(self.start_date) else False
     
     def __repr__(self) -> str:
         # __str__ / __repr__ ; print 默认调用__str__  ; 如果__str__没有重写返回__repr__
@@ -94,7 +97,7 @@ class Line:
 
     def serialize(self) -> dict:
 
-        return {"sid": self.sid, "utc": self.utc, "open": self.open, "high": self.high, 
+        return {"sid": self.sid, "tick": self.tick, "open": self.open, "high": self.high, 
                 "low": self.low, "close": self.close, "volume": self.volume, "amount": self.amount}
     
 
@@ -125,7 +128,7 @@ class Dividend:
 
 @dataclass(frozen=True)     
 # @total_ordering
-class Rightment:
+class Rgt:
 
     sid: str
     register_date: int
