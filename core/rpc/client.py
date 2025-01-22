@@ -11,9 +11,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-import pdb
+import numpy as np
 import grpc
-import logging
 from typing import Iterator, Iterable, AsyncIterator
 from concurrent.futures import ThreadPoolExecutor
 from google.protobuf import empty_pb2
@@ -82,18 +81,28 @@ class RpcClient:
             return {"tz_info": meta.tz_info, "trading_days": list(meta.date)}
             
         def instrument_handler(meta):
-            return [MessageToDict(item) for item in meta.asset]
+            return [MessageToDict(item, 
+                                  preserving_proto_field_name=True, 
+                                  always_print_fields_with_no_presence=True) for item in meta.asset]
             
         def dataset_handler(meta):
-            lines = [MessageToDict(item) for item in meta.line]
-            return {"tick": meta.tick, "line": lines}
+            lines = [MessageToDict(item, 
+                                   preserving_proto_field_name=True, 
+                                  always_print_fields_with_no_presence=True) for item in meta.line]
+            line_arrays = [([item["sid"], item["open"], item["high"], item["low"], 
+                            item["close"], item.get("volume", 0), item.get("amount", 0)]) for item in lines]
+            return {"tick": meta.tick, "line": line_arrays}
         
         def adjustment_handler(meta):
-            adj = [MessageToDict(item) for item in meta.adjustment]
+            adj = [MessageToDict(item, 
+                                 preserving_proto_field_name=True, 
+                                 always_print_fields_with_no_presence=True) for item in meta.adj]
             return {"date": meta.date, "adjustment": adj}
         
         def right_handler(meta):
-            rgts = [MessageToDict(item) for item in meta.right]
+            rgts = [MessageToDict(item, 
+                                  preserving_proto_field_name=True, 
+                                  always_print_fields_with_no_presence=True) for item in meta.rgt]
             return {"date": meta.date, "right": rgts}
             
         handlers = {
@@ -124,9 +133,9 @@ class RpcClient:
     
     async def _instrumentCall(self, stub_req) -> AsyncIterator[dict]:
 
-        def on_handle(meta):
-            metadata = [MessageToDict(item) for item in meta.asset]
-            return metadata
+        # def on_handle(meta):
+        #     metadata = [MessageToDict(item) for item in meta.asset]
+        #     return metadata
 
         response_iterator = self._stub.InstrumentCall(stub_req, wait_for_ready=True)
         # _instrument_future = self._executor.submit(
@@ -141,10 +150,10 @@ class RpcClient:
 
     async def _tickCall(self, stub_req) -> AsyncIterator[dict]:
 
-        def on_handle(meta):
-            lines = [MessageToDict(item) for item in meta.line]
-            metadata = {"tick": meta.tick, "line": lines}
-            return metadata
+        # def on_handle(meta):
+        #     lines = [MessageToDict(item) for item in meta.line]
+        #     metadata = {"tick": meta.tick, "line": lines}
+        #     return metadata
 
         response_iterator = self._stub.LineStreamCall(stub_req, wait_for_ready=True)
         # _dataset_future = self._stream_response(response_iterator, on_callback=on_handle) 
@@ -159,10 +168,10 @@ class RpcClient:
 
     async def _adjustmentCall(self, stub_req) -> AsyncIterator[dict]:
 
-        def on_handle(meta):
-            adj = [MessageToDict(item) for item in meta.adjustment]
-            metadata = {"date": meta.date, "adjustment": adj}
-            return metadata
+        # def on_handle(meta):
+        #     adj = [MessageToDict(item) for item in meta.adjustment]
+        #     metadata = {"date": meta.date, "adjustment": adj}
+        #     return metadata
 
         response_iterator = self._stub.AdjustmentStreamCall(stub_req, wait_for_ready=True)
         # _adjustment_future = self._stream_response(response_iterator, on_callback=on_handle) 
@@ -177,10 +186,10 @@ class RpcClient:
 
     async def _rightmentCall(self, stub_req) -> AsyncIterator[dict]:
 
-        def on_handle(meta):
-            rgts = [MessageToDict(item) for item in meta.right]
-            metadata = {"date": meta.date, "right": rgts}
-            return metadata
+        # def on_handle(meta):
+        #     rgts = [MessageToDict(item) for item in meta.right]
+        #     metadata = {"date": meta.date, "right": rgts}
+        #     return metadata
 
         response_iterator = self._stub.RightStreamCall(stub_req, wait_for_ready=True)
         # _calendar_future = self._stream_response(response_iterator, on_callback=on_handle) 

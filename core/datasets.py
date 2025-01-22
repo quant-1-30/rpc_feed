@@ -140,18 +140,19 @@ class Instrument(BaseProvider):
         """
         assets = []
         objs = await async_ops.get_tables()
+        model = objs[self.p.table]
 
-        stmt = select(objs[self.p.table]).execution_options(**self.execution_options)
+        stmt = select(model).where(
+            and_(
+                model.c.first_trading.between(req.start_date, req.end_date)
+            )
+        )
+        if req.sid:
+            stmt = stmt.where(model.c.sid.in_(req.sid))
+        stmt = stmt.execution_options(**self.execution_options)
+
         async for item in async_ops.on_query(stmt):
             assets.append(Asset(*item[1:]))
-
-        # filter by time range
-        assets = [asset for asset in assets if asset.first_trading >= req.start_date
-                  and asset.first_trading <= req.end_date]
-        # filter by sids
-        if req.sids:
-            assets = [asset for asset in assets if asset.sid in req.sids]
-        print("assets ", assets)
 
         for item in assets:
             yield item.serialize()
@@ -182,13 +183,18 @@ class Tick(BaseProvider):
         # relationship
         # from sqlalchemy.orm import selectinload
         # stmt = select(table).options(selectinload(table.c.sid))
-        stmt = select(model).where(
-            and_(
-                # model.c.sid.in_(req.sids),
-                model.c.tick > req.start_date,
-                model.c.tick < req.end_date
-            )
-        ).execution_options(**self.execution_options)
+        # stmt = select(model).where(
+        #     and_(
+        #         model.c.tick >= req.start_date,
+        #         model.c.tick <= req.end_date
+        #     )
+        # )
+        stmt = select(model).where(model.c.tick.between(req.start_date, req.end_date))
+        # .execution_options(**self.execution_options)
+        if req.sid:
+            stmt = stmt.where(model.c.sid.in_(req.sid))
+
+        stmt = stmt.execution_options(**self.execution_options)
 
         async for item in async_ops.on_query(stmt):
             yield Line(*item[1:]).serialize()
@@ -217,13 +223,15 @@ class Adjustment(BaseProvider):
         objs = await async_ops.get_tables()
         stmt = select(objs[self.p.table]).where(
             and_(
-                objs[self.p.table].c.trading_date.between(req.start_date, req.end_date),
-                objs[self.p.table].c.sid.in_(req.sids),
+                objs[self.p.table].c.ex_date.between(req.start_date, req.end_date),
                 # or_()
             )   
         )
+        if req.sid:
+            stmt = stmt.where(objs[self.p.table].c.sid.in_(req.sid))
+        stmt = stmt.execution_options(**self.execution_options)
         async for item in async_ops.on_query(stmt):
-            yield Adjustment(*item[1:]).serialize()
+            yield Dividend(*item[1:]).serialize()
 
 
 class Right(BaseProvider):
@@ -250,12 +258,14 @@ class Right(BaseProvider):
         stmt = select(objs[self.p.table]).where(
             and_(
                 objs[self.p.table].c.ex_date.between(req.start_date, req.end_date),
-                objs[self.p.table].c.sid.in_(req.sids),
                 # or_()
             )   
         )
+        if req.sid:
+            stmt = stmt.where(objs[self.p.table].c.sid.in_(req.sid))
+        stmt = stmt.execution_options(**self.execution_options)
         async for item in async_ops.on_query(stmt):
-            yield Right(*item[1:]).serialize()
+            yield Rgt(*item[1:]).serialize()
 
 
 Providers = dict(

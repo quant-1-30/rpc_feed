@@ -47,43 +47,34 @@ def parse_args():
 
 if __name__ == "__main__":
 
-    # args = parse_args()
-    # print(args)
-    # bt_feed.add_data(args.dataset, args.xml)
+    args = parse_args()
+    print(args)
+    bt_feed.add_data(args.dataset, args.xml)
     
-    # dataset = "calendar"
-    # dataset_path = os.path.join(os.path.expanduser("~"), "Downloads/quant/calendar")
-    # xml = "xml/calendar.graphml"
-    # bt_feed.add_data(dataset, xml, dataset_path, prefix=".csv", filter=False)
+    dataset = "calendar"
+    dataset_path = os.path.join(os.path.expanduser("~"), "Downloads/quant/calendar")
+    xml = "xml/calendar.graphml"
+    bt_feed.add_data(dataset, xml, dataset_path, prefix=".csv", filter=False)
 
-    # dataset = "asset"
-    # dataset_path = os.path.join(os.path.expanduser("~"), "Downloads/quant/assets")
-    # xml = "xml/asset.graphml"
-    # bt_feed.add_data(dataset, xml, dataset_path, prefix="csv")
+    dataset = "asset"
+    dataset_path = os.path.join(os.path.expanduser("~"), "Downloads/quant/assets")
+    xml = "xml/asset.graphml"
+    bt_feed.add_data(dataset, xml, dataset_path, prefix="csv")
     
-    # dataset = "minute"
-    # dataset_path = os.path.join(os.path.expanduser("~"), "Downloads/quant/202410/sh/minline")
-    # xml = "xml/minute.graphml"
-    # bt_feed.add_data(dataset, xml, dataset_path, prefix=".01", filter=True)
+    dataset = "minute"
+    dataset_path = os.path.join(os.path.expanduser("~"), "Downloads/quant/202410/sh/minline")
+    xml = "xml/minute.graphml"
+    bt_feed.add_data(dataset, xml, dataset_path, prefix=".01", filter=True)
     
-    # dataset = "adjustment"
-    # dataset_path = os.path.join(os.path.expanduser("~"), "Downloads/quant/adjustments")
-    # xml = "xml/adjustment.graphml"
-    # bt_feed.add_data(dataset, xml, dataset_path, prefix="csv", filter=True)
+    dataset = "adjustment"
+    dataset_path = os.path.join(os.path.expanduser("~"), "Downloads/quant/adjustments")
+    xml = "xml/adjustment.graphml"
+    bt_feed.add_data(dataset, xml, dataset_path, prefix="csv", filter=True)
 
-    # dataset = "rightment"
-    # dataset_path = os.path.join(os.path.expanduser("~"), "Downloads/quant/rights")
-    # xml = "xml/rightment.graphml"
-    # bt_feed.add_data(dataset, xml, dataset_path, prefix="csv", filter=True)
+    dataset = "rightment"
+    dataset_path = os.path.join(os.path.expanduser("~"), "Downloads/quant/rights")
+    xml = "xml/rightment.graphml"
+    bt_feed.add_data(dataset, xml, dataset_path, prefix="csv", filter=True)
 
-    # dataset = "calendar"
-    # dataset = "asset"
-    # request = Request()
-    dataset = "line"
-    request = Request(start=1728351060, end=1728351600, sids=["603676"])
-    # dataset = "adjustment"
-    # dataset = "rightment"
-
-    asyncio.run(bt_feed.replay(dataset, request))
 
 

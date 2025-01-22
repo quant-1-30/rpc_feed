@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 import pandas as pd
+from sqlalchemy import Select
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
 from sqlalchemy.ext.automap import automap_base
 from sqlalchemy.orm import sessionmaker
@@ -149,6 +150,22 @@ class AsyncOps(with_metaclass(MetaBase, object)):
         valid_keys = [column.name for column in base_obj.__table__.columns]
         # 只设置模型中定义的字段
         return {key: value for key, value in insert.items() if key in valid_keys}
+    
+    async def on_query_obj(self, query: Select, params=None):
+        await self._ensure_initialized()
+        async with self.get_db() as session:
+            async with session.begin():
+                result = await session.execute(query, params=params)
+                return result.scalars().all()
+    
+    async def on_insert_obj(self, objs: Union[List[Base], Base]):
+        await self._ensure_initialized()
+        async with self.get_db() as session:
+            async with session.begin():
+                print("on_insert_obj", objs)
+                objs = [objs] if not isinstance(objs, Iterable) else objs
+                session.add_all(objs)
+            await session.commit()
 
 
 async_ops = AsyncOps()

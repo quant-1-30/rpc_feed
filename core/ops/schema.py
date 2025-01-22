@@ -90,8 +90,8 @@ class Adjustment(Base):
                                      nullable=False, use_existing_column=True)
     register_date: Mapped[int] = mapped_column(Integer, nullable=False, use_existing_column=True)
     ex_date: Mapped[int] = mapped_column(Integer, nullable=False, use_existing_column=True)
-    bonus_share: Mapped[int] = mapped_column(Integer, nullable=True, use_existing_column=True)
-    transfer_share: Mapped[int] = mapped_column(Integer, nullable=True, use_existing_column=True)
+    share: Mapped[int] = mapped_column(Integer, nullable=True, use_existing_column=True)
+    transfer: Mapped[int] = mapped_column(Integer, nullable=True, use_existing_column=True)
     interest: Mapped[int] = mapped_column(Integer, nullable=True, use_existing_column=True)
 
     asset: Mapped["Asset"] = relationship("Asset", back_populates="adjustment")
@@ -104,7 +104,7 @@ class Adjustment(Base):
 
 class Rightment(Base):
 
-    # register_date:登记日 ; ex_date:除权除息日 
+    # register_date:登记日 ; ex_date:除权除息日; pay_date:除权除息日 ; effective_date:上市日期 
     # 股权登记日后的下一个交易日就是除权日或除息日，这一天购入该公司股票的股东不再享有公司此次分红配股
     # 上交所证券的红股上市日为股权除权日的下一个交易日; 深交所证券的红股上市日为股权登记日后的第3个交易日
     # price --- 配股价格 / ratio --- 配股比例
@@ -118,7 +118,7 @@ class Rightment(Base):
                                      nullable=False, primary_key=True, use_existing_column=True)
     register_date: Mapped[int] = mapped_column(Integer, nullable=False, use_existing_column=True)
     ex_date: Mapped[int] = mapped_column(Integer, nullable=False, use_existing_column=True)
-    effective_date: Mapped[int] = mapped_column(Integer, nullable=False, use_existing_column=True)
+    # effective_date: Mapped[int] = mapped_column(Integer, nullable=False, use_existing_column=True)
     price: Mapped[int] = mapped_column(Integer, nullable=True, use_existing_column=True)
     ratio: Mapped[int] = mapped_column(Integer, nullable=True, use_existing_column=True)
 

@@ -57,7 +57,12 @@ class QuoteServer(service_pb2_grpc.btDataFeedServicer):
         # trading_days = [c.trading_date for c in bt_feed.get] 
         response = service_pb2.Calendar()
         response.tz_info = "Asia/shanghai"
-        obj_map = MessageToDict(request, preserving_proto_field_name=True)
+        obj_map = MessageToDict(
+            request, 
+            preserving_proto_field_name=True, 
+            always_print_fields_with_no_presence=True,
+            including_default_value_fields=True
+        )
         print("obj_map ", obj_map)
         response_iterator = bt_feed.replay("calendar", Request(**obj_map))
         # import pdb; pdb.set_trace()
@@ -79,11 +84,17 @@ class QuoteServer(service_pb2_grpc.btDataFeedServicer):
 
         response = service_pb2.InstFrame()
         # context.add_callback(lambda: self._clean_call_session(call_info))
-        obj_map = MessageToDict(request, preserving_proto_field_name=True)
+        obj_map = MessageToDict(
+            request, 
+            preserving_proto_field_name=True, 
+            always_print_fields_with_no_presence=True,
+        )
         response_iterator = bt_feed.replay("asset", Request(**obj_map))
         assets = []
         async for resp in response_iterator:
+            print("resp ", resp)
             obj = service_pb2.Instrument(**resp)
+            print("obj ", obj)
             assets.append(obj)
         response.asset.extend(assets)
         print("instrument repsonse ", response)
@@ -97,7 +108,11 @@ class QuoteServer(service_pb2_grpc.btDataFeedServicer):
     ) -> service_pb2.TickFrame: # type: ignore
         
         logging.info("Received dataset")
-        obj_map = MessageToDict(request, preserving_proto_field_name=True)
+        obj_map = MessageToDict(
+            request, 
+            preserving_proto_field_name=True, 
+            always_print_fields_with_no_presence=True,
+        )
         response_iterator = bt_feed.replay("line", Request(**obj_map))
         # context.add_callback(lambda: self._clean_call_session(call_info))
         async for resp in response_iterator:
@@ -119,12 +134,16 @@ class QuoteServer(service_pb2_grpc.btDataFeedServicer):
         
         # context.set_compression(grpc.Compression.NoCompression)
         logging.info("Received adjustment")
-        obj_map = MessageToDict(request, preserving_proto_field_name=True)
-        response_iterator = await bt_feed.replay("adjustment", Request(**obj_map))
+        obj_map = MessageToDict(
+            request, 
+            preserving_proto_field_name=True, 
+            always_print_fields_with_no_presence=True,
+        )
+        response_iterator = bt_feed.replay("adjustment", Request(**obj_map))
         # context.add_callback(lambda: self._clean_call_session(call_info))
         async for adjs in response_iterator:
             response = service_pb2.AdjFrame()
-            response.date = adjs.pop("date")
+            response.date = adjs["ex_date"]
             adjustments = service_pb2.Adjustment(**adjs)
             response.adj.extend([adjustments])
             print("adjustment repsonse ", response)
@@ -138,12 +157,16 @@ class QuoteServer(service_pb2_grpc.btDataFeedServicer):
     ) -> service_pb2.RightmentFrame: # type: ignore
         
         logging.info("Received right")
-        obj_map = MessageToDict(request, preserving_proto_field_name=True)
+        obj_map = MessageToDict(
+            request, 
+            preserving_proto_field_name=True, 
+            always_print_fields_with_no_presence=True,
+        )
         response_iterator = bt_feed.replay("right", Request(**obj_map))
         # context.add_callback(lambda: self._clean_call_session(call_info))
         async for rgts in response_iterator:
             response = service_pb2.RightmentFrame()
-            response.date = rgts.pop("date")
+            response.date = rgts["ex_date"]
             rights = service_pb2.Rightment(**rgts)
             response.rgt.extend([rights])
             print("rightment repsonse ", response)

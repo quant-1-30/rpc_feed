@@ -24,7 +24,7 @@ class UTC(ParamBase):
         else:
             raise TypeError("")
         
-    def _on_transform(self, dt: Union[datetime.datetime, str, datetime.datetime.timestamp]):
+    def on_transform(self, dt: Union[datetime.datetime, str, datetime.datetime.timestamp]):
         # if not dt.tzinfo:
         #     dt = dt.replace(tzinfo=pytz.timezone(tz))
         # return dt.replace(tzinfo=pytz.utc) 
@@ -38,7 +38,6 @@ class UTC(ParamBase):
             local_dt = datetime.datetime.strptime(dt, self.p.format)
         # utc_timestamp = utc_dt.astimezone(tz=tz).timestamp() 
         utc_dt = local_dt.astimezone(tz=tz)
-        # pdb.set_trace()
         return utc_dt.timestamp()
     
     def on_handle(self, frame: pd.DataFrame) -> Any:
@@ -50,7 +49,7 @@ class UTC(ParamBase):
             return pd.Timestamp(ts.to_pydatetime(warn=False), tz='UTC')
         """
         if len(frame):
-            frame.loc[:, "tick"] = frame["timestamp"].apply(lambda x: self._on_transform(x))
+            frame.loc[:, "tick"] = frame["timestamp"].apply(lambda x: self.on_transform(x))
         return frame
 
     def __repr__(self):

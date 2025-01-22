@@ -13,10 +13,10 @@ class Request(BaseModel):
 
     start_date: int = Field(default=-np.inf)
     end_date: int = Field(gt=0, default=np.inf)
-    sids: List[str]=[]
+    sid: List[str]=[]
 
     def serialize(self) -> str:
-        return {"start_date": self.start_date, "end_date": self.end_date, "sids": self.sids}
+        return {"start_date": self.start_date, "end_date": self.end_date, "sid": self.sid}
     
     def range(self) -> List[int]:
         return [self.start_date, self.end_date]
@@ -55,8 +55,8 @@ class Asset:
 
     sid: str
     name: str
-    first_trading: str
-    delist: str
+    first_trading: int
+    delist: int
     
     def __eq__(self, _value: object) -> bool:
         if not isinstance(_value, self):
@@ -69,7 +69,8 @@ class Asset:
         return self.first_trading < _value.first_trading
 
     def serialize(self) -> dict:
-        return {"sid": self.sid, "name": self.name, "first_trading": self.first_trading, "delist": self.delist}
+        return {"sid": self.sid, "name": self.name, 
+                "first_trading": self.first_trading, "delist": self.delist}
     
 
 @dataclass(frozen=True)
@@ -108,8 +109,9 @@ class Dividend:
     sid: str
     register_date: int
     ex_date: int
-    stock_bonus: int = 0
-    bonus: int = 0
+    share: int = 0
+    transfer: int = 0
+    interest: int = 0
 
     def __eq__(self, _value: object) -> bool:
         if not isinstance(_value, self):
@@ -122,8 +124,9 @@ class Dividend:
         return self.register_date < _value.register_date
 
     def serialize(self) -> dict:
-        return {"sid": self.sid, "register_date": self.register_date, "ex_date": self.ex_date, 
-                "stock_bonus": self.stock_bonus, "bonus": self.bonus}
+        return {"sid": self.sid, "register_date": self.register_date, 
+                "ex_date": self.ex_date, "share": self.share,
+                "transfer": self.transfer, "interest": self.interest}
 
 
 @dataclass(frozen=True)     
@@ -133,7 +136,7 @@ class Rgt:
     sid: str
     register_date: int
     ex_date: int
-    effective_date: int
+    # effective_date: int
     price: int
     ratio: int
 
@@ -149,4 +152,4 @@ class Rgt:
 
     def serialize(self) -> dict:
         return {"sid": self.sid, "register_date": self.register_date, "ex_date": self.ex_date, 
-                "effective_date": self.effective_date, "price": self.price, "ratio": self.ratio}
+                "price": self.price, "ratio": self.ratio}

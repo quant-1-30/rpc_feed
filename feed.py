@@ -30,14 +30,6 @@ class Feed(metaclass=SingletonMeta):
         module = get_module_by_module_path(current_path)
         return module.Providers
 
-    # @lazyproperty
-    # def trading_calendar(self):
-    #     return self.provider["calendar"].get_data()
-    
-    # @lazyproperty
-    # def instruments(self):
-    #     return self.provider["instrument"].get_data()
-
     @classmethod
     def filter(cls, paths):
         pattern = "^[6|0|3][0-9]{5}$"
@@ -48,11 +40,6 @@ class Feed(metaclass=SingletonMeta):
             if m and not m[0].startswith("688"):
                 filtered_paths.append(p)
         return filtered_paths
-    
-    async def replay(self, dataset, request: Request):
-         iterator = self.providers[dataset].get_data(request)
-         async for item in iterator:
-             yield item
     
     def add_data(self, dataset, xml, dataset_path, prefix, filter=False):
         '''
@@ -66,6 +53,11 @@ class Feed(metaclass=SingletonMeta):
         else:
             iterables = glob_paths
         self.pipeline.execute_graph(dataset, xml, iterables)
+
+    async def replay(self, dataset, request: Request):
+         iterator = self.providers[dataset].get_data(request)
+         async for item in iterator:
+             yield item
 
 
 bt_feed = Feed()
