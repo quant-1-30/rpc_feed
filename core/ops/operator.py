@@ -156,6 +156,7 @@ class AsyncOps(with_metaclass(MetaBase, object)):
         async with self.get_db() as session:
             async with session.begin():
                 result = await session.execute(query, params=params)
+                # scalars().all() single field / all() multiple fields tuple
                 return result.scalars().all()
     
     async def on_insert_obj(self, objs: Union[List[Base], Base]):
