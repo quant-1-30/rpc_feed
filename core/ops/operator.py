@@ -37,6 +37,10 @@ class AsyncOps(with_metaclass(MetaBase, object)):
 
     def __init__(self):
         self._initialized = False
+
+    async def __aenter__(self):
+        await self._ensure_initialized()
+        return self
     
     async def initialize(self):
         """Async initialization method"""
@@ -113,7 +117,7 @@ class AsyncOps(with_metaclass(MetaBase, object)):
                 await session.close()
     
     async def on_query(self, query):
-        await self._ensure_initialized()
+        # await self._ensure_initialized()
         async with self.get_db() as session:
             async with session.begin():
                     # stmt = select(cal).execution_options(**self.options)
@@ -130,7 +134,7 @@ class AsyncOps(with_metaclass(MetaBase, object)):
                         yield row
 
     async def on_insert(self, table_name: str, data: Union[pd.DataFrame, List[dict], dict]):
-        await self._ensure_initialized()
+        # await self._ensure_initialized()
         async with self.get_db() as session:
             async with session.begin():
                 if isinstance(data, pd.DataFrame):
@@ -152,7 +156,7 @@ class AsyncOps(with_metaclass(MetaBase, object)):
         return {key: value for key, value in insert.items() if key in valid_keys}
     
     async def on_query_obj(self, query: Select, params=None):
-        await self._ensure_initialized()
+        # await self._ensure_initialized()
         async with self.get_db() as session:
             async with session.begin():
                 result = await session.execute(query, params=params)
@@ -160,13 +164,19 @@ class AsyncOps(with_metaclass(MetaBase, object)):
                 return result.scalars().all()
     
     async def on_insert_obj(self, objs: Union[List[Base], Base]):
-        await self._ensure_initialized()
+        # await self._ensure_initialized()
         async with self.get_db() as session:
             async with session.begin():
                 print("on_insert_obj", objs)
                 objs = [objs] if not isinstance(objs, Iterable) else objs
                 session.add_all(objs)
             await session.commit()
+
+    async def __aexit__(self, exc_type, exc_value, traceback):
+            if exc_type is not None:
+                print(f"Error: {exc_type}, {exc_value}, {traceback}")
+            # True mean suppress exception
+            return True
 
 
 async_ops = AsyncOps()

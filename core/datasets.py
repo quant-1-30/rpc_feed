@@ -3,7 +3,7 @@
 
 import datetime
 import pandas as pd
-from sqlalchemy import select, text
+from sqlalchemy import select
 from sqlalchemy import and_, or_
 from meta import with_metaclass, MetaBase
 from utils.cache import lazyproperty
@@ -93,30 +93,31 @@ class TradingCalendar(BaseProvider):
             calendar list
         """
         calendar = []
-        objs = await async_ops.get_tables()
+        async with async_ops as ctx:
+            objs = await ctx.get_tables()
+            # stmt = text("select trading_date from calendar")
+            stmt = select(objs[self.p.table].c.trading_date)
 
-        # stmt = text("select trading_date from calendar")
-        stmt = select(objs[self.p.table].c.trading_date)
-        async for trading_dt in async_ops.on_query(stmt):
-            calendar.append(Calendar(trading_dt[0]))
+            async for trading_dt in ctx.on_query(stmt):
+                calendar.append(Calendar(trading_dt[0]))
 
-        calendar.sort(key=lambda x: x.trading_date)
-        start_time, end_time = req.range()
-        if isinstance(start_time, (pd.Timestamp, datetime.datetime)):
-            start_time = int(start_time.strftime("%Y%m%d"))
+            calendar.sort(key=lambda x: x.trading_date)
+            start_time, end_time = req.range()
+            if isinstance(start_time, (pd.Timestamp, datetime.datetime)):
+                start_time = int(start_time.strftime("%Y%m%d"))
         
-        if isinstance(end_time, (pd.Timestamp, datetime.datetime)):
-            end_time = int(end_time.strftime("%Y%m%d"))
-            
-        if start_time > int(calendar[-1].trading_date):
-                yield np.array([])
+            if isinstance(end_time, (pd.Timestamp, datetime.datetime)):
+                end_time = int(end_time.strftime("%Y%m%d"))
 
-        if end_time < calendar[0].trading_date:
-                yield np.array([])
+            if start_time > int(calendar[-1].trading_date):
+                    yield np.array([])
 
-        si, ei = locate_index(calendar, start_time, end_time) 
-        for item in calendar[si:ei]:
-            yield item
+            if end_time < calendar[0].trading_date:
+                    yield np.array([])
+
+            si, ei = locate_index(calendar, start_time, end_time) 
+            for item in calendar[si:ei]:
+                yield item
 
 
 class Instrument(BaseProvider):
@@ -139,23 +140,24 @@ class Instrument(BaseProvider):
         """Get the existiongconfig dictionary for a base market adding several dynamic filters.
         """
         assets = []
-        objs = await async_ops.get_tables()
-        model = objs[self.p.table]
+        async with async_ops as ctx:
+            objs = await ctx.get_tables()
+            model = objs[self.p.table]
 
-        stmt = select(model).where(
-            and_(
-                model.c.first_trading.between(req.start_date, req.end_date)
+            stmt = select(model).where(
+                and_(
+                    model.c.first_trading.between(req.start_date, req.end_date)
+                )
             )
-        )
-        if req.sid:
-            stmt = stmt.where(model.c.sid.in_(req.sid))
-        stmt = stmt.execution_options(**self.execution_options)
+            if req.sid:
+                stmt = stmt.where(model.c.sid.in_(req.sid))
+            stmt = stmt.execution_options(**self.execution_options)
 
-        async for item in async_ops.on_query(stmt):
-            assets.append(Asset(*item[1:]))
+            async for item in ctx.on_query(stmt):
+                assets.append(Asset(*item[1:]))
 
-        for item in assets:
-            yield item.serialize()
+            for item in assets:
+                yield item.serialize()
     
     
 class Tick(BaseProvider):
@@ -178,26 +180,27 @@ class Tick(BaseProvider):
         pd.DataFrame
             a pandas dataframe with <instrument, datetime> index.
         """
-        objs = await async_ops.get_tables()
-        model = objs[self.p.table]
-        # relationship
-        # from sqlalchemy.orm import selectinload
-        # stmt = select(table).options(selectinload(table.c.sid))
-        # stmt = select(model).where(
-        #     and_(
-        #         model.c.tick >= req.start_date,
-        #         model.c.tick <= req.end_date
-        #     )
-        # )
-        stmt = select(model).where(model.c.tick.between(req.start_date, req.end_date))
-        # .execution_options(**self.execution_options)
-        if req.sid:
-            stmt = stmt.where(model.c.sid.in_(req.sid))
+        async with async_ops as ctx:
+            objs = await ctx.get_tables()
+            model = objs[self.p.table]
+            # relationship
+            # from sqlalchemy.orm import selectinload
+            # stmt = select(table).options(selectinload(table.c.sid))
+            stmt = select(model).where(
+                and_(
+                    model.c.tick >= req.start_date,
+                    model.c.tick <= req.end_date
+                )
+            )
+            # stmt = select(model).where(model.c.tick.between(req.start_date, req.end_date))
+            # .execution_options(**self.execution_options)
+            if req.sid:
+                stmt = stmt.where(model.c.sid.in_(req.sid))
 
-        stmt = stmt.execution_options(**self.execution_options)
+            stmt = stmt.execution_options(**self.execution_options)
 
-        async for item in async_ops.on_query(stmt):
-            yield Line(*item[1:]).serialize()
+            async for item in ctx.on_query(stmt):
+                yield Line(*item[1:]).serialize()
 
 
 class Adjustment(BaseProvider):
@@ -220,18 +223,19 @@ class Adjustment(BaseProvider):
         Returns
         ----------
         """
-        objs = await async_ops.get_tables()
-        stmt = select(objs[self.p.table]).where(
-            and_(
-                objs[self.p.table].c.ex_date.between(req.start_date, req.end_date),
-                # or_()
-            )   
-        )
-        if req.sid:
-            stmt = stmt.where(objs[self.p.table].c.sid.in_(req.sid))
-        stmt = stmt.execution_options(**self.execution_options)
-        async for item in async_ops.on_query(stmt):
-            yield Dividend(*item[1:]).serialize()
+        async with async_ops as ctx:
+            objs = await ctx.get_tables()
+            stmt = select(objs[self.p.table]).where(
+                and_(
+                    objs[self.p.table].c.ex_date.between(req.start_date, req.end_date),
+                        # or_()
+                    )   
+                )
+            if req.sid:
+                stmt = stmt.where(objs[self.p.table].c.sid.in_(req.sid))
+            stmt = stmt.execution_options(**self.execution_options)
+            async for item in ctx.on_query(stmt):
+                yield Dividend(*item[1:]).serialize()
 
 
 class Right(BaseProvider):
@@ -254,18 +258,19 @@ class Right(BaseProvider):
         Returns
         ----------
         """
-        objs = await async_ops.get_tables()
-        stmt = select(objs[self.p.table]).where(
-            and_(
-                objs[self.p.table].c.ex_date.between(req.start_date, req.end_date),
-                # or_()
-            )   
-        )
-        if req.sid:
-            stmt = stmt.where(objs[self.p.table].c.sid.in_(req.sid))
-        stmt = stmt.execution_options(**self.execution_options)
-        async for item in async_ops.on_query(stmt):
-            yield Rgt(*item[1:]).serialize()
+        async with async_ops as ctx:
+            objs = await ctx.get_tables()
+            stmt = select(objs[self.p.table]).where(
+                and_(
+                    objs[self.p.table].c.ex_date.between(req.start_date, req.end_date),
+                    # or_()
+                )   
+            )
+            if req.sid:
+                stmt = stmt.where(objs[self.p.table].c.sid.in_(req.sid))
+            stmt = stmt.execution_options(**self.execution_options)
+            async for item in ctx.on_query(stmt):
+                yield Rgt(*item[1:]).serialize()
 
 
 Providers = dict(
