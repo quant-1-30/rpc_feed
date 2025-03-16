@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-import sys
 import asyncio
 import grpc
 import signal
@@ -60,8 +59,7 @@ class QuoteServer(service_pb2_grpc.btDataFeedServicer):
         obj_map = MessageToDict(
             request, 
             preserving_proto_field_name=True, 
-            always_print_fields_with_no_presence=True,
-            including_default_value_fields=True
+            always_print_fields_with_no_presence=True
         )
         print("obj_map ", obj_map)
         response_iterator = bt_feed.replay("calendar", Request(**obj_map))
@@ -118,9 +116,9 @@ class QuoteServer(service_pb2_grpc.btDataFeedServicer):
         async for resp in response_iterator:
             # pdb.set_trace()
             response = service_pb2.TickFrame()  
-            response.tick = resp.pop("tick")
+            # response.tick = resp.pop("tick")
+            response.sid = resp.pop("sid")
             line = service_pb2.Line(**resp)
-            # lines = [service_pb2.Line(**item) for item in lines]
             response.line.extend([line])
             print("dataset repsonse ", response)
             print("DatasetStreamCall ticker repsonse size ", response.ByteSize())

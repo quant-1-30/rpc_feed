@@ -27,10 +27,11 @@ class AsyncOps(with_metaclass(MetaBase, object)):
         ("port", "5432"),
         ("user", "postgres"),
         ("pwd", "20210718"),
-        ("db", "backtest"),
+        ("db", "bt_feed"),
         ("engine", "psycopg"),
         ("pool_size", 20),
         ("max_overflow", 10),
+        ("pool_recycle", 3600),
         ("pool_pre_ping", True),
         ("echo", True)
     )
@@ -178,6 +179,10 @@ class AsyncOps(with_metaclass(MetaBase, object)):
             # True mean suppress exception
             return True
 
+# self.conn.execute(
+#     "CREATE INDEX IF NOT EXISTS stock_dividends_payouts_ex_date "
+#     "ON stock_dividend_payouts(ex_date)"
+# )
 
 async_ops = AsyncOps()
 

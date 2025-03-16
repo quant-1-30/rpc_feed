@@ -86,3 +86,23 @@ class TextLoader(ParamBase):
         else:
             frame = self._readlines(path)
         return frame
+
+
+# from io import StringIO
+
+# output = StringIO()
+# output.write('First line.\n')
+# contents = output.getvalue()
+# output.close()
+# fd = StringIO()
+# fd.tell()
+# fd.seek(0)
+# fd.close()
+# fd = StringIO()
+# if isinstance(data, str):
+#     fd.write(data)
+# else:
+#     for chunk in data:
+#         fd.write(chunk)
+# self.fetch_size = fd.tell()
+# fd.seek(0)

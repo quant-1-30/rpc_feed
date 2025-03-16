@@ -26,22 +26,22 @@ class Instrument(_message.Message):
     def __init__(self, sid: _Optional[str] = ..., name: _Optional[str] = ..., first_trading: _Optional[int] = ..., delist: _Optional[int] = ...) -> None: ...
 
 class Line(_message.Message):
-    __slots__ = ("sid", "open", "high", "low", "close", "volume", "amount")
-    SID_FIELD_NUMBER: _ClassVar[int]
+    __slots__ = ("tick", "open", "high", "low", "close", "volume", "amount")
+    TICK_FIELD_NUMBER: _ClassVar[int]
     OPEN_FIELD_NUMBER: _ClassVar[int]
     HIGH_FIELD_NUMBER: _ClassVar[int]
     LOW_FIELD_NUMBER: _ClassVar[int]
     CLOSE_FIELD_NUMBER: _ClassVar[int]
     VOLUME_FIELD_NUMBER: _ClassVar[int]
     AMOUNT_FIELD_NUMBER: _ClassVar[int]
-    sid: str
+    tick: int
     open: int
     high: int
     low: int
     close: int
     volume: int
     amount: int
-    def __init__(self, sid: _Optional[str] = ..., open: _Optional[int] = ..., high: _Optional[int] = ..., low: _Optional[int] = ..., close: _Optional[int] = ..., volume: _Optional[int] = ..., amount: _Optional[int] = ...) -> None: ...
+    def __init__(self, tick: _Optional[int] = ..., open: _Optional[int] = ..., high: _Optional[int] = ..., low: _Optional[int] = ..., close: _Optional[int] = ..., volume: _Optional[int] = ..., amount: _Optional[int] = ...) -> None: ...
 
 class Adjustment(_message.Message):
     __slots__ = ("sid", "register_date", "ex_date", "share", "transfer", "interest")
@@ -80,12 +80,12 @@ class InstFrame(_message.Message):
     def __init__(self, asset: _Optional[_Iterable[_Union[Instrument, _Mapping]]] = ...) -> None: ...
 
 class TickFrame(_message.Message):
-    __slots__ = ("tick", "line")
-    TICK_FIELD_NUMBER: _ClassVar[int]
+    __slots__ = ("sid", "line")
+    SID_FIELD_NUMBER: _ClassVar[int]
     LINE_FIELD_NUMBER: _ClassVar[int]
-    tick: int
+    sid: str
     line: _containers.RepeatedCompositeFieldContainer[Line]
-    def __init__(self, tick: _Optional[int] = ..., line: _Optional[_Iterable[_Union[Line, _Mapping]]] = ...) -> None: ...
+    def __init__(self, sid: _Optional[str] = ..., line: _Optional[_Iterable[_Union[Line, _Mapping]]] = ...) -> None: ...
 
 class AdjFrame(_message.Message):
     __slots__ = ("date", "adj")

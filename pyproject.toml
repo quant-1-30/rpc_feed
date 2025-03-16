@@ -1,12 +1,13 @@
 [tool.poetry]
-name = "bt-feed"
+name = "rpc-feed"
 version = "0.1.0"
-description = "backtrader feed module"
+description = ""
 authors = ["hengxin.liu <hengxin.liu@inceptio.ai>"]
 readme = "README.md"
 
 [tool.poetry.dependencies]
 python = "^3.9"
+pandas = "^2.2.3"
 
 
 [build-system]
