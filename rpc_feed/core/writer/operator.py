@@ -52,7 +52,7 @@ class AsyncOps(with_metaclass(MetaBase, object)):
            postgresql+psycopg2://me@localhost/mydb
            postgresql+asyncpg://me@localhost/mydb
         """
-        print("builder ", cls)
+        # print("builder ", cls)
         url = f"postgresql+{cls.p.driver}://{cls.p.user}:{cls.p.pwd}@{cls.p.host}:{cls.p.port}/{cls.p.db}"
         # isolation_level="AUTOCOMMIT"
         engine = create_async_engine(url, 
@@ -153,7 +153,7 @@ class AsyncOps(with_metaclass(MetaBase, object)):
         # await self._ensure_initialized()
         async with self.get_db() as session:
             async with session.begin():
-                print("on_insert_obj", objs)
+                # print("on_insert_obj", objs)
                 objs = [objs] if not isinstance(objs, Iterable) else objs
                 session.add_all(objs)
             await session.commit()

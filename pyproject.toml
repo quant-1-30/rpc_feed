@@ -20,6 +20,7 @@ ipython = "<9.0.0"
 colorama = "^0.4.6"
 pyyaml = "^6.0.2"
 pytest = "^8.3.5"
+matplotlib = "<3.10"
 
 
 [build-system]

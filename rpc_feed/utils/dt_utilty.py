@@ -5,19 +5,18 @@ Created on Tue Mar 12 15:37:47 2019
 
 @author: python
 """
-from typing import Union
-import numpy as np
 import datetime
 import pandas as pd
 import pytz
 import bisect
 from datetime import timedelta
+from typing import Union
 
 MAX_MONTH_RANGE = 23
 MAX_WEEK_RANGE = 5
 
 
-def get_tickdata(date: Union[str, int], freq="M", opens=("9:30", "13:00"), closes=("11:30", "15:00")):
+def get_trading_ranges(date: Union[str, int], freq="M", opens=("9:30", "13:00"), closes=("11:30", "15:00")):
     #      ("opens", ("9:30", "13:00")),
     #      ("closes", ("11:30", "15:00"))
     dt = datetime.datetime.strptime(str(date), "%Y-%m-%d")
@@ -58,7 +57,7 @@ def locate_index(calendar, start_time, end_time):
         e = bisect.bisect_right(trading_days, end_time) -1 
         # loc = np.searchsorted(data["date"], cur_time_int, side="right")
         return s, e
-    
+
 
 def date2utc(date, tzinfo="Asia/Shanghai"):
     struct_dt = datetime.datetime.strptime(str(date), '%Y%m%d')
@@ -84,32 +83,12 @@ def market_utc(date, tzinfo="Asia/Shanghai"):
 #     return format_dt
 
 
-def calc_distance(tick, _format="%Y%m%d%H%M"):
+def calc_delta(tick, _format="%Y%m%d%H%M"):
     # %-m 不补0
     formate_date = datetime.datetime.strptime(str(tick), _format)
     delta = formate_date - datetime.datetime(year=formate_date.year, month=formate_date.month, day=formate_date.day, hours=9, minutes=30)
     return delta.seconds, formate_date
     
-
-def loc2tick(dt, loc, _format="%Y%m%d"):
-    struct_date = datetime.datetime.strptime(str(dt), _format)
-    loc_date = struct_date + datetime.timedelta(hours=9, minutes=30) + datetime.timedelta(seconds=loc * 3)
-    return loc_date 
-
-def locate_pos(price, minutes, direction):
-    print('minutes locate_pos', minutes)
-    # 当卖出价格大于bid价格才会成交，买入价格低于bid价格才会成交
-    loc = list(minutes[minutes <= price].index) if direction == '1' else \
-        list(minutes[minutes >= price].index)
-    # print('present minutes', minutes[minutes <= price])
-    try:
-        # pos = pd.Timestamp(datetime.datetime.utcfromtimestamp(loc[0]))
-        pos = loc[0]
-    except IndexError:
-        print('price out of minutes')
-        pos = None
-    return pos
-
 
 def parse_date_str_series(format_str, tz, date_str_series):
     tz_str = str(tz)

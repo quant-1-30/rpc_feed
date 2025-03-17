@@ -62,15 +62,15 @@ class QuoteServer(service_pb2_grpc.btDataFeedServicer):
             preserving_proto_field_name=True, 
             always_print_fields_with_no_presence=True
         )
-        print("obj_map ", obj_map)
+        # print("obj_map ", obj_map)
         response_iterator = bt_feed.replay("calendar", Request(**obj_map))
         # import pdb; pdb.set_trace()
         trading_days = []
         async for resp in response_iterator:
-            print("resp ", resp)
+            # print("resp ", resp)
             trading_days.append(resp.trading_date)
         response.date.extend(trading_days)
-        print("calendar repsonse ", response)
+        # print("calendar repsonse ", response)
         yield response
 
     async def InstrumentCall(
@@ -91,9 +91,9 @@ class QuoteServer(service_pb2_grpc.btDataFeedServicer):
         response_iterator = bt_feed.replay("asset", Request(**obj_map))
         assets = []
         async for resp in response_iterator:
-            print("resp ", resp)
+            # print("resp ", resp)
             obj = service_pb2.Instrument(**resp)
-            print("obj ", obj)
+            # print("obj ", obj)
             assets.append(obj)
         response.asset.extend(assets)
         print("instrument repsonse ", response)

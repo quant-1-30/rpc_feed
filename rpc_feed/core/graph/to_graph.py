@@ -4,8 +4,7 @@
 import asyncio
 import os
 import networkx as nx
-import pandas as pd
-# import matplotlib.pyplot as plt
+import matplotlib.pyplot as plt
 from concurrent.futures import ThreadPoolExecutor
 
 from .node import *
@@ -35,13 +34,6 @@ class Graph(object):
 
     def remove(self, node):
         self.graph = list(filter(lambda x: x.name != node.name, self.graph))
-
-    # def visual_graph(self):
-    #     # nx.circular_layout / nx.shell_layout / nx.spring_layout / nx.spectral_layout / nx.random_layout
-    #     pos = nx.spring_layout(self.graph)
-    #     nx.draw(self.graph, pos, with_labels=True, node_size=2000, node_color='lightblue', font_size=10, font_weight='bold')
-    #     plt.title("Graph Visualization")
-    #     plt.show()
 
     def _build_graph(self, graph_xml):
         
@@ -84,3 +76,10 @@ class Graph(object):
 
         self._build_graph(graph_xml=graph_xml) 
         self.run(iterables)
+
+    def visual_graph(self):
+        # nx.circular_layout / nx.shell_layout / nx.spring_layout / nx.spectral_layout / nx.random_layout
+        pos = nx.spring_layout(self.graph)
+        nx.draw(self.graph, pos, with_labels=True, node_size=2000, node_color='lightblue', font_size=10, font_weight='bold')
+        plt.title("Graph Visualization")
+        plt.show()
