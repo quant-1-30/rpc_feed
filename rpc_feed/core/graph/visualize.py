@@ -1,7 +1,6 @@
 """
 Tools for visualizing dependencies between Terms.
 """
-from __future__ import unicode_literals
 
 from contextlib import contextmanager
 import errno
@@ -11,13 +10,6 @@ from subprocess import Popen, PIPE
 
 from networkx import topological_sort
 from six import iteritems
-
-from .data import BoundColumn
-from .filters import Filter
-from .factors import Factor
-from .classifiers import Classifier
-from .term import Term, AssetExists
-
 
 class NoIPython(Exception):
     pass
@@ -77,10 +69,8 @@ def roots(g):
     return set(n for n, d in iteritems(g.in_degree()) if d == 0)
 
 
-def filter_nodes(include_asset_exists, nodes):
-    if include_asset_exists:
-        return nodes
-    return filter(lambda n: n is not AssetExists(), nodes)
+def filter_nodes(nodes):
+    return nodes
 
 
 def _render(g, out, format_, include_asset_exists=False):
@@ -94,8 +84,6 @@ def _render(g, out, format_, include_asset_exists=False):
     out : file-like object
     format_ : str {'png', 'svg'}
         Output format.
-    include_asset_exists : bool
-        Whether to filter out `AssetExists()` nodes.
     """
     graph_attrs = {'rankdir': 'TB', 'splines': 'ortho'}
     cluster_attrs = {'style': 'filled', 'color': 'lightgoldenrod1'}
@@ -108,25 +96,24 @@ def _render(g, out, format_, include_asset_exists=False):
 
         # Write outputs cluster.
         with cluster(f, 'Output', labelloc='b', **cluster_attrs):
-            for term in filter_nodes(include_asset_exists, out_nodes):
+            for term in filter_nodes(out_nodes):
                 add_term_node(f, term)
 
         # Write inputs cluster.
         with cluster(f, 'Input', **cluster_attrs):
-            for term in filter_nodes(include_asset_exists, in_nodes):
+            for term in filter_nodes(in_nodes):
                 add_term_node(f, term)
 
         # Write intermediate results.
-        for term in filter_nodes(include_asset_exists,
-                                 topological_sort(g.graph)):
+        for term in filter_nodes(topological_sort(g.graph)):
             if term in in_nodes or term in out_nodes:
                 continue
             add_term_node(f, term)
 
         # Write edges
         for source, dest in g.graph.edges():
-            if source is AssetExists() and not include_asset_exists:
-                continue
+            # if source is AssetExists() and not include_asset_exists:
+            #     continue
             add_edge(f, id(source), id(dest))
 
     cmd = ['dot', '-T', format_]
@@ -173,15 +160,6 @@ def display_graph(g, format='svg', include_asset_exists=False):
 def writeln(f, s):
     f.write((s + '\n').encode('utf-8'))
 
-
-def fmt(obj):
-    if isinstance(obj, Term):
-        r = obj.graph_repr()
-    else:
-        r = obj
-    return '"%s"' % r
-
-
 def add_term_node(f, term):
     declare_node(f, id(term), attrs_for_node(term))
 
@@ -194,12 +172,12 @@ def add_edge(f, source, dest):
     writeln(f, "{0} -> {1};".format(source, dest))
 
 
-def attrs_for_node(term, **overrides):
+def attrs_for_node(node, **overrides):
     attrs = {
         'shape': 'box',
         'colorscheme': 'pastel19',
         'style': 'filled',
-        'label': fmt(term),
+        'label': repr(node),
     }
     # if isinstance(term, BoundColumn):
     #     attrs['fillcolor'] = '1'

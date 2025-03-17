@@ -5,8 +5,12 @@ Created on Sat Feb 16 13:56:19 2019
 
 @author: python
 """
+import pandas as pd
 import contextlib
-import functools, logging, pdb, time
+import functools
+import logging
+import pdb
+import time
 import warnings
 from functools import wraps
 from contextlib import contextmanager
@@ -83,7 +87,7 @@ class Deprecated(object):
         self.tip_info = tip_info
 
     def __call__(self, obj):
-        if isinstance(obj, six.class_types):
+        if isinstance(obj, type):
             # 针对类装饰
             return self._decorate_class(obj)
         else:
@@ -131,7 +135,7 @@ class Deprecated(object):
         return wrapped
 
     def _update_doc(self, func_doc):
-        """更新文档信息，把原来的文档信息进行合并格式化, 即第一行为deprecated_doc(Deprecated: tip_info)，下一行为原始func_doc"""
+        """更新文档信息，把原来的文档信息进行合并格式化, 即第一行为deprecated_doc(Deprecated: tip_info),下一行为原始func_doc"""
         deprecated_doc = "Deprecated"
         if self.tip_info:
             """如果有tip format tip"""
@@ -142,21 +146,21 @@ class Deprecated(object):
         return func_doc
 
 
-def warnings_filter(func):
-    """
-        作用范围: 函数装饰器 (模块函数或者类函数)
-        功能: 被装饰的函数上的警告不会打印，忽略
-    """
+# def warnings_filter(func):
+#     """
+#         作用范围: 函数装饰器 (模块函数或者类函数)
+#         功能: 被装饰的函数上的警告不会打印，忽略
+#     """
 
-    @functools.wraps(func)
-    def wrapper(*args, **kwargs):
-        warnings.simplefilter('ignore')
-        ret = func(*args, **kwargs)
-        if not ABuEnv.g_ignore_all_warnings:
-            # 如果env中的设置不是忽略所有才恢复
-            warnings.simplefilter('default')
-        return ret
-    return wrapper
+#     @functools.wraps(func)
+#     def wrapper(*args, **kwargs):
+#         warnings.simplefilter('ignore')
+#         ret = func(*args, **kwargs)
+#         if not ABuEnv.g_ignore_all_warnings:
+#             # 如果env中的设置不是忽略所有才恢复
+#             warnings.simplefilter('default')
+#         return ret
+#     return wrapper
 
 
 def singleton(cls):
@@ -174,36 +178,36 @@ def singleton(cls):
     return get_instance
 
 
-def params_to_pandas(func):
-    """
-        函数装饰器:不定参数装饰器,定参数转换使用ABuScalerUtil中的装饰器arr_to_pandas(func)
-        将被装饰函数中的参数中所有可以迭代的序列转换为pd.DataFrame或者pd.Series
-    """
-    @functools.wraps(func)
-    def wrapper(*arg, **kwargs):
-        # 把arg中的可迭代序列转换为pd.DataFrame或者pd.Series
-        arg_list = [arr_to_pandas(param) for param in arg]
-        # 把kwargs中的可迭代序列转换为pd.DataFrame或者pd.Series
-        arg_dict = {param_key: arr_to_pandas(kwargs[param_key]) for param_key in kwargs}
-        return func(*arg_list, **arg_dict)
+# def params_to_pandas(func):
+#     """
+#         函数装饰器:不定参数装饰器,定参数转换使用ABuScalerUtil中的装饰器arr_to_pandas(func)
+#         将被装饰函数中的参数中所有可以迭代的序列转换为pd.DataFrame或者pd.Series
+#     """
+#     @functools.wraps(func)
+#     def wrapper(*arg, **kwargs):
+#         # 把arg中的可迭代序列转换为pd.DataFrame或者pd.Series
+#         arg_list = [arr_to_pandas(param) for param in arg]
+#         # 把kwargs中的可迭代序列转换为pd.DataFrame或者pd.Series
+#         arg_dict = {param_key: arr_to_pandas(kwargs[param_key]) for param_key in kwargs}
+#         return func(*arg_list, **arg_dict)
 
-    return wrapper
+#     return wrapper
 
 
-def params_to_numpy(func):
-    """
-        函数装饰器:不定参数装饰器,定参数转换使用ABuScalerUtil中的装饰器arr_to_numpy(func)
-        将被装饰函数中的参数中所有可以迭代的序列转换为np.array
-    """
-    @functools.wraps(func)
-    def wrapper(*arg, **kwargs):
-        # 把arg中的可迭代序列转换为np.array
-        arg_list = [arr_to_numpy(param) for param in arg]
-        # 把kwargs中的可迭代序列转换为np.array
-        arg_dict = {param_key: arr_to_numpy(kwargs[param_key]) for param_key in kwargs}
-        return func(*arg_list, **arg_dict)
+# def params_to_numpy(func):
+#     """
+#         函数装饰器:不定参数装饰器,定参数转换使用ABuScalerUtil中的装饰器arr_to_numpy(func)
+#         将被装饰函数中的参数中所有可以迭代的序列转换为np.array
+#     """
+#     @functools.wraps(func)
+#     def wrapper(*arg, **kwargs):
+#         # 把arg中的可迭代序列转换为np.array
+#         arg_list = [arr_to_numpy(param) for param in arg]
+#         # 把kwargs中的可迭代序列转换为np.array
+#         arg_dict = {param_key: arr_to_numpy(kwargs[param_key]) for param_key in kwargs}
+#         return func(*arg_list, **arg_dict)
 
-    return wrapper
+#     return wrapper
 
 
 def catch_error(return_val=None, log=True):
@@ -550,49 +554,49 @@ def remove_na(f):
     return wrapper
 
 
-def coerce_numbers_to_my_dtype(f):
-    """
-    A decorator for methods whose signature is f(self, other) that coerces
-    ``other`` to ``self.dtype``.
+# def coerce_numbers_to_my_dtype(f):
+#     """
+#     A decorator for methods whose signature is f(self, other) that coerces
+#     ``other`` to ``self.dtype``.
 
-    This is used to make comparison operations between numbers and `Factor`
-    instances work independently of whether the user supplies a float or
-    integer literal.
+#     This is used to make comparison operations between numbers and `Factor`
+#     instances work independently of whether the user supplies a float or
+#     integer literal.
 
-    For example, if I write::
+#     For example, if I write::
 
-        my_filter = my_factor > 3
+#         my_filter = my_factor > 3
 
-    my_factor probably has dtype float64, but 3 is an int, so we want to coerce
-    to float64 before doing the comparison.
-    """
-    @wraps(f)
-    def method(self, other):
-        if isinstance(other, Number):
-            other = coerce_to_dtype(self.dtype, other)
-        return f(self, other)
-    return method
+#     my_factor probably has dtype float64, but 3 is an int, so we want to coerce
+#     to float64 before doing the comparison.
+#     """
+#     @wraps(f)
+#     def method(self, other):
+#         if isinstance(other, Number):
+#             other = coerce_to_dtype(self.dtype, other)
+#         return f(self, other)
+#     return method
 
 
-# 基于api_method 将方法注册到api
-def api_method(f):
-    # Decorator that adds the decorated class method as a callable
-    # function (wrapped) to zipline.api
-    @wraps(f)
-    def wrapped(*args, **kwargs):
-        # Get the instance and call the method
-        algo_instance = get_algo_instance()
-        if algo_instance is None:
-            raise RuntimeError(
-                'zipline api method %s must be called during a ArkQuant.'
-                % f.__name__
-            )
-        return getattr(algo_instance, f.__name__)(*args, **kwargs)
-    # Add functor to zipline.api
-    # setattr(zipline.api, f.__name__, wrapped)
-    # zipline.api.__all__.append(f.__name__)
-    # f.is_api_method = True
-    return f
+# # 基于api_method 将方法注册到api
+# def api_method(f):
+#     # Decorator that adds the decorated class method as a callable
+#     # function (wrapped) to zipline.api
+#     @wraps(f)
+#     def wrapped(*args, **kwargs):
+#         # Get the instance and call the method
+#         algo_instance = get_algo_instance()
+#         if algo_instance is None:
+#             raise RuntimeError(
+#                 'zipline api method %s must be called during a ArkQuant.'
+#                 % f.__name__
+#             )
+#         return getattr(algo_instance, f.__name__)(*args, **kwargs)
+#     # Add functor to zipline.api
+#     # setattr(zipline.api, f.__name__, wrapped)
+#     # zipline.api.__all__.append(f.__name__)
+#     # f.is_api_method = True
+#     return f
 
 
 class Context:
@@ -642,8 +646,3 @@ def make_context():
         yield {}
     except RuntimeError as err:
         print(f"{err=}")
-
-
-# if __name__ == "__main__":
-#     # print("---------------")
-#     func('作为装饰器运行')

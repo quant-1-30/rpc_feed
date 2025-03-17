@@ -1,17 +1,21 @@
 # !/usr/bin/env python3
 # -*- coding: utf-8 -*-
+
 import asyncio
 import os
 import networkx as nx
 import pandas as pd
+# import matplotlib.pyplot as plt
+from concurrent.futures import ThreadPoolExecutor
+
 from .node import *
-# from utils.wrapper import parallel
 from utils.loader import get_module_by_module_path
 from utils.io import build_from_cfg
-import matplotlib.pyplot as plt
+from utils.wrapper import singleton
 
 
-class Pipeline(object):
+@singleton
+class Graph(object):
     """
         Pipeline is a class that can be used to build a pipeline of transformations.
     """
@@ -26,24 +30,23 @@ class Pipeline(object):
             cls.cfg_cache[basename] = get_module_by_module_path(cfg_path)
         return cls.cfg_cache[basename]
     
-    def add_node(self, node):
+    def add(self, node):
         self.graph.append(node)
 
-    def remove_node(self, node):
+    def remove(self, node):
         self.graph = list(filter(lambda x: x.name != node.name, self.graph))
 
-    def visual_graph(self):
-        # nx.circular_layout / nx.shell_layout / nx.spring_layout / nx.spectral_layout / nx.random_layout
-        pos = nx.spring_layout(self.graph)
-        nx.draw(self.graph, pos, with_labels=True, node_size=2000, node_color='lightblue', font_size=10, font_weight='bold')
-        plt.title("Graph Visualization")
-        plt.show()
+    # def visual_graph(self):
+    #     # nx.circular_layout / nx.shell_layout / nx.spring_layout / nx.spectral_layout / nx.random_layout
+    #     pos = nx.spring_layout(self.graph)
+    #     nx.draw(self.graph, pos, with_labels=True, node_size=2000, node_color='lightblue', font_size=10, font_weight='bold')
+    #     plt.title("Graph Visualization")
+    #     plt.show()
 
-    def _build_graph(self, graph_xml, external_args=None):
+    def _build_graph(self, graph_xml):
         
         # 从 GraphML 文件加载图
         G = nx.read_graphml(graph_xml)
-
         # 检查是否为 DAG
         if nx.is_directed_acyclic_graph(G):
             # 获取拓扑排序
@@ -54,25 +57,30 @@ class Pipeline(object):
             # setup pipeline
             for node in topological_order:
                 node_obj = build_from_cfg(node)
-                if node == "DatabaseWriter":
-                    node_obj.table = external_args
-                    self.add_node(node_obj)
+                self.add_node(node_obj)
         else:
             raise ValueError("The graph is not a DAG")
-
-    async def async_task(self, data):
-        inserts = list(data.T.to_dict().values()) if isinstance(data, pd.DataFrame) else data
-        await self.graph[-1].on_handle(inserts)
-
+        
+    async def async_io(self, data):
+        is_async = self.graph[-1].p.is_async
+        f = self.graph[-1].next
+        if not is_async:
+            loop = asyncio.get_event_loop()
+            with ThreadPoolExecutor(max_workers=os.cpu_count()) as executor:
+                output = await loop.run_in_executor(executor, f, data)
+        else:
+            output = await f(data)
+        return output
+    
     # @parallel(workers=6)
     def run(self, iterables):
         for item in iterables:
             for node in self.graph[:-1]:
-                item = node.on_handle(item)
+                item = node.next(item)
             # async 
-            asyncio.run(self.async_task(item))  # 运行异步任务
+            asyncio.run(self.async_io(item))  # 运行异步任务
 
-    def execute_graph(self, table, graph_xml, iterables):
+    def to_execute(self, graph_xml, iterables):
 
-        self._build_graph(graph_xml=graph_xml, external_args=table) 
+        self._build_graph(graph_xml=graph_xml) 
         self.run(iterables)

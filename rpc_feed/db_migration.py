@@ -5,9 +5,9 @@ Created on Tue Mar 12 15:37:47 2019
 
 @author: python
 """
+import sqlalchemy as sa
 from alembic import context
 from alembic.operations import Operations
-import sqlalchemy as sa
 from toolz.curried import do, operator
 from functools import wraps
 

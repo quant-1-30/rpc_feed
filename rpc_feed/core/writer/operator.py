@@ -28,7 +28,7 @@ class AsyncOps(with_metaclass(MetaBase, object)):
         ("user", "postgres"),
         ("pwd", "20210718"),
         ("db", "bt_feed"),
-        ("engine", "psycopg"),
+        ("driver", "psycopg"),
         ("pool_size", 20),
         ("max_overflow", 10),
         ("pool_recycle", 3600),
@@ -36,38 +36,24 @@ class AsyncOps(with_metaclass(MetaBase, object)):
         ("echo", True)
     )
 
-    def __init__(self):
-        self._initialized = False
+    def __donew__(cls, *args, **kwargs):
+        _obj, args, kwargs = super().__new__(cls, *args, **kwargs)
+        # 初始化
+        _obj.engine = None
+        _obj._initialized = False
+        _obj.async_engine = _obj._build_async_engine()
+        return _obj, args, kwargs
 
-    async def __aenter__(self):
-        await self._ensure_initialized()
-        return self
-    
-    async def initialize(self):
-        """Async initialization method"""
-        if self._initialized:
-            return
-        await self._build_engine()
-        self._initialized = True
-    
-    async def _ensure_initialized(self):
-        """Helper method to ensure initialization"""
-        if not self._initialized:
-            await self.initialize()
-
-    # @staticmethod
     @classmethod
     async def _build_engine(cls):
         """
-            a. create all tables
-            b. reflect tables
-            c. bug --- every restart service result scan model to recreate (rollback)
+           drivers: psycopg2cffi, psycopg2, asyncpg
+           postgresql+psycopg2cffi://user:password@host:port/dbname[?key=value&key=value...]
+           postgresql+psycopg2://me@localhost/mydb
+           postgresql+asyncpg://me@localhost/mydb
         """
-        # postgresql+psycopg2cffi://user:password@host:port/dbname[?key=value&key=value...]
-        # postgresql+psycopg2://me@localhost/mydb
-        # postgresql+asyncpg://me@localhost/mydb
         print("builder ", cls)
-        url = f"postgresql+{cls.p.engine}://{cls.p.user}:{cls.p.pwd}@{cls.p.host}:{cls.p.port}/{cls.p.db}"
+        url = f"postgresql+{cls.p.driver}://{cls.p.user}:{cls.p.pwd}@{cls.p.host}:{cls.p.port}/{cls.p.db}"
         # isolation_level="AUTOCOMMIT"
         engine = create_async_engine(url, 
                                pool_size=cls.p.pool_size, 
@@ -77,34 +63,33 @@ class AsyncOps(with_metaclass(MetaBase, object)):
                                # 使用 ping 检查连接有效性 
                                pool_pre_ping=cls.p.pool_pre_ping,
                                echo=cls.p.echo).execution_options(compiled_cache={})
-        
+        return engine
+    
+    async def _async_initialize(self):
         # Create tables and reflect schema asynchronously
-        async with engine.begin() as conn:
+        async with self.async_engine.begin() as conn:
             await conn.run_sync(Base.metadata.create_all)
             await conn.run_sync(Base.metadata.reflect)
             # Reflect ORM objects
             MapBase = automap_base(metadata=Base.metadata)
             await conn.run_sync(MapBase.prepare)
-        
-        setattr(cls, "engine", engine)
-        setattr(cls, "_tables", Base.metadata.tables)
-        setattr(cls, "_orm_map", MapBase.classes)
 
-    async def get_tables(self):
+        self._tables = Base.metadata.tables
+        self._orm_map = MapBase.classes
+        self._initialized = True
+    
+    async def _ensure_initialized(self):
+        """Helper method to ensure initialization"""
+        if not self._initialized:
+            await self._async_initialize()
+    
+    async def __aenter__(self):
         await self._ensure_initialized()
-        return self._tables
+        return self
 
     @classmethod
     @asynccontextmanager
     async def get_db(cls):
-        if isinstance(cls, type):
-            # If called on class, ensure instance is initialized
-            instance = cls()
-            await instance._ensure_initialized()
-        else:
-            # If called on instance
-            await cls._ensure_initialized()        
-             
         AsyncSessionLocal = sessionmaker(
             bind=cls.engine,
             class_=AsyncSession,
@@ -117,7 +102,13 @@ class AsyncOps(with_metaclass(MetaBase, object)):
         finally:
                 await session.close()
     
-    async def on_query(self, query):
+    @staticmethod
+    def filter_valid_keys(base_obj, insert):
+        valid_keys = [column.name for column in base_obj.__table__.columns]
+        # 只设置模型中定义的字段
+        return {key: value for key, value in insert.items() if key in valid_keys}
+    
+    async def on_iter_query(self, query):
         # await self._ensure_initialized()
         async with self.get_db() as session:
             async with session.begin():
@@ -134,7 +125,15 @@ class AsyncOps(with_metaclass(MetaBase, object)):
                         # Use `scalars()` for ORM-mapped rows
                         yield row
 
-    async def on_insert(self, table_name: str, data: Union[pd.DataFrame, List[dict], dict]):
+    async def on_query_obj(self, query: Select, params=None):
+        # await self._ensure_initialized()
+        async with self.get_db() as session:
+            async with session.begin():
+                result = await session.execute(query, params=params)
+                # scalars().all() single field / all() multiple fields tuple
+                return result.scalars().all()
+
+    async def on_insert_val(self, table_name: str, data: Union[pd.DataFrame, List[dict], dict]):
         # await self._ensure_initialized()
         async with self.get_db() as session:
             async with session.begin():
@@ -149,21 +148,7 @@ class AsyncOps(with_metaclass(MetaBase, object)):
                 # 只设置模型中定义的字段
                 inserts = [base_obj(**self.filter_valid_keys(base_obj, insert)) for insert in inserts]
                 session.add_all(inserts)
-    
-    @staticmethod
-    def filter_valid_keys(base_obj, insert):
-        valid_keys = [column.name for column in base_obj.__table__.columns]
-        # 只设置模型中定义的字段
-        return {key: value for key, value in insert.items() if key in valid_keys}
-    
-    async def on_query_obj(self, query: Select, params=None):
-        # await self._ensure_initialized()
-        async with self.get_db() as session:
-            async with session.begin():
-                result = await session.execute(query, params=params)
-                # scalars().all() single field / all() multiple fields tuple
-                return result.scalars().all()
-    
+ 
     async def on_insert_obj(self, objs: Union[List[Base], Base]):
         # await self._ensure_initialized()
         async with self.get_db() as session:
@@ -178,11 +163,6 @@ class AsyncOps(with_metaclass(MetaBase, object)):
                 print(f"Error: {exc_type}, {exc_value}, {traceback}")
             # True mean suppress exception
             return True
-
-# self.conn.execute(
-#     "CREATE INDEX IF NOT EXISTS stock_dividends_payouts_ex_date "
-#     "ON stock_dividend_payouts(ex_date)"
-# )
 
 async_ops = AsyncOps()
 

@@ -1,3 +1,6 @@
+#! /usr/bin/env python3 
+# -*- coding: utf-8 -*-
+
 import pandas as pd
 import os
 
@@ -17,4 +20,3 @@ if __name__ == "__main__":
         df["first_trading"] = df["first_trading"].apply(lambda x: int(x.replace("-", "")))
 
     df.to_csv("sz_delist_clean.csv", index=False)
-

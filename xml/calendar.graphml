@@ -5,7 +5,7 @@
          http://graphml.graphdrawing.org/xmlns/1.0/graphml.xsd">
     <graph id="G" edgedefault="directed">
         <node id="TextLoader"/>
-        <node id="DatabaseWriter"/>
-        <edge source="TextLoader" target="DatabaseWriter"/>
+        <node id="PgWriter"/>
+        <edge source="TextLoader" target="PgWriter"/>
     </graph>
 </graphml>

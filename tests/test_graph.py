@@ -1,13 +1,11 @@
 #! /usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-import datetime
 import argparse
 import os
-import asyncio
+import pytest
 
-from core.model import Request
-from feed import bt_feed
+from rpc_feed.feed import bt_feed
 
 
 def parse_args():
@@ -49,32 +47,24 @@ if __name__ == "__main__":
 
     args = parse_args()
     print(args)
-    bt_feed.add_data(args.dataset, args.xml)
+    bt_feed.load(args.dataset, args.xml)
     
-    dataset = "calendar"
     dataset_path = os.path.join(os.path.expanduser("~"), "Downloads/quant/calendar")
     xml = "xml/calendar.graphml"
-    bt_feed.add_data(dataset, xml, dataset_path, prefix=".csv", filter=False)
+    bt_feed.load(xml, dataset_path, prefix=".csv", filter=False)
 
-    dataset = "asset"
     dataset_path = os.path.join(os.path.expanduser("~"), "Downloads/quant/assets")
     xml = "xml/asset.graphml"
-    bt_feed.add_data(dataset, xml, dataset_path, prefix="csv")
+    bt_feed.load(xml, dataset_path, prefix="csv")
     
-    dataset = "minute"
     dataset_path = os.path.join(os.path.expanduser("~"), "Downloads/quant/202410/sh/minline")
     xml = "xml/minute.graphml"
-    bt_feed.add_data(dataset, xml, dataset_path, prefix=".01", filter=True)
+    bt_feed.load(xml, dataset_path, prefix=".01", filter=True)
     
-    dataset = "adjustment"
     dataset_path = os.path.join(os.path.expanduser("~"), "Downloads/quant/adjustments")
     xml = "xml/adjustment.graphml"
-    bt_feed.add_data(dataset, xml, dataset_path, prefix="csv", filter=True)
+    bt_feed.load(xml, dataset_path, prefix="csv", filter=True)
 
-    dataset = "rightment"
     dataset_path = os.path.join(os.path.expanduser("~"), "Downloads/quant/rights")
     xml = "xml/rightment.graphml"
-    bt_feed.add_data(dataset, xml, dataset_path, prefix="csv", filter=True)
-
-
-
+    bt_feed.load(xml, dataset_path, prefix="csv", filter=True)

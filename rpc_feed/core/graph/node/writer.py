@@ -1,51 +1,26 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8; py-indent-offset:4 -*-
 
-# from __future__ import (absolute_import, division, print_function,
-#                         unicode_literals)
-import collections
-from collections.abc import Iterable
 import io
 import sys
 import avro.schema
 import pandas as pd
 from typing import Any, Union, List
-from avro.io import DatumWriter
+from avro.datafile import DataFileReader, DataFileWriter
+from avro.io import DatumReader, DatumWriter
 from avro.datafile import DataFileWriter
-from sqlalchemy.orm import Session
-from sqlalchemy import text
 
-from meta import ParamBase
+from core.graph.base import Node
 from utils.registry import registry
-from core.ops.operator import async_ops
-
-
-try:  # For new Python versions
-    collectionsAbc = collections.abc  # collections.Iterable -> collections.abc.Iterable
-except AttributeError:  # For old Python versions
-    collectionsAbc = collections  # Используем collections.Iterable
+from core.writer.operator import async_ops
 
 
 @registry
-class AvroWriter(ParamBase):
+class AvroWriter(Node):
 
-    # import avro.schema
-    # from avro.datafile import DataFileReader, DataFileWriter
-    # from avro.io import DatumReader, DatumWriter
+    params = (("is_async", False),)
 
-    # schema = avro.schema.parse(open("user.avsc", "rb").read())
-
-    # writer = DataFileWriter(open("users.avro", "wb"), DatumWriter(), schema)
-    # writer.append({"name": "Alyssa", "favorite_number": 256})
-    # writer.append({"name": "Ben", "favorite_number": 7, "favorite_color": "red"})
-    # writer.close()
-
-    # reader = DataFileReader(open("users.avro", "rb"), DatumReader())
-    # for user in reader:
-    #     print (user)
-    # reader.close()
-    
-    def on_handle(self, schema_path: str, data_path: str, frame: pd.DataFrame) -> Any:
+    def next(self, schema_path: str, data_path: str, frame: pd.DataFrame) -> Any:
         # ticker.avsc
         schema = avro.schema.parse(open(schema_path, "rb").read())
         # users.avro 
@@ -55,32 +30,39 @@ class AvroWriter(ParamBase):
             # element --- {"name": "Ben", "favorite_number": 7, "favorite_color": "red"}
             writer.append(element)
         writer.close()
+        # reader = DataFileReader(open("users.avro", "rb"), DatumReader())
+        # for user in reader:
+        #     print (user)
+        # reader.close()
 
 
 @registry
-class DatabaseWriter(ParamBase):
+class PgWriter(Node):
     """
         Postgresql Writer
     """
+    params = (
+        ("table", ""),
+        ("is_async", True),
+    )
     
-    def __init__(self):
-        self.ops = async_ops
-        self.table = ""
+    def __init__(self, kwargs):
+        if "table" not in kwargs:
+            raise TypeError
     
-    async def on_handle(self, data: Union[pd.DataFrame, List[dict], dict]):
-        status = {"status": 0, "error": ""}
-        if len(data):
+    async def next(self, data: Union[pd.DataFrame, List[dict], dict]):
+        async with async_ops as ctx:
             try:
-                await self.ops.on_insert(self.table, data)
+                await ctx.on_insert_val(self.p.table, data)
                 status = {"status": 0, "error": ""}
             except Exception as e:
                 print(e)
-                status = {"status": 1, "error": str(e)}
+            status = {"status": 1, "error": str(e)}
         return status
 
 
 @registry
-class CsvWriter(ParamBase):
+class CsvWriter(Node):
 
     '''The system wide writer class.
     It can be parametrized with:
@@ -124,7 +106,8 @@ class CsvWriter(ParamBase):
         ('out', None),
         ('indent', 2),
         ("headers", ""),
-        ("separator", ",")
+        ("separator", ","),
+        ("is_async", False),
     )
 
     def _start_output(self):
@@ -144,16 +127,16 @@ class CsvWriter(ParamBase):
         self.out.close()
 
     async def _writeline(self, line):
-        self.out.write(line + '\n')
+        await self.out.write(line + '\n')
 
     async def writelineseparator(self):
         if self.p.headers:
             headers = self.p.headers.split(self.p.separator)
             sep = ' ' * self.p.indent + self.p.separator
             csv_header = sep.join(headers)
-            self._writeline(csv_header)
+            await self._writeline(csv_header)
 
-    async def on_handle(self, lines):
+    async def next(self, lines):
         if lines:
             await self.writelineseparator()
             for l in lines:
@@ -162,19 +145,31 @@ class CsvWriter(ParamBase):
 
         
 @registry
-class WriterStringIO(ParamBase):
+class WriterStringIO(Node):
 
     params = (
-        ('out', io.StringIO),
+        ('fd', io.StringIO),
+        ("is_async", False),
         )
+    # output.write('First line.\n')
+    # contents = output.getvalue()
+    # output.close()
+    # sys.stdout = output / print redirect to getvalue
 
     def __init__(self):
         super(WriterStringIO, self).__init__()
 
-    def stop(self):
+    def reset(self):
         # super(WriterStringIO, self).stop()
         # Leave the file positioned at the beginning
         self.out.seek(0)
 
-    def on_handle(self, *args, **kwargs):
-        super().on_handle(*args, **kwargs)
+    def next(self, data):
+        fd = self.p.fd()
+        if isinstance(data, str):
+            fd.write(data)
+        else:
+            for chunk in data:
+                fd.write(str(chunk))
+        # self.fetch_size = fd.tell()
+        fd.close()

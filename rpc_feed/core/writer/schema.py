@@ -129,3 +129,5 @@ class Rightment(Base):
             if hasattr(self, key):  # 只设置模型中定义的字段
                 setattr(self, key, value)
 
+
+__all__ = ["Calendar", "Asset", "Line", "Adjustment", "Rightment"]

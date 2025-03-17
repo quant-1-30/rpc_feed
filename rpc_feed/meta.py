@@ -1,13 +1,13 @@
 # /usr/bin/env python3
 # -*- coding: utf-8 -*-
-import weakref
+import re
 import sys
 import itertools
 import logging
-import copy
-from textwrap import dedent
 from typing import Any, List
 from collections import OrderedDict
+
+from utils.wrapper import async_method_warning
 
 
 # This is from Armin Ronacher from Flash simplified later by six
@@ -209,11 +209,11 @@ class MetaParams(MetaBase):
         # (and hence "repetition")
         newparams = dct.pop('params', ())
 
-        packs = 'packages'
-        newpackages = tuple(dct.pop(packs, ()))  # remove before creation
+        # packs = 'packages'
+        # newpackages = tuple(dct.pop(packs, ()))  # remove before creation
 
-        fpacks = 'frompackages'
-        fnewpackages = tuple(dct.pop(fpacks, ()))  # remove before creation
+        # fpacks = 'frompackages'
+        # fnewpackages = tuple(dct.pop(fpacks, ()))  # remove before creation
 
         # Create the new class - this pulls predefined "params"
         cls = super(MetaParams, meta).__new__(meta, name, bases, dct)
@@ -222,21 +222,21 @@ class MetaParams(MetaBase):
         params = getattr(cls, 'params', AutoInfoClass)
 
         # Pulls the packages class out of it - default is the empty class
-        packages = tuple(getattr(cls, packs, ()))
-        fpackages = tuple(getattr(cls, fpacks, ()))
+        # packages = tuple(getattr(cls, packs, ()))
+        # fpackages = tuple(getattr(cls, fpacks, ()))
 
         # get extra (to the right) base classes which have a param attribute
         morebasesparams = [x.params for x in bases[1:] if hasattr(x, 'params')]
 
-        # Get extra packages, add them to the packages and put all in the class
-        for y in [x.packages for x in bases[1:] if hasattr(x, packs)]:
-            packages += tuple(y)
+        # # Get extra packages, add them to the packages and put all in the class
+        # for y in [x.packages for x in bases[1:] if hasattr(x, packs)]:
+        #     packages += tuple(y)
 
-        for y in [x.frompackages for x in bases[1:] if hasattr(x, fpacks)]:
-            fpackages += tuple(y)
+        # for y in [x.frompackages for x in bases[1:] if hasattr(x, fpacks)]:
+        #     fpackages += tuple(y)
 
-        cls.packages = packages + newpackages
-        cls.frompackages = fpackages + fnewpackages
+        # cls.packages = packages + newpackages
+        # cls.frompackages = fpackages + fnewpackages
 
         # Subclass and store the newly derived params class
         cls.params = params._derive(name, newparams, morebasesparams)
@@ -246,41 +246,41 @@ class MetaParams(MetaBase):
     def donew(cls, *args, **kwargs):
         clsmod = sys.modules[cls.__module__]
         # import specified packages
-        for p in cls.packages:
-            if isinstance(p, (tuple, list)):
-                p, palias = p
-            else:
-                palias = p
+        # for p in cls.packages:
+        #     if isinstance(p, (tuple, list)):
+        #         p, palias = p
+        #     else:
+        #         palias = p
 
-            pmod = __import__(p)
+        #     pmod = __import__(p)
 
-            plevels = p.split('.')
-            if p == palias and len(plevels) > 1:  # 'os.path' not aliased
-                setattr(clsmod, pmod.__name__, pmod)  # set 'os' in module
+        #     plevels = p.split('.')
+        #     if p == palias and len(plevels) > 1:  # 'os.path' not aliased
+        #         setattr(clsmod, pmod.__name__, pmod)  # set 'os' in module
 
-            else:  # aliased and/or dots
-                for plevel in plevels[1:]:  # recurse down the mod
-                    pmod = getattr(pmod, plevel)
+        #     else:  # aliased and/or dots
+        #         for plevel in plevels[1:]:  # recurse down the mod
+        #             pmod = getattr(pmod, plevel)
 
-                setattr(clsmod, palias, pmod)
+        #         setattr(clsmod, palias, pmod)
 
-        # import from specified packages - the 2nd part is a string or iterable
-        for p, frompackage in cls.frompackages:
-            if isinstance(frompackage, str):
-                frompackage = (frompackage,)  # make it a tuple
+        # # import from specified packages - the 2nd part is a string or iterable
+        # for p, frompackage in cls.frompackages:
+        #     if isinstance(frompackage, str):
+        #         frompackage = (frompackage,)  # make it a tuple
 
-            for fp in frompackage:
-                if isinstance(fp, (tuple, list)):
-                    fp, falias = fp
-                else:
-                    fp, falias = fp, fp  # assumed is string
+        #     for fp in frompackage:
+        #         if isinstance(fp, (tuple, list)):
+        #             fp, falias = fp
+        #         else:
+        #             fp, falias = fp, fp  # assumed is string
 
-                # complain "not string" without fp (unicode vs bytes)
-                pmod = __import__(p, fromlist=[str(fp)])
-                pattr = getattr(pmod, fp)
-                setattr(clsmod, falias, pattr)
-                for basecls in cls.__bases__:
-                    setattr(sys.modules[basecls.__module__], falias, pattr)
+        #         # complain "not string" without fp (unicode vs bytes)
+        #         pmod = __import__(p, fromlist=[str(fp)])
+        #         pattr = getattr(pmod, fp)
+        #         setattr(clsmod, falias, pattr)
+        #         for basecls in cls.__bases__:
+        #             setattr(sys.modules[basecls.__module__], falias, pattr)
 
         # Create params and set the values from the kwargs
         params = cls.params()
@@ -318,3 +318,16 @@ class MetaLogger(type):
             if key not in attrs and key != "__reduce__":
                 attrs[key] = val
         return type.__new__(mcs, name, bases, attrs)
+
+
+
+__all__ = [ 
+           "with_metaclass", 
+           "MetaParams", 
+           "AssetFilter", 
+           "FundFilter", 
+           "ConvertibleFilter",
+           "Provider",
+           "Node"
+           ]
+

@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 #-*- coding: utf-8 -*-
 
+import numpy as np
 from dataclasses import dataclass
 from functools import total_ordering
-import numpy as np
 from pydantic import BaseModel, Field
 # from functools import total_ordering
 from typing import List, Union, Optional, Dict

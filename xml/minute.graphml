@@ -4,17 +4,18 @@
          xsi:schemaLocation="http://graphml.graphdrawing.org/xmlns
          http://graphml.graphdrawing.org/xmlns/1.0/graphml.xsd">
     <graph id="G" edgedefault="directed">
-        <node id="StructLoader"/>
-        <node id="ParseDate"/>
-        <node id="UTC"/>
-        <node id="ProcessNa"/>
-        <node id="ProcessInf"/>
-        <node id="Multiply"/>
-        <node id="DatabaseWriter"/>
-        <edge source="StructLoader" target="UTC"/>
+        <node id="StructUnpacker", params=""/>
+        <node id="Decode", params=""/>
+        <node id="UTC", params=""/>
+        <node id="ProcessNa", params=""/>
+        <node id="ProcessInf", params=""/>
+        <node id="Multiply", params=""/>
+        <node id="PgWriter", params=""/>
+        <edge source="StructUnpacker" target="Decode"/>
+        <edge source="Decode" target="UTC"/>
         <edge source="UTC" target="ProcessNa"/>
         <edge source="ProcessNa" target="ProcessInf"/>
         <edge source="ProcessInf" target="Multiply"/>
-        <edge source="Multiply" target="DatabaseWriter"/>
+        <edge source="Multiply" target="PgWriter"/>
     </graph>
 </graphml>

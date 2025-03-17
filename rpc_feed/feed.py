@@ -2,27 +2,28 @@
 # -*- coding: utf-8 -*-
 
 import os
-import re
 from typing import Dict,Any
-from meta import SingletonMeta
+from meta import with_metaclass, MetaParams
 
+from core.graph import Graph
+from core.datasets import _providers, Request
+
+from filter import _filters
 from utils.io import recursive_glob
 from utils.loader import get_module_by_module_path
 from utils.cache import lazyproperty
-from core.model import Request
-from quandl.graph import Pipeline
 
 
-class Feed(metaclass=SingletonMeta):
+class MetaFeed(MetaParams):
 
-    params = (
-        ("alias", "feed"),
-        ("filter", True),
-        ("pipeline", Pipeline())
-    )
-
-    def __init__(self):
-        self.providers = self._build_dataset()
+    def __donew__(cls, *args, **kwargs):
+        _obj, args, kwargs = super().__new__(cls, *args, **kwargs)
+        _obj.datesets = _obj._build_dataset()
+        # set filter
+        _obj.filter = _filters.get(_obj.p._filter)
+        # set datasets
+        _obj.datasets = _providers
+        return _obj, args, kwargs
     
     @staticmethod
     def _build_dataset():
@@ -30,34 +31,42 @@ class Feed(metaclass=SingletonMeta):
         module = get_module_by_module_path(current_path)
         return module.Providers
 
-    @classmethod
-    def filter(cls, paths):
-        pattern = "^[6|0|3][0-9]{5}$"
-        filtered_paths = []
-        for p in paths:
-            sid = os.path.basename(p).split('.')[0][2:]
-            m = re.match(pattern, sid)
-            if m and not m[0].startswith("688"):
-                filtered_paths.append(p)
-        return filtered_paths
+
+class Feed(with_metaclass(MetaFeed, object)):
     
-    def add_data(self, dataset, xml, dataset_path, prefix, filter=False):
+    params = (
+        ("filter", "asset"),
+        ("graph", Graph())
+    )
+
+    def load(self, *args, **kwargs):
+        """execute graph to load data"""
+        pass
+
+    def next(self, *args, **kwargs):
+        """yield data from datasource"""
+        pass
+
+
+class BtFeed(with_metaclass(MetaFeed, object)):
+
+
+    def load(self, graph_xml, dataset_path, prefix):
         '''
         Adds a ``Data Feed`` instance to the mix.
         If ``name`` is not None it will be put into ``data._name`` which is
         meant for decoration/plotting purposes.
         '''
         glob_paths = recursive_glob(dataset_path, prefix=prefix)
-        if filter:
-            iterables = self.filter(glob_paths)
-        else:
-            iterables = glob_paths
-        self.pipeline.execute_graph(dataset, xml, iterables)
+        iterables = self.filter(glob_paths)
+        self.pipeline.execute_graph(graph_xml, iterables)
 
-    async def replay(self, dataset, request: Request):
-         iterator = self.providers[dataset].get_data(request)
+    async def next(self, dataset, request: Request):
+         iterator = self.datasets[dataset].load(request)
          async for item in iterator:
              yield item
 
 
-bt_feed = Feed()
+bt_feed = BtFeed()
+
+__all__ = ["bt_feed"]
