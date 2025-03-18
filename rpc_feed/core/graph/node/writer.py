@@ -53,7 +53,7 @@ class PgWriter(Node):
     async def next(self, data: Union[pd.DataFrame, List[dict], dict]):
         async with async_ops as ctx:
             try:
-                await ctx.on_insert_val(self.p.table, data)
+                await ctx.on_val_insert(self.p.table, data)
                 status = {"status": 0, "error": ""}
             except Exception as e:
                 print(e)

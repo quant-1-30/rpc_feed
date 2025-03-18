@@ -35,15 +35,6 @@ class MetaProvider(MetaBase):
             raise NotImplementedError("implement load method")
         return _obj, args, kwargs
 
-    def start(self):
-        self._status = self.CONNECTED
-
-    def stop(self):
-        self._status = self.DISCONNECTED
-
-    # def clone(self, **kwargs):
-    #     return DataClone(dataname=self, **kwargs)
-
 
 class Provider(with_metaclass(MetaProvider, object)):
     """Provider
@@ -58,3 +49,12 @@ class Provider(with_metaclass(MetaProvider, object)):
     
     def load(self, *args, **kwargs):
         pass
+
+    def start(self):
+        self._status = self.CONNECTED
+
+    def stop(self):
+        self._status = self.DISCONNECTED
+
+    # def clone(self, **kwargs):
+    #     return DataClone(dataname=self, **kwargs)

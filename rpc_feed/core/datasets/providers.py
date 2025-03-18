@@ -43,8 +43,8 @@ class TradingCalendar(Provider):
         """
         calendar = []
         async with async_ops as ctx:
-            stmt = select(Calendar.trading_date)
-            async for trading_dt in ctx.on_query(stmt):
+            stmt = select(Calendar.trading_date).order_by(Calendar.trading_date)
+            async for trading_dt in ctx.on_iter_query(stmt):
                 calendar.append(Calendar(trading_dt[0]))
 
             calendar.sort(key=lambda x: x.trading_date)
@@ -86,7 +86,7 @@ class Instrument(Provider):
                 stmt = stmt.where(Asset.sid.in_(req.sid))
             stmt = stmt.execution_options(**self.execution_options)
 
-            async for item in ctx.on_query(stmt):
+            async for item in ctx.on_iter_query(stmt):
                 assets.append(Asset(*item[1:]))
 
             for item in assets:
@@ -116,13 +116,13 @@ class Tick(Provider):
                     Line.tick >= req.start_date,
                     Line.tick <= req.end_date
                 )
-            )
+            ).order_by(Line.tick)
             if req.sid:
                 stmt = stmt.where(Line.sid.in_(req.sid))
 
             stmt = stmt.execution_options(**self.execution_options)
 
-            async for item in ctx.on_query(stmt):
+            async for item in ctx.on_iter_query(stmt):
                 yield Line(*item[1:]).serialize()
 
 
@@ -149,11 +149,11 @@ class Adjustment(Provider):
                     Adjustment.ex_date.between(req.start_date, req.end_date),
                         # or_()
                     )   
-                )
+                ).order_by(Adjustment.ex_date)
             if req.sid:
                 stmt = stmt.where(Adjustment.sid.in_(req.sid))
             stmt = stmt.execution_options(**self.execution_options)
-            async for item in ctx.on_query(stmt):
+            async for item in ctx.on_iter_query(stmt):
                 yield Dividend(*item[1:]).serialize()
 
 
@@ -180,11 +180,11 @@ class Right(Provider):
                     Rightment.ex_date.between(req.start_date, req.end_date),
                     # or_()
                 )   
-            )
+            ).order_by(Rightment.ex_date)
             if req.sid:
                 stmt = stmt.where(Rightment.sid.in_(req.sid))
             stmt = stmt.execution_options(**self.execution_options)
-            async for item in ctx.on_query(stmt):
+            async for item in ctx.on_iter_query(stmt):
                 yield Rgt(*item[1:]).serialize()
 
 
@@ -195,6 +195,7 @@ _providers = dict(
     ("adjustment", Adjustment()),
     ("right", Right()),
     ))
+
 
 __all__ = ["_providers"]
 

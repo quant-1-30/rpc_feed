@@ -12,6 +12,8 @@ from core.graph.base import Node
 
 @registry
 class StructUnpacker(Node):
+ 
+    """bytes ---> int () int.from_bytes() | struct.unpack(), 大端(human)与小端数据"""
 
     params=(
         ("pack", "HhIIIIfii"),
@@ -22,9 +24,8 @@ class StructUnpacker(Node):
         ("subset", None),
     )
 
-    def __init__(self, kwargs):
-        # update params from kwargs
-        pass
+    # def __init__(self, kwargs):
+    #     pass
 
     def next(self, path):
         frame=pd.DataFrame()
@@ -53,10 +54,6 @@ class AvroUnpacker(Node):
         ("subset", None),
         )
 
-    def __init__(self, kwargs):
-        # update params from kwargs
-        pass
-
     def next(self, path):
         frame = pd.DataFrame()
         if path:
@@ -84,10 +81,6 @@ class TextLoader(Node):
         ("dtype", {"sid": "str"}),
         ("alias", "avro"),
     )
-
-    def __init__(self, kwargs):
-        # update params from kwargs
-        pass
 
     def prenext(self, path):
         lines = []

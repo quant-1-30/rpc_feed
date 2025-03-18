@@ -1,7 +1,5 @@
 framework:
 
-
-
 serialize: pb / arrow / fury
 
 # pb 
@@ -18,3 +16,17 @@ flatc --grpc --python -o . -I . service.fbs
 # 双向流模式 (在一次调用中, 客户端和服务器都可以向对方多次收发数据)
 
 # peewee / sqlalchemy
+
+mysql tool:
+    # select host,user,authentication_string from mysql.user;
+    # set password for user@localhost = newpassword;
+    # flush privileges;
+    # create user c_test@locahost identified by password;
+    # drop user c_test@localhost;
+    # grant select,update | all privileges on orm.* to guest@localhost;
+    # 当忘记密码:  mysqld --skip-grant-tables,use mysql,set password
+    # primary key
+    # constraint
+    # foreign key references
+    # alter add constraint
+    # alter  drop foreign key

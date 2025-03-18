@@ -45,7 +45,7 @@ class AsyncOps(with_metaclass(MetaBase, object)):
         return _obj, args, kwargs
 
     @classmethod
-    async def _build_engine(cls):
+    async def _build_async_engine(cls):
         """
            drivers: psycopg2cffi, psycopg2, asyncpg
            postgresql+psycopg2cffi://user:password@host:port/dbname[?key=value&key=value...]
@@ -65,6 +65,10 @@ class AsyncOps(with_metaclass(MetaBase, object)):
                                echo=cls.p.echo).execution_options(compiled_cache={})
         return engine
     
+    async def __aenter__(self):
+        await self._ensure_initialized()
+        return self
+    
     async def _async_initialize(self):
         # Create tables and reflect schema asynchronously
         async with self.async_engine.begin() as conn:
@@ -82,10 +86,6 @@ class AsyncOps(with_metaclass(MetaBase, object)):
         """Helper method to ensure initialization"""
         if not self._initialized:
             await self._async_initialize()
-    
-    async def __aenter__(self):
-        await self._ensure_initialized()
-        return self
 
     @classmethod
     @asynccontextmanager
@@ -125,7 +125,7 @@ class AsyncOps(with_metaclass(MetaBase, object)):
                         # Use `scalars()` for ORM-mapped rows
                         yield row
 
-    async def on_query_obj(self, query: Select, params=None):
+    async def on_query(self, query: Select, params=None):
         # await self._ensure_initialized()
         async with self.get_db() as session:
             async with session.begin():
@@ -133,7 +133,7 @@ class AsyncOps(with_metaclass(MetaBase, object)):
                 # scalars().all() single field / all() multiple fields tuple
                 return result.scalars().all()
 
-    async def on_insert_val(self, table_name: str, data: Union[pd.DataFrame, List[dict], dict]):
+    async def on_val_insert(self, table_name: str, data: Union[pd.DataFrame, List[dict], dict]):
         # await self._ensure_initialized()
         async with self.get_db() as session:
             async with session.begin():
@@ -149,7 +149,7 @@ class AsyncOps(with_metaclass(MetaBase, object)):
                 inserts = [base_obj(**self.filter_valid_keys(base_obj, insert)) for insert in inserts]
                 session.add_all(inserts)
  
-    async def on_insert_obj(self, objs: Union[List[Base], Base]):
+    async def on_obj_insert(self, objs: Union[List[Base], Base]):
         # await self._ensure_initialized()
         async with self.get_db() as session:
             async with session.begin():
@@ -163,6 +163,11 @@ class AsyncOps(with_metaclass(MetaBase, object)):
                 print(f"Error: {exc_type}, {exc_value}, {traceback}")
             # True mean suppress exception
             return True
+    
+    async def cleanup(self):
+        # 释放所有连接，断开数据库 / 清理的
+        self.engine.dispose()
+        pass
 
 async_ops = AsyncOps()
 
