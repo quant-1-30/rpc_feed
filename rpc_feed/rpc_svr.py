@@ -10,9 +10,11 @@ from typing import Iterable
 from concurrent.futures import ThreadPoolExecutor
 from google.protobuf.json_format import MessageToDict
 from google.protobuf import empty_pb2
-from core.rpc.serialize.pb import service_pb2, service_pb2_grpc
+
 from feed import *
-from core.datasets.model import Request
+from core.datasets.object import Request
+from core.rpc.serialize.pb import service_pb2, service_pb2_grpc
+from core.middleware import RateLimitInterceptor, ConsoleLogger
 
 
 class QuoteServer(service_pb2_grpc.btDataFeedServicer):
@@ -206,7 +208,8 @@ async def serve(address: str, MAX_MESSAGE_LENGTH=1024 * 1024 * 1024) -> None:
         ('grpc.max_receive_message_length', MAX_MESSAGE_LENGTH),
     ]
 
-    server = grpc.aio.server(ThreadPoolExecutor(), compression=grpc.Compression.Gzip, options=server_options)
+    server = grpc.aio.server(ThreadPoolExecutor(), compression=grpc.Compression.Gzip, 
+                             options=server_options, interceptors=[])
     service_pb2_grpc.add_btDataFeedServicer_to_server(QuoteServer(), server)
     server.add_insecure_port(address)
     await server.start()

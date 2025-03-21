@@ -219,6 +219,8 @@ class MetaParams(MetaBase):
         cls = super(MetaParams, meta).__new__(meta, name, bases, dct)
 
         # Pulls the param class out of it - default is the empty class
+        # MetaParams must have not params / method is to transform every base class params to AutoInfoClass
+        # and via _derive to compose all class params to construct a new class with the params
         params = getattr(cls, 'params', AutoInfoClass)
 
         # Pulls the packages class out of it - default is the empty class
@@ -311,23 +313,15 @@ class SingletonMeta(type):
         return cls._instances[cls]
 
 
-class MetaLogger(type):
-    def __new__(mcs, name, bases, attrs):  # pylint: disable=C0204
-        wrapper_dict = logging.Logger.__dict__.copy()
-        for key, val in wrapper_dict.items():
-            if key not in attrs and key != "__reduce__":
-                attrs[key] = val
-        return type.__new__(mcs, name, bases, attrs)
+# class MetaLogger(type):
+#     def __new__(mcs, name, bases, attrs):  # pylint: disable=C0204
+#         wrapper_dict = logging.Logger.__dict__.copy()
+#         for key, val in wrapper_dict.items():
+#             if key not in attrs and key != "__reduce__":
+#                 attrs[key] = val
+#         return type.__new__(mcs, name, bases, attrs)
 
 
 
-__all__ = [ 
-           "with_metaclass", 
-           "MetaParams", 
-           "AssetFilter", 
-           "FundFilter", 
-           "ConvertibleFilter",
-           "Provider",
-           "Node"
-           ]
+__all__ = [ "with_metaclass", "MetaParams", "ParamsBase" ]
 

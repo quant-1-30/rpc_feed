@@ -10,6 +10,7 @@ from .writer import AvroWriter, PgWriter, CsvWriter
 __all__ = [
     "UTC",
     "Decode",
+    "Multiply",
     "StructUnpacker",
     "AvroUnpacker",
     "TextLoader",

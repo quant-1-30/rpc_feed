@@ -1,10 +1,10 @@
 #! /usr/bin/env python3 
 # -*- coding: utf-8 -*-
 
-from meta import MetaBase, with_metaclass
+from meta import MetaParams, with_metaclass
 
 
-class MetaProvider(MetaBase):
+class MetaProvider(MetaParams):
     """Client Provider
 
     Requesting data from server as a client. Can propose requests:
@@ -28,8 +28,8 @@ class MetaProvider(MetaBase):
     (CONNECTED, DISCONNECTED, CONNBROKEN, DELAYED,
      LIVE, NOTSUBSCRIBED, NOTSUPPORTED_TF, UNKNOWN) = range(8)
 
-    def __donew__(cls, *args, **kwargs):
-        _obj, args, kwargs = super().__new__(cls, *args, **kwargs)
+    def donew(cls, *args, **kwargs):
+        _obj, args, kwargs = super(MetaProvider, cls).donew(*args, **kwargs)
         
         if not hasattr(_obj, "load"):
             raise NotImplementedError("implement load method")

@@ -6,9 +6,9 @@ from meta import MetaParams, with_metaclass
 
 class MetaNode(MetaParams):
 
-    def __donew__(cls, *args, **kwargs):
+    def donew(cls, *args, **kwargs):
 
-        _obj, args, kwargs = super().__new__(cls, *args, **kwargs)
+        _obj, args, kwargs = super().donew(cls, *args, **kwargs)
 
         # ownerskip = kwargs.pop('_ownerskip', None)
         # _obj._owner = findowner(_obj, _obj._OwnerCls or LineMultiple, skip=ownerskip)

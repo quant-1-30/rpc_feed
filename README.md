@@ -30,3 +30,6 @@ mysql tool:
     # foreign key references
     # alter add constraint
     # alter  drop foreign key
+
+# frame.sort_values(by=self.p.sort_key, ascending=True, inplace=True)
+# multi_index = pd.MultiIndex.from_arrays(_sids, names=self.p.lines)

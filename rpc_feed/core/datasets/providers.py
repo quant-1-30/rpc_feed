@@ -11,7 +11,7 @@ from sqlalchemy import and_
 from utils.dt_utilty import locate_index
 
 from .base import Provider
-from .model import *
+from .object import *
 from core.writer.schema import *
 from core.writer.operator import async_ops
 
