@@ -5,15 +5,13 @@
 # Licensed under the MIT License.
 
 import datetime
-import pandas as pd
 from sqlalchemy import select
 from sqlalchemy import and_
-from utils.dt_utilty import locate_index
 
 from .base import Provider
-from .object import *
-from core.writer.schema import *
-from core.writer.operator import async_ops
+from .model import *
+from core.ops.schema import *
+from core.ops.operator import async_ops
 
 
 class TradingCalendar(Provider):
@@ -22,7 +20,7 @@ class TradingCalendar(Provider):
     Provide calendar data.
     """
 
-    async def load(self, req: Request):
+    async def next(self, req: Request):
         """Get calendar of certain market in given time range.
 
         Parameters
@@ -41,29 +39,19 @@ class TradingCalendar(Provider):
         list
             calendar list
         """
-        calendar = []
-        async with async_ops as ctx:
-            stmt = select(Calendar.trading_date).order_by(Calendar.trading_date)
-            async for trading_dt in ctx.on_iter_query(stmt):
-                calendar.append(Calendar(trading_dt[0]))
 
-            calendar.sort(key=lambda x: x.trading_date)
-            start_time, end_time = req.range()
-            if isinstance(start_time, (pd.Timestamp, datetime.datetime)):
-                start_time = int(start_time.strftime("%Y%m%d"))
+        start_time = int(req.start_date.strftime("%Y%m%d")) if isinstance(req.start_date, datetime.datetime) else req.start_date
+        end_time = int(req.end_date.strftime("%Y%m%d")) if isinstance(req.end_date, datetime.datetime) else req.end_date
         
-            if isinstance(end_time, (pd.Timestamp, datetime.datetime)):
-                end_time = int(end_time.strftime("%Y%m%d"))
+        async with async_ops as ctx:
+            stmt = select(Calendar.trading_date).where(
+                and_(
+                    Calendar.trading_date.between(start_time, end_time)
+                )
+            ).order_by(Calendar.trading_date)
 
-            if start_time > int(calendar[-1].trading_date):
-                    yield np.array([])
-
-            if end_time < calendar[0].trading_date:
-                    yield np.array([])
-
-            si, ei = locate_index(calendar, start_time, end_time) 
-            for item in calendar[si:ei]:
-                yield item
+            async for trading_dt in ctx.on_query(stmt):
+                yield CalendarModel(trading_date=trading_dt[0]).model_dump()
 
 
 class Instrument(Provider):
@@ -72,33 +60,31 @@ class Instrument(Provider):
     Provide instrument data.
     """
    
-    async def load(self, req: Request):
+    async def next(self, req: Request):
         """Get the existiongconfig dictionary for a base market adding several dynamic filters.
         """
-        assets = []
         async with async_ops as ctx:
-            stmt = select(Asset).where(
-                and_(
-                    Asset.first_trading.between(req.start_date, req.end_date)
-                )
-            )
+            stmt = select(Asset)
             if req.sid:
                 stmt = stmt.where(Asset.sid.in_(req.sid))
-            stmt = stmt.execution_options(**self.execution_options)
+            else:
+                stmt = stmt.where(
+                    and_(
+                        Asset.first_trading.between(req.start_date, req.end_date)
+                    )
+                )
 
-            async for item in ctx.on_iter_query(stmt):
-                assets.append(Asset(*item[1:]))
+            async for item in ctx.on_query(stmt):
+                row = item[0].serialize()
+                yield AssetModel(**row).model_dump()
 
-            for item in assets:
-                yield item.serialize()
-    
     
 class Tick(Provider):
     """Dataset provider class
     Provide Dataset data.
     """
 
-    async def load(self, req: Request):
+    async def next(self, req: Request):
         """Get dataset data.
 
         Parameters
@@ -107,8 +93,6 @@ class Tick(Provider):
 
         Returns
         ----------
-        pd.DataFrame
-            a pandas dataframe with <instrument, datetime> index.
         """
         async with async_ops as ctx:
             stmt = select(Line).where(
@@ -120,19 +104,18 @@ class Tick(Provider):
             if req.sid:
                 stmt = stmt.where(Line.sid.in_(req.sid))
 
-            stmt = stmt.execution_options(**self.execution_options)
+            async for item in ctx.on_query(stmt):
+                row = item[0].serialize()
+                yield LineModel(**row).model_dump()
 
-            async for item in ctx.on_iter_query(stmt):
-                yield Line(*item[1:]).serialize()
 
-
-class Adjustment(Provider):
+class Adjust(Provider):
     """
         Calendar provider base class
         Provide calendar data.
     """
 
-    async def load(self, req: Request):
+    async def next(self, req: Request):
         """Get dvidends of certain asset in given time range.
 
         Parameters
@@ -152,9 +135,10 @@ class Adjustment(Provider):
                 ).order_by(Adjustment.ex_date)
             if req.sid:
                 stmt = stmt.where(Adjustment.sid.in_(req.sid))
-            stmt = stmt.execution_options(**self.execution_options)
-            async for item in ctx.on_iter_query(stmt):
-                yield Dividend(*item[1:]).serialize()
+            
+            async for item in ctx.on_query(stmt):
+                row = item[0].serialize()
+                yield AdjustmentModel(**row).model_dump()
 
 
 class Right(Provider):
@@ -163,7 +147,7 @@ class Right(Provider):
         Provide calendar data.
     """
 
-    async def load(self, req: Request):
+    async def next(self, req: Request):
         """Get dvidends of certain asset in given time range.
 
         Parameters
@@ -183,16 +167,17 @@ class Right(Provider):
             ).order_by(Rightment.ex_date)
             if req.sid:
                 stmt = stmt.where(Rightment.sid.in_(req.sid))
-            stmt = stmt.execution_options(**self.execution_options)
-            async for item in ctx.on_iter_query(stmt):
-                yield Rgt(*item[1:]).serialize()
+            
+            async for item in ctx.on_query(stmt):
+                row = item[0].serialize()
+                yield RightmentModel(**row).model_dump()
 
 
 _providers = dict(
     (("calendar", TradingCalendar()),
     ("asset", Instrument()),
     ("line", Tick()),
-    ("adjustment", Adjustment()),
+    ("adjust", Adjust()),
     ("right", Right()),
     ))
 

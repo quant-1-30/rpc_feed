@@ -9,11 +9,16 @@ from sqlalchemy.orm import DeclarativeBase
 from sqlalchemy.orm import Mapped
 from sqlalchemy.orm import mapped_column
 from sqlalchemy.orm import relationship
-
+from sqlalchemy.inspection import inspect
 
 # declarative base class
 class Base(DeclarativeBase):
-    pass
+    
+    def serialize(self, include_id=False):
+        if include_id:
+            return {c.key: getattr(self, c.key) for c in inspect(self).mapper.column_attrs}
+        else:
+            return {c.key: getattr(self, c.key) for c in inspect(self).mapper.column_attrs if c.key != "id"}
 
 
 class Calendar(Base):

@@ -16,12 +16,17 @@ from utils.cache import lazyproperty
 
 class MetaFeed(MetaParams):
 
-    def __donew__(cls, *args, **kwargs):
-        _obj, args, kwargs = super().__new__(cls, *args, **kwargs)
-        _obj.datesets = _obj._build_dataset()
-        # set filter
-        _obj.filter = _filters.get(_obj.p._filter)
-        # set datasets
+    def __new__(mcs, name, bases, dct):
+        # Ensure 'load' method is implemented
+        if 'load' not in dct:
+            raise TypeError(f"Class {name} must implement 'load' method")
+        # Ensure 'next' method is implemented
+        if 'next' not in dct:
+            raise TypeError(f"Class {name} must implement 'next' method")
+        return super().__new__(mcs, name, bases, dct)
+
+    def donew(cls, *args, **kwargs):
+        _obj, args, kwargs = super().donew(*args, **kwargs)
         _obj.datasets = _providers
         return _obj, args, kwargs
     
@@ -39,13 +44,17 @@ class Feed(with_metaclass(MetaFeed, object)):
         ("graph", Graph())
     )
 
-    def load(self, *args, **kwargs):
-        """execute graph to load data"""
-        pass
+    def donew(cls, *args, **kwargs):
+        _obj, args, kwargs = super().donew(*args, **kwargs)
+        # set filter
+        _obj.filter = _filters.get(_obj.p._filter)
+        return _obj, args, kwargs
+    
+    def load(cls, *args, **kwargs):
+        raise NotImplementedError("intend for execute graph")
 
-    def next(self, *args, **kwargs):
-        """yield data from datasource"""
-        pass
+    def next(cls, *args, **kwargs):
+        raise NotImplementedError("intend for yield data from datasource")
 
 
 class BtFeed(with_metaclass(MetaFeed, object)):
@@ -62,7 +71,7 @@ class BtFeed(with_metaclass(MetaFeed, object)):
         self.pipeline.execute_graph(graph_xml, iterables)
 
     async def next(self, dataset, request: Request):
-         iterator = self.datasets[dataset].load(request)
+         iterator = self.datasets[dataset].next(request)
          async for item in iterator:
              yield item
 

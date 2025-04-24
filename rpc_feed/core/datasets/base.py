@@ -33,6 +33,7 @@ class MetaProvider(MetaParams):
         
         if not hasattr(_obj, "load"):
             raise NotImplementedError("implement load method")
+
         return _obj, args, kwargs
 
 
@@ -43,7 +44,6 @@ class Provider(with_metaclass(MetaProvider, object)):
     """
     
     params = (
-        ("options", {"chunk_size": 1000, "timeout": 60}),
         ("stream", False),
     )
     

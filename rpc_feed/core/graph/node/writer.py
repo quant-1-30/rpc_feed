@@ -12,7 +12,7 @@ from avro.datafile import DataFileWriter
 
 from core.graph.base import Node
 from utils.registry import registry
-from core.writer.operator import async_ops
+from core.ops.operator import async_ops
 
 
 @registry

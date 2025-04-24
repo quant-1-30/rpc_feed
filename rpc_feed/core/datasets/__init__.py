@@ -2,4 +2,4 @@
 # -*- coding: utf-8 -*-
 
 from .providers import *
-from .object import *
+from .model import *

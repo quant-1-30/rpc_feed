@@ -5,23 +5,21 @@ import asyncio
 import grpc
 import signal
 import logging
-import threading
 from typing import Iterable
 from concurrent.futures import ThreadPoolExecutor
 from google.protobuf.json_format import MessageToDict
 from google.protobuf import empty_pb2
 
 from feed import *
-from core.datasets.object import Request
+from core.datasets.model import Request
 from core.rpc.serialize.pb import service_pb2, service_pb2_grpc
 from core.middleware import RateLimitInterceptor, ConsoleLogger
 
 
-class QuoteServer(service_pb2_grpc.btDataFeedServicer):
+class FeedServer(service_pb2_grpc.btDataFeedServicer):
 
     def __init__(self):
         self._id_counter = 0
-        self._lock = threading.RLock()
 
     # def _clean_call_session(self, call_info: service_pb2.CallInfo) -> None:
     #     logging.info("Call session cleaned [%s]", MessageToJson(call_info))
@@ -65,12 +63,12 @@ class QuoteServer(service_pb2_grpc.btDataFeedServicer):
             always_print_fields_with_no_presence=True
         )
         # print("obj_map ", obj_map)
-        response_iterator = bt_feed.replay("calendar", Request(**obj_map))
+        response_iterator = bt_feed.next("calendar", Request(**obj_map))
         # import pdb; pdb.set_trace()
         trading_days = []
         async for resp in response_iterator:
             # print("resp ", resp)
-            trading_days.append(resp.trading_date)
+            trading_days.append(resp["trading_date"])
         response.date.extend(trading_days)
         # print("calendar repsonse ", response)
         yield response
@@ -90,7 +88,7 @@ class QuoteServer(service_pb2_grpc.btDataFeedServicer):
             preserving_proto_field_name=True, 
             always_print_fields_with_no_presence=True,
         )
-        response_iterator = bt_feed.replay("asset", Request(**obj_map))
+        response_iterator = bt_feed.next("asset", Request(**obj_map))
         assets = []
         async for resp in response_iterator:
             # print("resp ", resp)
@@ -114,7 +112,7 @@ class QuoteServer(service_pb2_grpc.btDataFeedServicer):
             preserving_proto_field_name=True, 
             always_print_fields_with_no_presence=True,
         )
-        response_iterator = bt_feed.replay("line", Request(**obj_map))
+        response_iterator = bt_feed.next("line", Request(**obj_map))
         # context.add_callback(lambda: self._clean_call_session(call_info))
         async for resp in response_iterator:
             # pdb.set_trace()
@@ -140,7 +138,7 @@ class QuoteServer(service_pb2_grpc.btDataFeedServicer):
             preserving_proto_field_name=True, 
             always_print_fields_with_no_presence=True,
         )
-        response_iterator = bt_feed.replay("adjustment", Request(**obj_map))
+        response_iterator = bt_feed.next("adjust", Request(**obj_map))
         # context.add_callback(lambda: self._clean_call_session(call_info))
         async for adjs in response_iterator:
             response = service_pb2.AdjFrame()
@@ -163,7 +161,7 @@ class QuoteServer(service_pb2_grpc.btDataFeedServicer):
             preserving_proto_field_name=True, 
             always_print_fields_with_no_presence=True,
         )
-        response_iterator = bt_feed.replay("right", Request(**obj_map))
+        response_iterator = bt_feed.next("right", Request(**obj_map))
         # context.add_callback(lambda: self._clean_call_session(call_info))
         async for rgts in response_iterator:
             response = service_pb2.RightmentFrame()
@@ -210,7 +208,7 @@ async def serve(address: str, MAX_MESSAGE_LENGTH=1024 * 1024 * 1024) -> None:
 
     server = grpc.aio.server(ThreadPoolExecutor(), compression=grpc.Compression.Gzip, 
                              options=server_options, interceptors=[])
-    service_pb2_grpc.add_btDataFeedServicer_to_server(QuoteServer(), server)
+    service_pb2_grpc.add_btDataFeedServicer_to_server(FeedServer(), server)
     server.add_insecure_port(address)
     await server.start()
     logging.info("Server serving at %s", address)
