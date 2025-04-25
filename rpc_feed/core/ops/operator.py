@@ -112,19 +112,18 @@ class AsyncOps(with_metaclass(MetaParams, object)):
     async def on_query(self, query):
         # await self._ensure_initialized()
         async with self.get_db() as session:
-            async with session.begin():
-                    # stmt = select(cal).execution_options(**self.options)
-                    # AsyncSession not support query 
-                    # result = await session.execute(query)
-                    # yield result.scalars().all()
-                    # in asynchronous mode, the synchronous yield_per isn't directly applicable. 
-                    # Instead, you can use the stream() method, which allows streaming query results asynchronously.
-                    stream = await session.stream(query)
-                    # stream.scalars() return one field
-                    # async for row in stream.scalars():
-                    async for row in stream:
-                        # Use `scalars()` for ORM-mapped rows
-                        yield row
+                # stmt = select(cal).execution_options(**self.options)
+                # AsyncSession not support query 
+                # result = await session.execute(query)
+                # yield result.scalars().all()
+                # in asynchronous mode, the synchronous yield_per isn't directly applicable. 
+                # Instead, you can use the stream() method, which allows streaming query results asynchronously.
+                stream = await session.stream(query)
+                # stream.scalars() return one field
+                # async for row in stream.scalars():
+                async for row in stream:
+                    # Use `scalars()` for ORM-mapped rows
+                    yield row
 
     async def on_insert(self, table_name: str, data: Union[pd.DataFrame, List[dict], dict]):
         # await self._ensure_initialized()
@@ -151,11 +150,10 @@ class AsyncOps(with_metaclass(MetaParams, object)):
     async def on_query_obj(self, query: Select, params=None):
         # await self._ensure_initialized()
         async with self.get_db() as session:
-            async with session.begin():
-                result = await session.execute(query, params=params)
-                # result.all() returns a list of Row objects, each representing a row in the result set.
-                # scalars().all() single field / all() multiple fields tuple
-                return result.all()
+            result = await session.execute(query, params=params)
+            # result.all() returns a list of Row objects, each representing a row in the result set.
+            # scalars().all() single field / all() multiple fields tuple
+            return result.all()
     
     async def on_insert_obj(self, objs: Union[List[Base], Base], return_obj=False):
         # await self._ensure_initialized()
