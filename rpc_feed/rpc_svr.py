@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
+import os
 import asyncio
 import grpc
 import signal
@@ -13,64 +14,53 @@ from google.protobuf import empty_pb2
 from feed import *
 from core.datasets.model import Request
 from core.rpc.serialize.pb import service_pb2, service_pb2_grpc
-from core.middleware import RateLimitInterceptor, ConsoleLogger
+from core.middleware.interceptors import RateLimitInterceptor
 
 
-class FeedServer(service_pb2_grpc.btDataFeedServicer):
+class RpcServer(service_pb2_grpc.btDataFeedServicer):
 
     def __init__(self):
         self._id_counter = 0
 
-    # def _clean_call_session(self, call_info: service_pb2.CallInfo) -> None:
-    #     logging.info("Call session cleaned [%s]", MessageToJson(call_info))
-        
-    async def CalendarCall(
-        self,
-        # request: empty_pb2.Empty,
-        request: service_pb2.QuoteRequest,
-        context: grpc.ServicerContext,
-    ) -> service_pb2.Calendar: # type: ignore
-        
-        # try:
-        #     request = next(request_iterator)
-        #     logging.info(
-        #         "Received a phone call request for number [%s]",
-        #         request.phone_number,
-        #     )
-        # except StopIteration:
-        #     raise RuntimeError("Failed to receive call request")
-        
-        # context.set_compression(grpc.Compression.NoCompression)
-        logging.info("Received calendar")
+    async def _set_context(self, context: grpc.ServicerContext) -> None:
 
-        for key, value in context.invocation_metadata():
-            print("Received initial metadata: key=%s value=%s" % (key, value))
-
+        # NoCompression / Gzip
+        context.set_compression(grpc.Compression.Deflate)
         context.set_trailing_metadata(
             (
                 ("checksum-bin", b"I agree"),
                 ("retry", "false"),
             )
         )
+        # context is_active to check if the request is cancelled
+        
+    async def CalendarCall(
+        self,
+        request: service_pb2.QuoteRequest,
+        context: grpc.ServicerContext,
+    ) -> service_pb2.Calendar: # type: ignore
+        
+        await self._set_context(context)
 
-        # context.add_callback(lambda: self._clean_call_session(call_info))
-        # trading_days = [c.trading_date for c in bt_feed.get] 
-        response = service_pb2.Calendar()
-        response.tz_info = "Asia/shanghai"
+        logging.info("Received calendar")
+
+        for key, value in context.invocation_metadata():
+            print("Received initial metadata: key=%s value=%s" % (key, value))
+
         obj_map = MessageToDict(
             request, 
             preserving_proto_field_name=True, 
             always_print_fields_with_no_presence=True
         )
-        # print("obj_map ", obj_map)
-        response_iterator = bt_feed.next("calendar", Request(**obj_map))
-        # import pdb; pdb.set_trace()
+        response_iterator = bt_feed("calendar", Request(**obj_map))
+        # 
+        response = service_pb2.Calendar()
+        response.tz_info = "Asia/shanghai"
         trading_days = []
         async for resp in response_iterator:
-            # print("resp ", resp)
             trading_days.append(resp["trading_date"])
         response.date.extend(trading_days)
-        # print("calendar repsonse ", response)
+        print("calendar repsonse ", response.ByteSize())
         yield response
 
     async def InstrumentCall(
@@ -79,26 +69,31 @@ class FeedServer(service_pb2_grpc.btDataFeedServicer):
         context: grpc.ServicerContext,
     ) -> service_pb2.Calendar: # type: ignore
         
+        await self._set_context(context)
+
         logging.info("Received InstrumentCall %s" % request.SerializeToString())
 
-        response = service_pb2.InstFrame()
-        # context.add_callback(lambda: self._clean_call_session(call_info))
         obj_map = MessageToDict(
             request, 
             preserving_proto_field_name=True, 
             always_print_fields_with_no_presence=True,
         )
-        response_iterator = bt_feed.next("asset", Request(**obj_map))
-        assets = []
+        response_iterator = bt_feed("asset", Request(**obj_map))
+        # response = service_pb2.InstFrame()
+        # assets = []
+        # async for resp in response_iterator:
+        #     obj = service_pb2.Instrument(**resp)
+        #     assets.append(obj)
+        # response.asset.extend(assets)
+        # print("instrument repsonse ", response.ByteSize())
+        # yield response
+
         async for resp in response_iterator:
-            # print("resp ", resp)
+            response = service_pb2.InstFrame()
             obj = service_pb2.Instrument(**resp)
-            # print("obj ", obj)
-            assets.append(obj)
-        response.asset.extend(assets)
-        print("instrument repsonse ", response)
-        print("InstrumentCall repsonse size ", response.ByteSize())
-        yield response
+            response.asset.extend([obj])
+            print("instrument repsonse ", response.ByteSize())
+            yield response
     
     async def LineStreamCall(
         self,
@@ -106,22 +101,21 @@ class FeedServer(service_pb2_grpc.btDataFeedServicer):
         context: grpc.ServicerContext,
     ) -> service_pb2.TickFrame: # type: ignore
         
+        await self._set_context(context)
+
         logging.info("Received dataset")
+
         obj_map = MessageToDict(
             request, 
             preserving_proto_field_name=True, 
             always_print_fields_with_no_presence=True,
         )
-        response_iterator = bt_feed.next("line", Request(**obj_map))
-        # context.add_callback(lambda: self._clean_call_session(call_info))
+        response_iterator = bt_feed("line", Request(**obj_map))
         async for resp in response_iterator:
-            # pdb.set_trace()
             response = service_pb2.TickFrame()  
-            # response.tick = resp.pop("tick")
             response.sid = resp.pop("sid")
             line = service_pb2.Line(**resp)
             response.line.extend([line])
-            print("dataset repsonse ", response)
             print("DatasetStreamCall ticker repsonse size ", response.ByteSize())
             yield response
 
@@ -131,21 +125,21 @@ class FeedServer(service_pb2_grpc.btDataFeedServicer):
         context: grpc.ServicerContext,
     ) -> service_pb2.AdjFrame: # type: ignore
         
-        # context.set_compression(grpc.Compression.NoCompression)
+        await self._set_context(context)
+
         logging.info("Received adjustment")
+
         obj_map = MessageToDict(
             request, 
             preserving_proto_field_name=True, 
             always_print_fields_with_no_presence=True,
         )
-        response_iterator = bt_feed.next("adjust", Request(**obj_map))
-        # context.add_callback(lambda: self._clean_call_session(call_info))
+        response_iterator = bt_feed("adjust", Request(**obj_map))
         async for adjs in response_iterator:
             response = service_pb2.AdjFrame()
             response.date = adjs["ex_date"]
             adjustments = service_pb2.Adjustment(**adjs)
             response.adj.extend([adjustments])
-            print("adjustment repsonse ", response)
             print("AdjustmentStreamCall ticker repsonse size ", response.ByteSize())
             yield response
 
@@ -155,25 +149,26 @@ class FeedServer(service_pb2_grpc.btDataFeedServicer):
         context: grpc.ServicerContext,
     ) -> service_pb2.RightmentFrame: # type: ignore
         
+        await self._set_context(context)
+
         logging.info("Received right")
+
         obj_map = MessageToDict(
             request, 
             preserving_proto_field_name=True, 
             always_print_fields_with_no_presence=True,
         )
-        response_iterator = bt_feed.next("right", Request(**obj_map))
-        # context.add_callback(lambda: self._clean_call_session(call_info))
+        response_iterator = bt_feed("right", Request(**obj_map))
         async for rgts in response_iterator:
             response = service_pb2.RightmentFrame()
             response.date = rgts["ex_date"]
             rights = service_pb2.Rightment(**rgts)
             response.rgt.extend([rights])
-            print("rightment repsonse ", response)
             print("RightStreamCall ticker repsonse size ", response.ByteSize())
             yield response
-
+    
   
-async def serve(address: str, MAX_MESSAGE_LENGTH=1024 * 1024 * 1024) -> None:
+async def serve() -> None:
     """
     grpc.keepalive_time_ms: The period (in milliseconds) after which a keepalive ping is
         sent on the transport.
@@ -193,6 +188,9 @@ async def serve(address: str, MAX_MESSAGE_LENGTH=1024 * 1024 * 1024) -> None:
         pings to be sent even if there are no calls in flight.
     For more details, check: https://github.com/grpc/grpc/blob/master/doc/keepalive.md
     """
+    address = os.getenv("RPC_FEED_ADDRESS", "localhost:50051")
+    MAX_MESSAGE_LENGTH = int(os.getenv("MAX_MESSAGE_LENGTH", 1024 * 1024 * 1024))
+
     server_options = [
         ("grpc.keepalive_time_ms", 20000),
         ("grpc.keepalive_timeout_ms", 10000),
@@ -208,7 +206,7 @@ async def serve(address: str, MAX_MESSAGE_LENGTH=1024 * 1024 * 1024) -> None:
 
     server = grpc.aio.server(ThreadPoolExecutor(), compression=grpc.Compression.Gzip, 
                              options=server_options, interceptors=[])
-    service_pb2_grpc.add_btDataFeedServicer_to_server(FeedServer(), server)
+    service_pb2_grpc.add_btDataFeedServicer_to_server(RpcServer(), server)
     server.add_insecure_port(address)
     await server.start()
     logging.info("Server serving at %s", address)
@@ -236,6 +234,4 @@ async def serve(address: str, MAX_MESSAGE_LENGTH=1024 * 1024 * 1024) -> None:
 
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
-    # loop = asyncio.get_event_loop()
-    # loop.add_signal_handler(signal.SIGINT, handler)
-    asyncio.run(serve("localhost:50051"))
+    asyncio.run(serve())

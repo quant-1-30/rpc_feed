@@ -21,8 +21,8 @@ class MetaFeed(MetaParams):
         if 'load' not in dct:
             raise TypeError(f"Class {name} must implement 'load' method")
         # Ensure 'next' method is implemented
-        if 'next' not in dct:
-            raise TypeError(f"Class {name} must implement 'next' method")
+        # if 'next' not in dct:
+        #     raise TypeError(f"Class {name} must implement 'next' method")
         return super().__new__(mcs, name, bases, dct)
 
     def donew(cls, *args, **kwargs):
@@ -53,7 +53,7 @@ class Feed(with_metaclass(MetaFeed, object)):
     def load(cls, *args, **kwargs):
         raise NotImplementedError("intend for execute graph")
 
-    def next(cls, *args, **kwargs):
+    def __call__(cls, *args, **kwargs):
         raise NotImplementedError("intend for yield data from datasource")
 
 
@@ -70,8 +70,8 @@ class BtFeed(with_metaclass(MetaFeed, object)):
         iterables = self.filter(glob_paths)
         self.pipeline.execute_graph(graph_xml, iterables)
 
-    async def next(self, dataset, request: Request):
-         iterator = self.datasets[dataset].next(request)
+    async def __call__(self, dataset, request: Request):
+         iterator = self.datasets[dataset](request)
          async for item in iterator:
              yield item
 

@@ -20,7 +20,7 @@ class TradingCalendar(Provider):
     Provide calendar data.
     """
 
-    async def next(self, req: Request):
+    async def __call__(self, req: Request):
         """Get calendar of certain market in given time range.
 
         Parameters
@@ -60,7 +60,7 @@ class Instrument(Provider):
     Provide instrument data.
     """
    
-    async def next(self, req: Request):
+    async def __call__(self, req: Request):
         """Get the existiongconfig dictionary for a base market adding several dynamic filters.
         """
         async with async_ops as ctx:
@@ -84,7 +84,7 @@ class Tick(Provider):
     Provide Dataset data.
     """
 
-    async def next(self, req: Request):
+    async def __call__(self, req: Request):
         """Get dataset data.
 
         Parameters
@@ -115,7 +115,7 @@ class Adjust(Provider):
         Provide calendar data.
     """
 
-    async def next(self, req: Request):
+    async def __call__(self, req: Request):
         """Get dvidends of certain asset in given time range.
 
         Parameters
@@ -147,7 +147,7 @@ class Right(Provider):
         Provide calendar data.
     """
 
-    async def next(self, req: Request):
+    async def __call__(self, req: Request):
         """Get dvidends of certain asset in given time range.
 
         Parameters
