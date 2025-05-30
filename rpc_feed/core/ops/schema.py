@@ -4,12 +4,17 @@
 from typing import List
 from typing import Optional
 from sqlalchemy import func
-from sqlalchemy import Integer, String, ForeignKey, BigInteger, Text, UUID
+from sqlalchemy import Integer, String, ForeignKey, BigInteger, UUID
 from sqlalchemy.orm import DeclarativeBase
 from sqlalchemy.orm import Mapped
 from sqlalchemy.orm import mapped_column
 from sqlalchemy.orm import relationship
 from sqlalchemy.inspection import inspect
+from sqlalchemy.schema import PrimaryKeyConstraint, CreateTable, UniqueConstraint
+from sqlalchemy.ext.compiler import compiles
+from sqlalchemy import Identity
+
+
 
 # declarative base class
 class Base(DeclarativeBase):
@@ -32,35 +37,38 @@ class Calendar(Base):
 
 class Asset(Base):
 
-    # primary key constraint 与 table 
-    # from sqlalchemy.schema import PrimaryKeyConstraint
 
     __tablename__ = "asset"
-    __table_args__ = {"extend_existing": True}
+    __table_args__ = (
+        PrimaryKeyConstraint("id", "sid", name="pk_id_sid"),
+        {"extend_existing": True},
+    )
 
-    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
-    sid: Mapped[str] = mapped_column(String(10), unique=True, nullable=False, primary_key=True)
-    name: Mapped[str] = mapped_column(String(25), nullable=False, primary_key=True)
+    id: Mapped[int] = mapped_column(Integer, autoincrement=True)
+    sid: Mapped[str] = mapped_column(String(10), unique=True, nullable=False)
+    name: Mapped[str] = mapped_column(String(25), nullable=False)
     first_trading: Mapped[int] = mapped_column(Integer, nullable=False)
     delist: Mapped[int] = mapped_column(Integer, default=0)
 
     line: Mapped[List["Line"]] = relationship("Line", back_populates="asset", cascade="all, delete-orphan")
-    
     adjustment: Mapped[List["Adjustment"]] = relationship("Adjustment", back_populates="asset", cascade="all, delete-orphan")
-    
     rightment: Mapped[List["Rightment"]] = relationship("Rightment", back_populates="asset", cascade="all, delete-orphan")
 
 
 class Line(Base):
    
-    __tablename__ = "minute"
-    __table_args__ = {"extend_existing": True}
-
-    id: Mapped[int] = mapped_column(Integer,primary_key=True, autoincrement=True)
+    __tablename__ = "tick"
+    __table_args__ = (
+        PrimaryKeyConstraint("sid", "tick", name="pk_sid_tick_line"),
+        {'postgresql_partition_by': 'RANGE (tick)', "extend_existing": True},
+    )
+    # 在 PostgreSQL 中，只有当某个字段是主键或有 SERIAL 或 IDENTITY 声明时，它才会自动自增。
+    # id: Mapped[int] = mapped_column(Integer, primary=True, autoincrement=True)
+    id: Mapped[int] = mapped_column(Integer, Identity(), nullable=False)
     sid: Mapped[str] = mapped_column(String(20), 
                                      ForeignKey("asset.sid", onupdate="CASCADE", ondelete="CASCADE"), 
                                      nullable=False, use_existing_column=True)
-    tick: Mapped[int] = mapped_column(BigInteger, nullable=False, use_existing_column=True)
+    tick: Mapped[int] = mapped_column(BigInteger, unique=True, nullable=False, use_existing_column=True, index=True)
     open: Mapped[int] = mapped_column(Integer, nullable=False, use_existing_column=True)
     high: Mapped[int] = mapped_column(Integer, nullable=False, use_existing_column=True)
     low: Mapped[int] = mapped_column(Integer, nullable=False, use_existing_column=True)
@@ -70,13 +78,12 @@ class Line(Base):
 
     asset: Mapped["Asset"] = relationship("Asset", back_populates="line")
     
-    def __init__(self, kwargs):
-        import pdb; pdb.set_trace()
-        valid_keys = [column.name for column in self.__table__.columns]
-        for key, value in kwargs.items():
-            # if hasattr(self, key):  # 只设置模型中定义的字段
-            if key in valid_keys:
-                setattr(self, key, value)
+    # def __init__(self, kwargs):
+    #     valid_keys = [column.name for column in self.__table__.columns]
+    #     for key, value in kwargs.items():
+    #         # if hasattr(self, key):  # 只设置模型中定义的字段
+    #         if key in valid_keys:
+    #             setattr(self, key, value)
 
 
 class Adjustment(Base):
@@ -87,9 +94,12 @@ class Adjustment(Base):
     # share --- 送股 / transfer --- 转股 / interest --- 股息
 
     __tablename__ = "adjustment"
-    __table_args__ = {"extend_existing": True}
+    __table_args__ = (
+        UniqueConstraint("sid", "register_date", name="uq_sid_register_date_adjustment"),
+        {"extend_existing": True},
+    )
 
-    id: Mapped[int] = mapped_column(Integer,primary_key=True, autoincrement=True)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     sid: Mapped[str] = mapped_column(String(20), 
                                      ForeignKey("asset.sid", onupdate="CASCADE", ondelete="CASCADE"), 
                                      nullable=False, use_existing_column=True)
@@ -101,11 +111,6 @@ class Adjustment(Base):
 
     asset: Mapped["Asset"] = relationship("Asset", back_populates="adjustment")
 
-    def __init__(self, **kwargs):
-        for key, value in kwargs.items():
-            if hasattr(self, key):  # 只设置模型中定义的字段
-                setattr(self, key, value)
-
 
 class Rightment(Base):
 
@@ -115,9 +120,12 @@ class Rightment(Base):
     # price --- 配股价格 / ratio --- 配股比例
 
     __tablename__ = "rightment"
-    __table_args__ = {"extend_existing": True}
+    __table_args__ = (
+        UniqueConstraint("sid", "register_date", name="uq_sid_register_date_rightment"),
+        {"extend_existing": True},
+    )
 
-    id: Mapped[int] = mapped_column(Integer,primary_key=True, autoincrement=True)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     sid: Mapped[str] = mapped_column(String(20), 
                                      ForeignKey("asset.sid", onupdate="CASCADE", ondelete="CASCADE"), 
                                      nullable=False, primary_key=True, use_existing_column=True)
@@ -129,10 +137,17 @@ class Rightment(Base):
 
     asset: Mapped["Asset"] = relationship("Asset", back_populates="rightment")
 
-    def __init__(self, **kwargs):
-        for key, value in kwargs.items():
-            if hasattr(self, key):  # 只设置模型中定义的字段
-                setattr(self, key, value)
+
+# --- Partitioning Support ---
+# compile create table with partition by or raw sql ddl
+@compiles(CreateTable)
+def compile_create_partition_table(element, compiler, **kw):
+    table = element.element
+    if "postgresql_partition_by" in table.dialect_options["postgresql"]:
+        partition = table.dialect_options["postgresql"]["postgresql_partition_by"]
+        ddl = compiler.visit_create_table(element)
+        return ddl.replace("\n)", f"\n) PARTITION BY {partition}")
+    return compiler.visit_create_table(element)
 
 
 __all__ = ["Calendar", "Asset", "Line", "Adjustment", "Rightment"]

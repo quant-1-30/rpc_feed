@@ -24,16 +24,16 @@ class AvroWriter(Node):
         # ticker.avsc
         schema = avro.schema.parse(open(schema_path, "rb").read())
         # users.avro 
+        # reader = DataFileReader(open("users.avro", "rb"), DatumReader())
+        # for user in reader:
+        #     print (user)
+        # reader.close()
         writer = DataFileWriter((open(data_path), "wb"), DatumWriter(), schema)
         dicts = frame.to_dict()
         for element in dicts.values:
             # element --- {"name": "Ben", "favorite_number": 7, "favorite_color": "red"}
             writer.append(element)
         writer.close()
-        # reader = DataFileReader(open("users.avro", "rb"), DatumReader())
-        # for user in reader:
-        #     print (user)
-        # reader.close()
 
 
 @registry

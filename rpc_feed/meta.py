@@ -7,8 +7,6 @@ import logging
 from typing import Any, List
 from collections import OrderedDict
 
-from utils.wrapper import async_method_warning
-
 
 # This is from Armin Ronacher from Flash simplified later by six
 def with_metaclass(meta, *bases):
@@ -298,19 +296,33 @@ class MetaParams(MetaBase):
         return _obj, args, kwargs
 
 
+class MetaSingleton(MetaParams):
+    '''Metaclass to make a metaclassed class a singleton'''
+    def __init__(cls, name, bases, dct):
+        super(MetaSingleton, cls).__init__(name, bases, dct)
+        cls._singleton = None
+
+    def __call__(cls, *args, **kwargs):
+        if cls._singleton is None:
+            cls._singleton = (
+                super(MetaSingleton, cls).__call__(*args, **kwargs))
+
+        return cls._singleton
+    
+
 class ParamsBase(with_metaclass(MetaParams, object)):
     pass  # stub to allow easy subclassing without metaclasses
 
 
-class SingletonMeta(type):
+# class SingletonMeta(type):
 
-    _instances = {}
+#     _instances = {}
 
-    def __call__(cls, *args: Any, **kwds: Any) -> Any:
-        if cls not in cls._instances:
-            instance = super().__call__(*args, **kwds)
-            cls._instances[cls] = instance
-        return cls._instances[cls]
+#     def __call__(cls, *args: Any, **kwds: Any) -> Any:
+#         if cls not in cls._instances:
+#             instance = super().__call__(*args, **kwds)
+#             cls._instances[cls] = instance
+#         return cls._instances[cls]
 
 
 # class MetaLogger(type):

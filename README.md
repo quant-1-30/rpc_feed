@@ -8,7 +8,6 @@ python -m grpc_tools.protoc -I . --python_out=. --pyi_out=. --grpc_python_out=. 
 # fb
 flatc --grpc --python -o . -I . service.fbs
 
-# 优化存在 ---- 1、 分库、分表 ; 2、异步入库; 3、多线程处理 30亿条的数据, 每天增加规模115万条
 
 # 一元模式(在一次调用中, 客户端只能向服务器传输一次请求数据, 服务器也只能返回一次响应)
 # 客户端流模式（在一次调用中, 客户端可以多次向服务器传输数据, 但是服务器只能返回一次响应）
@@ -33,3 +32,10 @@ mysql tool:
 
 # frame.sort_values(by=self.p.sort_key, ascending=True, inplace=True)
 # multi_index = pd.MultiIndex.from_arrays(_sids, names=self.p.lines)
+
+# 优化存在 ---- 1、 分库、分表 ; 2、异步入库; 3、多线程处理 30亿条的数据, 每天增加规模115万条
+单表数据控制1亿条内 ---> 按照季度划分
+
+1\ 分表 
+2\ 执行 struct data
+3\ rpc_server --- original data / quote --- calc adjustment coef as line pass to sdk

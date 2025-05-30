@@ -9,12 +9,12 @@ from sqlalchemy.orm import sessionmaker
 from typing import Union, Dict, Iterable, Any, List
 from contextlib import asynccontextmanager
 from functools import lru_cache
-from meta import with_metaclass, MetaParams, ParamsBase
+
 from .schema import Base
-from utils.wrapper import singleton
+from rpc_feed.meta import with_metaclass, MetaParams, MetaSingleton
 
 
-class AsyncOps(with_metaclass(MetaParams, object)):
+class AsyncOps(with_metaclass(MetaSingleton, object)):
     """Local provider class
     It is a set of interface that allow users to access data.
     Because PITD is not exposed publicly to users, so it is not included in the interface.
@@ -111,18 +111,13 @@ class AsyncOps(with_metaclass(MetaParams, object)):
     
     async def on_query(self, query):
         # await self._ensure_initialized()
+        # AsyncSession not support query 
         async with self.get_db() as session:
-                # stmt = select(cal).execution_options(**self.options)
-                # AsyncSession not support query 
-                # result = await session.execute(query)
-                # yield result.scalars().all()
                 # in asynchronous mode, the synchronous yield_per isn't directly applicable. 
                 # Instead, you can use the stream() method, which allows streaming query results asynchronously.
                 stream = await session.stream(query)
                 # stream.scalars() return one field
-                # async for row in stream.scalars():
                 async for row in stream:
-                    # Use `scalars()` for ORM-mapped rows
                     yield row
 
     async def on_insert(self, table_name: str, data: Union[pd.DataFrame, List[dict], dict]):
@@ -168,6 +163,12 @@ class AsyncOps(with_metaclass(MetaParams, object)):
                 for obj in objs:
                     await session.refresh(obj)
                 return objs
+            
+    async def on_execute(self, query: str):
+        async with self.get_db() as session:
+            async with session.begin():
+                await session.execute(query)
+                await session.commit()
             
     async def on_delete_obj(self, query: Select):
         # await self._ensure_initialized()

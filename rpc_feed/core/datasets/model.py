@@ -61,14 +61,15 @@ class AssetModel(BaseModel):
 
 class LineModel(BaseModel):
 
+    # gt / ge / lt / le / eq / ne
     sid: str = Field(default="")
-    tick: int = Field(gt=0)
-    open: int = Field(gt=0)
-    high: int = Field(gt=0)
-    low: int = Field(gt=0)
-    close: int = Field(gt=0)
-    volume: int = Field(gt=0)
-    amount: int = Field(gt=0)
+    tick: int = Field(ge=0)
+    open: int = Field(ge=0)
+    high: int = Field(ge=0)
+    low: int = Field(ge=0)
+    close: int = Field(ge=0)
+    volume: int = Field(ge=0)
+    amount: int = Field(ge=0)
 
     def __eq__(self, _value: object) -> bool:
         if not isinstance(_value, self):

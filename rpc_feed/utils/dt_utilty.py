@@ -15,8 +15,24 @@ from typing import Union
 MAX_MONTH_RANGE = 23
 MAX_WEEK_RANGE = 5
 
+def loc2utc(dt: datetime.datetime, localize_tz="Asia/Shanghai", fmt="%Y-%m-%d"):
+    # datetime.timestamp()：无论当前对象是哪个时区的（只要是 aware datetime），它都转换为 UTC 再计算秒数。
+    # 所以 .astimezone(pytz.UTC).timestamp() 和 .timestamp() 是一样的
+    native_tz = pytz.timezone(localize_tz)
+    if isinstance(dt, datetime.datetime):
+        localized = native_tz.localize(dt)
+    elif isinstance(dt, int):
+        localized = datetime.datetime.fromtimestamp(dt, tz=native_tz)
+    elif isinstance(dt, str):
+        dt_ = datetime.datetime.strptime(dt, fmt)
+        localized = native_tz.localize(dt_)
+    else:
+        raise ValueError(f"Invalid type: {type(dt)}")
+    utc_dt = localized.astimezone(tz=pytz.timezone("UTC"))
+    return utc_dt
 
-def get_trading_ranges(date: Union[str, int], freq="M", opens=("9:30", "13:00"), closes=("11:30", "15:00")):
+
+def get_trading_range(date: Union[str, int], freq="M", opens=("9:30", "13:00"), closes=("11:30", "15:00")):
     #      ("opens", ("9:30", "13:00")),
     #      ("closes", ("11:30", "15:00"))
     dt = datetime.datetime.strptime(str(date), "%Y-%m-%d")
