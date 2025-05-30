@@ -84,8 +84,9 @@ def downgrade(engine, desired_version):
 
         # Check for accidental upgrade
         if starting_version < desired_version:
-            raise AssetDBImpossibleDowngrade(db_version=starting_version,
-                                             desired_version=desired_version)
+            # raise AssetDBImpossibleDowngrade(db_version=starting_version,
+            #                                  desired_version=desired_version)
+            raise ValueError(f"db_version: {starting_version} < desired_version: {desired_version}")
 
         # Check if the desired version is already the db version
         if starting_version == desired_version:
