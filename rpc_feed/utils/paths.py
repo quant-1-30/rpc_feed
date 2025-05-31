@@ -4,9 +4,16 @@ Created on Tue Mar 12 15:37:47 2019
 
 @author: python
 """
+import os
+import pandas as pd
 from errno import EEXIST
-import os, pandas as pd
 from os.path import exists, expanduser, join
+from tempfile import NamedTemporaryFile
+from shutil import move
+from shutil import rmtree
+from tempfile import mkdtemp
+from distutils import dir_util
+
 
 
 def hidden(path):

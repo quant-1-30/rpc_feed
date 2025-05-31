@@ -155,7 +155,7 @@ def downgrades(src):
         def wrapper(op, conn, version_info_table):
             conn.execute(version_info_table.delete())  # clear the version
             f(op)
-            write_version_info(conn, version_info_table, destination)
+            # write_version_info(conn, version_info_table, destination)
 
         return wrapper
     return _

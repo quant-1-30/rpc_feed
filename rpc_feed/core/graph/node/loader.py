@@ -24,9 +24,6 @@ class StructUnpacker(Node):
         ("subset", None),
     )
 
-    # def __init__(self, kwargs):
-    #     pass
-
     def next(self, path):
         frame=pd.DataFrame()
         if path:

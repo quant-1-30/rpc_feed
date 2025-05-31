@@ -29,7 +29,8 @@ class Node(with_metaclass(MetaNode, object)):
 
     params = (
         ("refname", None),
-        ("binds", [])
+        ("binds", []),
+        ("is_async", False),
     )
 
     def prenext(self, *args, **kwargs):

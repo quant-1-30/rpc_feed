@@ -4,7 +4,7 @@ Created on Tue Mar 12 15:37:47 2019
 
 @author: python
 """
-from collections import Sequence
+from collections import Sequence, OrderedDict
 from itertools import compress
 # 弱引用 以及沙盒函数需要研究一下 、gcc回收机制
 from weakref import WeakKeyDictionary, ref
@@ -19,7 +19,7 @@ class _WeakArgs(Sequence):
     When any of those args are gc'd, the pair is removed from the cache.
     """
     def __init__(self, items, dict_remove=None):
-        def remove(selfref=ref(self), dict_remove=dict_remove):
+        def remove(k, selfref=ref(self), dict_remove=dict_remove):
             self = selfref()
             if self is not None and dict_remove is not None:
                 dict_remove(self)
@@ -38,24 +38,12 @@ class _WeakArgs(Sequence):
     @staticmethod
     def _try_ref(item, callback):
         try:
-            """ 
-                Return a weak reference to object.
-                If callback is provided and not None, and the returned weakref object is still alive, 
-                the callback will be called when the object is about to be finalized; 
-                the weak reference object will be passed as the only parameter to the callback; 
-                the referent will no longer be available.
-            """
             return ref(item, callback), True
         except TypeError:
             return item, False
 
     @property
     def alive(self):
-        """
-        itertools.compress(data, selectors)¶
-        Make an iterator that filters elements from data returning only those
-        that have a corresponding element in selectors that evaluates to True.
-        """
         return all(item() is not None
                    for item in compress(self._items, self._selectors))
 
@@ -92,6 +80,68 @@ class _WeakArgsDict(WeakKeyDictionary, object):
 
     def pop(self, key, *args):
         return self.data.pop(_WeakArgs(key), *args)
+
+
+class _WeakArgsOrderedDict(_WeakArgsDict, object):
+    def __init__(self):
+        super(_WeakArgsOrderedDict, self).__init__()
+        self.data = OrderedDict()
+
+    def popitem(self, last=True):
+        while True:
+            key, value = self.data.popitem(last)
+            if key.alive:
+                return tuple(key), value
+
+    def move_to_end(self, key):
+        """Move an existing element to the end.
+
+        Raises KeyError if the element does not exist.
+        """
+        self[key] = self.pop(key)
+
+
+def weak_lru_cache(maxsize=100):
+    """Weak least-recently-used cache decorator.
+
+    If *maxsize* is set to None, the LRU features are disabled and the cache
+    can grow without bound.
+
+    Arguments to the cached function must be hashable. Any that are weak-
+    referenceable will be stored by weak reference.  Once any of the args have
+    been garbage collected, the entry will be removed from the cache.
+
+    View the cache statistics named tuple (hits, misses, maxsize, currsize)
+    with f.cache_info().  Clear the cache and statistics with f.cache_clear().
+
+    See:  http://en.wikipedia.org/wiki/Cache_algorithms#Least_Recently_Used
+
+    """
+    class desc(object):
+        def __get__(self, instance, owner):
+            if instance is None:
+                return self
+            try:
+                return self._cache[instance]
+            except KeyError:
+                inst = ref(instance)
+
+                @_weak_lru_cache(maxsize)
+                @wraps(self._get)
+                def wrapper(*args, **kwargs):
+                    return self._get(inst(), *args, **kwargs)
+
+                self._cache[instance] = wrapper
+                return wrapper
+
+        @_weak_lru_cache(maxsize)
+        def __call__(self, *args, **kwargs):
+            return self._get(*args, **kwargs)
+
+    return desc
+
+
+remember_last = weak_lru_cache(1)
 
 
 def _weak_lru_cache(maxsize=100):

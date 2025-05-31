@@ -38,4 +38,6 @@ mysql tool:
 
 1\ 分表 
 2\ 执行 struct data
-3\ rpc_server --- original data / quote --- calc adjustment coef as line pass to sdk
+3\ df -h --- mac外接硬盘
+4\ rpc_server --- original data / quote --- calc adjustment coef as line pass to sdk
+

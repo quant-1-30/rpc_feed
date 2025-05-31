@@ -14,6 +14,7 @@ import re
 from tempfile import mkdtemp
 from pathlib import Path
 from contextlib import contextmanager
+from typing import Callable, Generator
 from .registry import registry
 
 
@@ -123,18 +124,16 @@ def read_bin(file_path: Union[str, Path], start_index, end_index):
     return series
 
 
-def recursive_glob(root_path, prefix):
+def recursive_glob(root_path: str, suffix: str, filter: Callable[[str], bool]) -> Generator[str, None, None]:
+    """Recursively find all files under `root_path` ending with `suffix` and matching `filter` condition."""
     expand_root_path = os.path.expanduser(root_path)
-    if os.path.isfile(expand_root_path):
-        return root_path
-    else:
-        prefix_files = []
-        for root, dirs, files in os.walk(expand_root_path):
-            prefixs = [os.path.join(root, file) for file in files if file.endswith(prefix)]
-            prefix_files.extend(prefixs)
-            if dirs:
-                for dir_ in dirs:
-                    output = recursive_glob(os.path.join(root, dir_), prefix)
-                    prefix_files.extend(output)
-        return prefix_files
 
+    if not os.path.exists(expand_root_path):
+        return  # Nothing to yield
+
+    for root, _, files in os.walk(expand_root_path):
+        # 递归每个层级files
+        for file in files:
+            file_path = os.path.join(root, file)
+            if file.endswith(suffix) and filter(file_path):
+                yield file_path

@@ -28,6 +28,7 @@ class MetaFeed(MetaParams):
     def donew(cls, *args, **kwargs):
         _obj, args, kwargs = super().donew(*args, **kwargs)
         _obj.datasets = _providers
+        _obj.pipeline = Graph()
         return _obj, args, kwargs
     
     @staticmethod
@@ -59,16 +60,14 @@ class Feed(with_metaclass(MetaFeed, object)):
 
 class BtFeed(with_metaclass(MetaFeed, object)):
 
-
     def load(self, graph_xml, dataset_path, prefix):
         '''
         Adds a ``Data Feed`` instance to the mix.
         If ``name`` is not None it will be put into ``data._name`` which is
         meant for decoration/plotting purposes.
         '''
-        glob_paths = recursive_glob(dataset_path, prefix=prefix)
-        iterables = self.filter(glob_paths)
-        self.pipeline.execute_graph(graph_xml, iterables)
+        iterables = recursive_glob(dataset_path, prefix=prefix, filter=self.filter)
+        self.pipeline.to_execute(graph_xml, iterables)
 
     async def __call__(self, dataset, request: Request):
          iterator = self.datasets[dataset](request)

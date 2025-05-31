@@ -5,7 +5,7 @@ import asyncio
 import os
 import networkx as nx
 import matplotlib.pyplot as plt
-from concurrent.futures import ThreadPoolExecutor
+import multiprocessing
 
 from .node import *
 from utils.loader import get_module_by_module_path
@@ -36,7 +36,6 @@ class Graph(object):
         self.graph = list(filter(lambda x: x.name != node.name, self.graph))
 
     def _build_graph(self, graph_xml):
-        
         # 从 GraphML 文件加载图
         G = nx.read_graphml(graph_xml)
         # 检查是否为 DAG
@@ -52,28 +51,42 @@ class Graph(object):
                 self.add_node(node_obj)
         else:
             raise ValueError("The graph is not a DAG")
-        
-    async def async_io(self, data):
-        is_async = self.graph[-1].p.is_async
-        f = self.graph[-1].next
-        if not is_async:
-            loop = asyncio.get_event_loop()
-            with ThreadPoolExecutor(max_workers=os.cpu_count()) as executor:
-                output = await loop.run_in_executor(executor, f, data)
-        else:
-            output = await f(data)
-        return output
+
+    async def async_consume(self):
+        last_node = self.graph[-1]
+        while True:
+            item = await self.queue.get()
+            if item is None:
+                break
+            if last_node.p.is_async:
+                await last_node.next(item)
+            else:
+                #with ThreadPoolExecutor(max_workers=os.cpu_count()) as executor:
+                #    output = await loop.run_in_executor(executor, f, data)
+                await asyncio.get_event_loop().run_in_executor(None, last_node.next, item)
     
-    # @parallel(workers=6)
+    def run_sync_pipeline(self, item):
+        for node in self.graph[:-1]:
+            item = node.next(item)
+        return item
+
+    async def _run_with_async_tail(self, iterables):
+        consumer_task = asyncio.create_task(self.async_consume())
+        self.queue = multiprocessing.Queue()
+        # sync process
+        with multiprocessing.Pool(processes=os.cpu_count()) as pool:
+            for processed_item in pool.imap_unordered(self.run_sync_pipeline, iterables):
+                # async put asyncio writer into queue
+                await self.queue.put(processed_item)
+
+        await self.queue.put(None)
+        await consumer_task
+        
     def run(self, iterables):
-        for item in iterables:
-            for node in self.graph[:-1]:
-                item = node.next(item)
-            # async 
-            asyncio.run(self.async_io(item))  # 运行异步任务
+        loop = asyncio.get_event_loop()
+        loop.run_until_complete(self._run_with_async_tail(iterables))
 
     def to_execute(self, graph_xml, iterables):
-
         self._build_graph(graph_xml=graph_xml) 
         self.run(iterables)
 
