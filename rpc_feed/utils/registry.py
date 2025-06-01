@@ -1,12 +1,11 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 import inspect
-import os
-import pdb
-from meta import SingletonMeta
+
+from rpc_feed.meta import with_metaclass, MetaSingleton
 
 
-class Registry(metaclass=SingletonMeta):
+class Registry(with_metaclass(MetaSingleton, object)):
         
     _module_dict = dict()
 

@@ -3,32 +3,45 @@
 
 import os
 from typing import Dict,Any
-from meta import with_metaclass, MetaParams
 
-from core.graph import Graph
-from core.datasets import _providers, Request
+from rpc_feed.meta import with_metaclass, MetaParams
+from rpc_feed.core.graph import Graph
+from rpc_feed.core.datasets import _providers, Request
 
-from filter import _filters
-from utils.io import recursive_glob
-from utils.loader import get_module_by_module_path
-from utils.cache import lazyproperty
+from rpc_feed.filter import _filters
+from rpc_feed.utils.io import recursive_glob
+from rpc_feed.utils.loader import get_module_by_module_path
+from rpc_feed.utils.cache import lazyproperty
 
 
-class MetaFeed(MetaParams):
+class FeedMeta(MetaParams):
 
-    def __new__(mcs, name, bases, dct):
-        # Ensure 'load' method is implemented
-        if 'load' not in dct:
-            raise TypeError(f"Class {name} must implement 'load' method")
-        # Ensure 'next' method is implemented
-        # if 'next' not in dct:
-        #     raise TypeError(f"Class {name} must implement 'next' method")
-        return super().__new__(mcs, name, bases, dct)
+    # def __new__(meta, name, bases, dct):
+    #     # Hack to support original method name for notify_order
+    #     if 'notify' in dct:
+    #         # rename 'notify' to 'notify_order'
+    #         dct['notify_order'] = dct.pop('notify')
+    #     if 'notify_operation' in dct:
+    #         # rename 'notify' to 'notify_order'
+    #         dct['notify_trade'] = dct.pop('notify_operation')
+    #     return super(FeedMeta, meta).__new__(meta, name, bases, dct)
+
+    # def __init__(cls, name, bases, dct):
+    #     '''
+    #     Class has already been created ... register subclasses
+    #     '''
+    #     # Initialize the class
+    #     super(FeedMeta, cls).__init__(name, bases, dct)
+
+    #     if not cls.aliased and \
+    #        name != 'Strategy' and not name.startswith('_'):
+    #         cls._indcol[name] = cls
 
     def donew(cls, *args, **kwargs):
-        _obj, args, kwargs = super().donew(*args, **kwargs)
+        _obj, args, kwargs = super(FeedMeta, cls).donew(*args, **kwargs)
         _obj.datasets = _providers
         _obj.pipeline = Graph()
+        _obj._filter = _filters.get(_obj.p._filter)
         return _obj, args, kwargs
     
     @staticmethod
@@ -37,28 +50,15 @@ class MetaFeed(MetaParams):
         module = get_module_by_module_path(current_path)
         return module.Providers
 
-
-class Feed(with_metaclass(MetaFeed, object)):
-    
-    params = (
-        ("filter", "asset"),
-        ("graph", Graph())
-    )
-
-    def donew(cls, *args, **kwargs):
-        _obj, args, kwargs = super().donew(*args, **kwargs)
-        # set filter
-        _obj.filter = _filters.get(_obj.p._filter)
-        return _obj, args, kwargs
-    
     def load(cls, *args, **kwargs):
         raise NotImplementedError("intend for execute graph")
 
-    def __call__(cls, *args, **kwargs):
-        raise NotImplementedError("intend for yield data from datasource")
 
+class BtFeed(with_metaclass(FeedMeta, object)):
 
-class BtFeed(with_metaclass(MetaFeed, object)):
+    params = (
+        ("_filter", "asset"),
+    )
 
     def load(self, graph_xml, dataset_path, prefix):
         '''
@@ -66,7 +66,7 @@ class BtFeed(with_metaclass(MetaFeed, object)):
         If ``name`` is not None it will be put into ``data._name`` which is
         meant for decoration/plotting purposes.
         '''
-        iterables = recursive_glob(dataset_path, prefix=prefix, filter=self.filter)
+        iterables = recursive_glob(dataset_path, suffix=prefix, filter=self._filter)
         self.pipeline.to_execute(graph_xml, iterables)
 
     async def __call__(self, dataset, request: Request):

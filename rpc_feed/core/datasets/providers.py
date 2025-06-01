@@ -10,8 +10,8 @@ from sqlalchemy import and_
 
 from .base import Provider
 from .model import *
-from core.ops.schema import *
-from core.ops.operator import async_ops
+from rpc_feed.core.middleware.ops.schema import *
+from rpc_feed.core.middleware.ops.operator import async_ops
 
 
 class TradingCalendar(Provider):

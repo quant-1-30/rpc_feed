@@ -7,9 +7,10 @@ import pandas as pd
 import numpy as np
 from typing import Any, Iterator, Union
 from toolz import valmap
-from utils.registry import registry
-from utils.utility import no_hup
-from core.graph.base import Node
+
+from rpc_feed.utils.registry import registry
+from rpc_feed.utils.utility import no_hup
+from rpc_feed.core.graph.base import Node
 
 
 @registry

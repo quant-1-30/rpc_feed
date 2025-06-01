@@ -1,14 +1,14 @@
 #! /usr/bin/env python3 
 # -*- coding: utf-8 -*-
 
-from meta import MetaParams, with_metaclass
+from rpc_feed.meta import MetaParams, with_metaclass
 
 
 class MetaNode(MetaParams):
 
     def donew(cls, *args, **kwargs):
 
-        _obj, args, kwargs = super().donew(cls, *args, **kwargs)
+        _obj, args, kwargs = super(MetaNode, cls).donew(*args, **kwargs)
 
         # ownerskip = kwargs.pop('_ownerskip', None)
         # _obj._owner = findowner(_obj, _obj._OwnerCls or LineMultiple, skip=ownerskip)

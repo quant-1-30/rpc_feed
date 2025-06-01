@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<graphml xmlns="http://graphml.graphdrawing.org/xmlns"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://graphml.graphdrawing.org/xmlns
+         http://graphml.graphdrawing.org/xmlns/1.0/graphml.xsd">
+    
+    <!-- 定义属性键 -->
+    <key id="type" for="node" attr.name="type" attr.type="string"/>
+    <key id="description" for="node" attr.name="description" attr.type="string"/>
+    <key id="priority" for="node" attr.name="priority" attr.type="int"/>
+    <key id="enabled" for="node" attr.name="enabled" attr.type="boolean"/>
+    
+    <graph id="G" edgedefault="directed">
+        <!-- 节点1：带多个属性 -->
+        <node id="TextLoader">
+            <data key="type">loader</data>
+            <data key="description">Loads text data from files</data>
+            <data key="priority">1</data>
+            <data key="enabled">true</data>
+        </node>
+        
+        <!-- 节点2：带部分属性 -->
+        <node id="PgWriter">
+            <data key="type">writer</data>
+            <data key="description">Writes data to PostgreSQL</data>
+            <data key="priority">2</data>
+        </node>
+        
+        <edge source="TextLoader" target="PgWriter"/>
+    </graph>
+</graphml> 

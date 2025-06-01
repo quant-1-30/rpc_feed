@@ -10,7 +10,8 @@ from distutils import dir_util
 from shutil import rmtree, move
 from tempfile import mkdtemp, NamedTemporaryFile
 import os, pickle, errno, pandas as pd
-from utils.paths import ensure_directory
+
+from .paths import ensure_directory
 
 
 # cacheObject --- bar_reader

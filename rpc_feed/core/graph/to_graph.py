@@ -8,9 +8,9 @@ import matplotlib.pyplot as plt
 import multiprocessing
 
 from .node import *
-from utils.loader import get_module_by_module_path
-from utils.io import build_from_cfg
-from utils.wrapper import singleton
+from rpc_feed.utils.loader import get_module_by_module_path
+from rpc_feed.utils.io import build_from_cfg
+from rpc_feed.utils.wrapper import singleton
 
 
 @singleton
@@ -29,7 +29,7 @@ class Graph(object):
             cls.cfg_cache[basename] = get_module_by_module_path(cfg_path)
         return cls.cfg_cache[basename]
     
-    def add(self, node):
+    def add_node(self, node):
         self.graph.append(node)
 
     def remove(self, node):

@@ -10,17 +10,18 @@ from avro.datafile import DataFileReader, DataFileWriter
 from avro.io import DatumReader, DatumWriter
 from avro.datafile import DataFileWriter
 
-from core.graph.base import Node
-from utils.registry import registry
-from core.middleware.ops.operator import async_ops
+from rpc_feed.core.graph.base import Node
+from rpc_feed.utils.registry import registry
+from rpc_feed.core.middleware.ops.operator import async_ops
 
 
 @registry
 class AvroWriter(Node):
 
-    params = (("is_async", False),)
+    params = (("is_async", True),)
 
-    def next(self, schema_path: str, data_path: str, frame: pd.DataFrame) -> Any:
+    def next(self, data: pd.DataFrame, info=[]) -> Any:
+        schema_path, data_path = info
         # ticker.avsc
         schema = avro.schema.parse(open(schema_path, "rb").read())
         # users.avro 
@@ -29,7 +30,7 @@ class AvroWriter(Node):
         #     print (user)
         # reader.close()
         writer = DataFileWriter((open(data_path), "wb"), DatumWriter(), schema)
-        dicts = frame.to_dict()
+        dicts = data.to_dict()
         for element in dicts.values:
             # element --- {"name": "Ben", "favorite_number": 7, "favorite_color": "red"}
             writer.append(element)
@@ -42,18 +43,13 @@ class PgWriter(Node):
         Postgresql Writer
     """
     params = (
-        ("table", ""),
         ("is_async", True),
     )
     
-    def __init__(self, kwargs):
-        if "table" not in kwargs:
-            raise TypeError
-    
-    async def next(self, data: Union[pd.DataFrame, List[dict], dict]):
+    async def next(self, data: Union[pd.DataFrame, List[dict], dict], info=""):
         async with async_ops as ctx:
             try:
-                await ctx.on_val_insert(self.p.table, data)
+                await ctx.on_insert(info, data)
                 status = {"status": 0, "error": ""}
             except Exception as e:
                 print(e)
@@ -107,7 +103,7 @@ class CsvWriter(Node):
         ('indent', 2),
         ("headers", ""),
         ("separator", ","),
-        ("is_async", False),
+        ("is_async", True),
     )
 
     def _start_output(self):
@@ -136,7 +132,7 @@ class CsvWriter(Node):
             csv_header = sep.join(headers)
             await self._writeline(csv_header)
 
-    async def next(self, lines):
+    async def next(self, lines, info=""):
         if lines:
             await self.writelineseparator()
             for l in lines:
@@ -164,7 +160,7 @@ class WriterStringIO(Node):
         # Leave the file positioned at the beginning
         self.out.seek(0)
 
-    def next(self, data):
+    def next(self, data, info=""):
         fd = self.p.fd()
         if isinstance(data, str):
             fd.write(data)

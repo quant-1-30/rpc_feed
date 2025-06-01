@@ -3,10 +3,10 @@
 
 import re
 
-from meta import MetaParams
+from rpc_feed.meta import MetaParams, with_metaclass
 
 
-class Filter(metaclass=MetaParams):
+class Filter(with_metaclass(MetaParams, object)):
     
     def __donew__(cls, *args, **kwargs):
         _obj, args, kwargs = super().__new__(cls, *args, **kwargs)

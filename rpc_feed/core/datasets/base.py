@@ -1,7 +1,7 @@
 #! /usr/bin/env python3 
 # -*- coding: utf-8 -*-
 
-from meta import MetaParams, with_metaclass
+from rpc_feed.meta import MetaParams, with_metaclass
 
 
 class MetaProvider(MetaParams):
