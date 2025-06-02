@@ -41,7 +41,7 @@ class FeedMeta(MetaParams):
         _obj, args, kwargs = super(FeedMeta, cls).donew(*args, **kwargs)
         _obj.datasets = _providers
         _obj.pipeline = Graph()
-        _obj._filter = _filters.get(_obj.p._filter)
+        # _obj._filter = _filters.get(_obj.p._filter)
         return _obj, args, kwargs
     
     @staticmethod
@@ -57,16 +57,16 @@ class FeedMeta(MetaParams):
 class BtFeed(with_metaclass(FeedMeta, object)):
 
     params = (
-        ("_filter", "asset"),
+        # ("_filter", "null"),
     )
 
-    def load(self, graph_xml, dataset_path, prefix):
+    def load(self, graph_xml, dataset_path, prefix, _filter="null"):
         '''
         Adds a ``Data Feed`` instance to the mix.
         If ``name`` is not None it will be put into ``data._name`` which is
         meant for decoration/plotting purposes.
         '''
-        iterables = recursive_glob(dataset_path, suffix=prefix, filter=self._filter)
+        iterables = recursive_glob(dataset_path, suffix=prefix, filter=_filters[_filter])
         self.pipeline.to_execute(graph_xml, iterables)
 
     async def __call__(self, dataset, request: Request):

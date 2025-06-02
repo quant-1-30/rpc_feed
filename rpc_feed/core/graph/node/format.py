@@ -31,11 +31,11 @@ class Decode(Node):
         tick = datetime.datetime(year, month, day, hour, minute)
         return tick
     
-    def next(self, df: pd.DataFrame):
-        if df:
-            assert "dates" in df.columns, "missing dates column"
-            df["tick"] = df.loc[:, self.p.lines].apply(lambda _slice: self.prenext(_slice), axis=1)
-        return df
+    def next(self, meta: pd.DataFrame, params: dict={}):
+        if meta:
+            assert "dates" in meta.columns, "missing dates column"
+            meta["tick"] = meta.loc[:, self.p.lines].apply(lambda _slice: self.prenext(_slice), axis=1)
+        return meta
 
     def __repr__(self):
         format_string = "format: %s" % self.__class__.__name__
@@ -65,7 +65,7 @@ class UTC(Node):
         utc_timestamp = localized.astimezone(tz=tz).timestamp() 
         return utc_timestamp
     
-    def next(self, df: pd.DataFrame) -> Any:
+    def next(self, meta: pd.DataFrame, params: dict={}) -> Any:
         """
             Converts a UTC tz-naive timestamp to a tz-aware timestamp.
             Normalize a time. If the time is tz-naive, assume it is UTC.
@@ -73,9 +73,9 @@ class UTC(Node):
             that we are losing the nanoseconds; however, this is intended.
             return pd.Timestamp(ts.to_pydatetime(warn=False), tz='UTC')
         """
-        if df:
-            df["tick"] = df["tick"].apply(lambda x: self.prenext(x))
-        return df
+        if meta:
+            meta["tick"] = meta["tick"].apply(lambda x: self.prenext(x))
+        return meta
 
     def __repr__(self):
         format_string = "format: %s" % self.__class__.__name__
@@ -95,7 +95,7 @@ class Multiply(Node):
             df[col] = df[col].map(lambda x: np.float32(x) * self.p.multiply)
         return df
 
-    def next(self, df: pd.DataFrame):
-        if df:
-            df = self.prenext(df)
-        return df
+    def next(self, meta: pd.DataFrame, params: dict={}):
+        if meta:
+            meta = self.prenext(meta)
+        return meta

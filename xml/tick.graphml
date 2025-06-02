@@ -15,12 +15,36 @@
     <key id="version" for="node" attr.name="version" attr.type="string"/>
 
     <graph id="G" edgedefault="directed">
-        <node id="TextLoader"/>
-        <!-- <node id="Normalize"/> -->
-        <node id="UTC"/>
-        <node id="ProcessNa"/>
-        <node id="ProcessInf"/>
-        <node id="Multiply"/>
+        <node id="StructUnpacker">
+            <data key="type">unpacker</data>
+            <data key="description">Unpacks data from binary format</data>
+            <data key="priority">1</data>
+            <data key="enabled">true</data>
+            
+            <!-- 业务属性 -->
+            <data key="params">{}</data>
+            <data key="version">2.1.0</data>
+        </node>
+        <node id="Decode">
+            <data key="type">decoder</data>
+            <data key="description">Decodes data from binary format</data>
+            <data key="priority">1</data>
+            <data key="enabled">true</data>
+            
+            <!-- 业务属性 -->
+            <data key="params">{}</data>
+            <data key="version">2.1.0</data>
+        </node>
+        <node id="Multiply">
+            <data key="type">multiplier</data>
+            <data key="description">Multiplies data</data>
+            <data key="priority">1</data>
+            <data key="enabled">true</data>
+            
+            <!-- 业务属性 -->
+            <data key="params">{}</data>
+            <data key="version">2.1.0</data>
+        </node>
         <node id="PgWriter">
             <data key="type">writer</data>
             <data key="description">Writes data to PostgreSQL</data>
@@ -28,10 +52,11 @@
             <data key="enabled">true</data>
             
             <!-- 业务属性 -->
-            <data key="params">{"table": "adjustment"}</data>
+            <data key="params">{"table": "tick"}</data>
             <data key="version">2.1.0</data>
         </node>
-        <edge source="TextLoader" target="UTC"/>
+        <edge source="StructUnpacker" target="Decode"/>
+        <edge source="Decode" target="UTC"/>
         <edge source="UTC" target="ProcessNa"/>
         <edge source="ProcessNa" target="ProcessInf"/>
         <edge source="ProcessInf" target="Multiply"/>

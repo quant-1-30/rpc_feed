@@ -2,26 +2,27 @@
 # -*- coding: utf-8 -*-
 
 import re
-
+from typing import List, Any
 from rpc_feed.meta import MetaParams, with_metaclass
 
 
-class Filter(with_metaclass(MetaParams, object)):
+class MetaFilter(MetaParams):
     
-    def __donew__(cls, *args, **kwargs):
-        _obj, args, kwargs = super().__new__(cls, *args, **kwargs)
-
-        _obj.filter = lambda x: re.match(_obj.p._regex, x)
-
+    def donew(cls, *args, **kwargs):
+        _obj, args, kwargs = super(MetaFilter, cls).donew(*args, **kwargs)
+        _obj.filter = lambda x: re.match(_obj.p.regex, x).group()
         return _obj, args, kwargs
     
-    def __call__(self, data):
-        return [d for d in data if self.filter(d)]
+    
+class Filter(with_metaclass(MetaFilter, object)):
+
+    def __call__(self, meta):
+        return True if self.filter(meta) else False
 
 
 class Nullfilter(Filter):
 
-    params = (("regex", "*"),)
+    params = (("regex", ".*"),)
 
 class AssetFilter(Filter):
 
@@ -34,7 +35,7 @@ class FundFilter(Filter):
 
 
 _filters = {
-    "null": Nullfilter,
-    "asset": AssetFilter,
-    "fund": FundFilter,
+    "null": Nullfilter(),
+    "asset": AssetFilter(),
+    "fund": FundFilter(),
 }

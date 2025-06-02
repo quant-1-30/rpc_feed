@@ -25,11 +25,11 @@ class StructUnpacker(Node):
         ("subset", None),
     )
 
-    def next(self, path):
+    def next(self, meta, params: dict={}):
         frame=pd.DataFrame()
-        if path:
-            sid = os.path.basename(path).split(self.p.sep)[0][2:]
-            with open(path, 'rb') as f:
+        if meta:
+            sid = os.path.basename(meta).split(self.p.sep)[0][2:]
+            with open(meta, 'rb') as f:
                 buf = f.read()
                 size = int(len(buf) / self.p.buflen)
                 data = []
@@ -52,12 +52,12 @@ class AvroUnpacker(Node):
         ("subset", None),
         )
 
-    def next(self, path):
+    def next(self, meta, params: dict={}):
         frame = pd.DataFrame()
-        if path:
+        if meta:
             # tick.avro
             arrays = []
-            reader = DataFileReader(open(path, "rb"), DatumReader())
+            reader = DataFileReader(open(meta, "rb"), DatumReader())
             for ele in reader:
                 arrays.append(ele)
             reader.close()
@@ -78,19 +78,21 @@ class TextLoader(Node):
         ('seplen', 79),
         ("dtype", {"sid": "str"}),
         ("alias", "avro"),
+        ("subset", None),
     )
 
-    def prenext(self, path):
+    def prenext(self, meta):
         lines = []
-        with open(path, "r") as f:
+        with open(meta, "r") as f:
             for line in f.readlines:
                 lines.append(line)
             return lines
 
-    def next(self, path):
-        if path.endswith(".csv"):
-            frame = pd.read_csv(path, dtype=self.p.dtype, sep=self.p.csvsep)
+    def next(self, meta, params: dict={}):
+        if meta.endswith(".csv"):
+            frame = pd.read_csv(meta, dtype=self.p.dtype, sep=self.p.csvsep)
         else:
-            frame = self.prenext(path)
+            frame = self.prenext(meta)
         frame.drop_duplicates(subset=self.p.subset, inplace=True) if self.p.subset else frame.drop_duplicates(inplace=True)
-        return frame
+        values = list(frame.T.to_dict().values())
+        return values

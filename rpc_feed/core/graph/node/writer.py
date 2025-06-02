@@ -20,8 +20,8 @@ class AvroWriter(Node):
 
     params = (("is_async", True),)
 
-    def next(self, data: pd.DataFrame, info=[]) -> Any:
-        schema_path, data_path = info
+    def next(self, meta: pd.DataFrame, params: dict={}) -> Any:
+        schema_path, data_path = params.values()
         # ticker.avsc
         schema = avro.schema.parse(open(schema_path, "rb").read())
         # users.avro 
@@ -30,7 +30,7 @@ class AvroWriter(Node):
         #     print (user)
         # reader.close()
         writer = DataFileWriter((open(data_path), "wb"), DatumWriter(), schema)
-        dicts = data.to_dict()
+        dicts = meta.to_dict()
         for element in dicts.values:
             # element --- {"name": "Ben", "favorite_number": 7, "favorite_color": "red"}
             writer.append(element)
@@ -46,14 +46,14 @@ class PgWriter(Node):
         ("is_async", True),
     )
     
-    async def next(self, data: Union[pd.DataFrame, List[dict], dict], info=""):
+    async def next(self, meta: Union[pd.DataFrame, List[dict], dict], params: dict={}):
         async with async_ops as ctx:
             try:
-                await ctx.on_insert(info, data)
+                await ctx.on_insert(params["table"], meta)
                 status = {"status": 0, "error": ""}
             except Exception as e:
-                print(e)
-            status = {"status": 1, "error": str(e)}
+                print("PgWriter Error", e)
+                status = {"status": 1, "error": str(e)}
         return status
 
 
@@ -132,10 +132,10 @@ class CsvWriter(Node):
             csv_header = sep.join(headers)
             await self._writeline(csv_header)
 
-    async def next(self, lines, info=""):
-        if lines:
+    async def next(self, meta, params: dict={}):
+        if meta:
             await self.writelineseparator()
-            for l in lines:
+            for l in meta:
                 await self._writeline(l + '\n')
             self.stop() 
 
@@ -160,12 +160,12 @@ class WriterStringIO(Node):
         # Leave the file positioned at the beginning
         self.out.seek(0)
 
-    def next(self, data, info=""):
+    def next(self, meta, params: dict={}):
         fd = self.p.fd()
-        if isinstance(data, str):
-            fd.write(data)
+        if isinstance(meta, str):
+            fd.write(meta)
         else:
-            for chunk in data:
+            for chunk in meta:
                 fd.write(str(chunk))
         # self.fetch_size = fd.tell()
         fd.close()

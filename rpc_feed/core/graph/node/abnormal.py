@@ -29,11 +29,11 @@ class ProcessNa(Node):
         df.values[nan_select] = self.p.na  
         return df
 
-    def next(self, df: pd.DataFrame):
+    def next(self, meta: pd.DataFrame, params: dict={}):
         # inf and na
-        if len(df):
-            df = self.prenext(df)  
-        return df
+        if len(meta):
+            meta = self.prenext(meta)  
+        return meta
 
 
 @registry
@@ -57,9 +57,9 @@ class ProcessInf(Node):
         df.sort_index(inplace=True)
         return df
 
-    def next(self, df: pd.DataFrame):
+    def next(self, meta: pd.DataFrame, params: dict={}):
         # # validate columns
-        if len(df):
-            df = self.prenext(df)
-        return df
+        if len(meta):
+            meta = self.prenext(meta)
+        return meta
     

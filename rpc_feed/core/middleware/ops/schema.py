@@ -32,7 +32,7 @@ class Calendar(Base):
     __table_args__ = {"extend_existing": True}
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
-    trading_date: Mapped[int] = mapped_column(Integer,unique=True, nullable=False, primary_key=True, use_existing_column=True)
+    trading_date: Mapped[int] = mapped_column(Integer, unique=True, nullable=False, use_existing_column=True)
 
 
 class Asset(Base):

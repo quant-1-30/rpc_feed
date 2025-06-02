@@ -1,16 +1,17 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-import pdb
+import re
 import os
+import sys
 import shutil
 import configparser
 import yaml
 import inspect
 import pandas as pd
 import numpy as np
+import warnings
 from typing import Union
 from yaml import SafeLoader
-import re
 from tempfile import mkdtemp
 from pathlib import Path
 from contextlib import contextmanager
@@ -86,12 +87,6 @@ def build_from_cfg(obj_type):
         obj: The constructed object.
     """
     print("registry modules", registry._module_dict.keys())
-    import pdb
-    # assert isinstance(cfg, dict) and "type" in cfg
-    # args = cfg.copy()
-    # obj_type = args.pop("type")
-    # obj_alias = args.pop("alias", "")
-    # pdb.set_trace()
     if isinstance(obj_type, str):
         obj_cls = registry.get(obj_type)
         if obj_cls is None:
@@ -129,9 +124,13 @@ def recursive_glob(root_path: str, suffix: str, filter: Callable[[str], bool]) -
     expand_root_path = os.path.expanduser(root_path)
 
     if not os.path.exists(expand_root_path):
-        return  # Nothing to yield
+        # asyncio need to exit
+        # raise ValueError(f'{expand_root_path} not found')
+        warnings.warn(f'{expand_root_path} not found')
+        sys.exit(0)
 
     for root, _, files in os.walk(expand_root_path):
+
         # 递归每个层级files
         for file in files:
             file_path = os.path.join(root, file)

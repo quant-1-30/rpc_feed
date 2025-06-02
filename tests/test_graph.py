@@ -47,24 +47,24 @@ if __name__ == "__main__":
 
    #  args = parse_args()
    #  print(args)
-   #  bt_feed.load(args.dataset, args.xml)
     
-    dataset_path = os.path.join(os.path.expanduser("~"), "Downloads/quant/calendar")
-    xml = "../xml/calendar.graphml"
-    bt_feed.load(xml, dataset_path, prefix=".csv")
+   #  dataset_path = os.path.join(os.path.expanduser("~"), "Downloads/quant/calendar")
+   #  xml = "../xml/calendar.graphml"
+   #  bt_feed.load(xml, dataset_path, prefix=".csv")
 
    #  dataset_path = os.path.join(os.path.expanduser("~"), "Downloads/quant/assets")
    #  xml = "../xml/asset.graphml"
    #  bt_feed.load(xml, dataset_path, prefix="csv")
     
-   #  dataset_path = os.path.join(os.path.expanduser("~"), "/Volumes/hengxin/quant/raw_data/minutes")
-   #  xml = "../xml/minute.graphml"
-   #  bt_feed.load(xml, dataset_path, prefix=".01", filter=True)
+    dataset_path = os.path.join(os.path.expanduser("~"), "/Volumes/hengxin/quant/raw_data/minutes")
+    xml = "../xml/tick.graphml"
+    bt_feed.load(xml, dataset_path, prefix=".01", _filter="asset")
     
    #  dataset_path = os.path.join(os.path.expanduser("~"), "Downloads/quant/adjustments")
    #  xml = "../xml/adjustment.graphml"
-   #  bt_feed.load(xml, dataset_path, prefix="csv", filter=True)
+   #  bt_feed.load(xml, dataset_path, prefix="csv")
 
    #  dataset_path = os.path.join(os.path.expanduser("~"), "Downloads/quant/rights")
    #  xml = "../xml/rightment.graphml"
-   #  bt_feed.load(xml, dataset_path, prefix="csv", filter=True)
+   #  bt_feed.load(xml, dataset_path, prefix="csv")
+

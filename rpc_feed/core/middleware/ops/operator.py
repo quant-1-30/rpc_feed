@@ -95,15 +95,13 @@ class AsyncOps(with_metaclass(MetaSingleton, object)):
 
     @asynccontextmanager
     async def get_db(self):
-        await self._ensure_initialized()        
-             
+        await self._ensure_initialized()                
         AsyncSessionLocal = sessionmaker(
             bind=self.engine,
             class_=AsyncSession,
             expire_on_commit=False
         )
         session = AsyncSessionLocal()
-        print("session", session)
         try:
                 yield session
         finally:
@@ -120,14 +118,15 @@ class AsyncOps(with_metaclass(MetaSingleton, object)):
                 async for row in stream:
                     yield row
 
-    async def on_insert(self, table_name: str, data: Union[pd.DataFrame, List[dict], dict]):
+    async def on_insert(self, table_name: str, data: Union[List[dict], dict]):
+        print("on_insert", table_name, data)
         # await self._ensure_initialized()
         async with self.get_db() as session:
             async with session.begin():
-                if isinstance(data, pd.DataFrame):
-                    inserts = list(data.T.to_dict().values())
-                    # Iterable 可迭代对象 __iter__ 使用for / Iterator 迭代器 __iter__ , __next__ yield
-                elif isinstance(data, Iterable):
+                # if isinstance(data, pd.DataFrame):
+                #     inserts = list(data.T.to_dict().values())
+                # Iterable 可迭代对象 __iter__ 使用for / Iterator 迭代器 __iter__ , __next__ yield
+                if isinstance(data, Iterable):
                     inserts = data
                 else:
                     inserts = [data]
