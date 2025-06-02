@@ -13,6 +13,9 @@ import os, pickle, errno, pandas as pd
 
 from .paths import ensure_directory
 
+def nop_context():
+    pass
+
 
 # cacheObject --- bar_reader
 class Expired(Exception):

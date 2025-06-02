@@ -219,8 +219,8 @@ class SequentialPool(object):
     --------
     :class:`multiprocessing.Pool`
     """
-    map = staticmethod(compose(list, imap))
-    imap = imap_unordered = staticmethod(imap)
+    map = staticmethod(compose(list, Pool.imap))
+    imap = imap_unordered = staticmethod(Pool.imap)
 
     @staticmethod
     def apply_async(f, args=(), kwargs=None, callback=None):

@@ -17,18 +17,15 @@ def convert_node_to_serializable(node):
         params=node.params
     )
 
-
 def build_node_from_serializable(s_node):
     module = importlib.import_module(s_node.module_path)
     cls = getattr(module, s_node.class_name)
     instance = cls()
     return instance, s_node.params
 
-
 def init_worker(serialized_graph_):
     global _serialized_graph
     _serialized_graph = serialized_graph_
-
 
 def run_sync_pipeline_global(item):
     global _serialized_graph
