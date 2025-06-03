@@ -10,7 +10,7 @@ class MetaFilter(MetaParams):
     
     def donew(cls, *args, **kwargs):
         _obj, args, kwargs = super(MetaFilter, cls).donew(*args, **kwargs)
-        _obj.filter = lambda x: re.match(_obj.p.regex, x).group()
+        _obj.filter = lambda x: re.match(_obj.p.regex, x)
         return _obj, args, kwargs
     
     
@@ -26,12 +26,12 @@ class Nullfilter(Filter):
 
 class AssetFilter(Filter):
 
-    params = (("regex", "^[6|0|3][0-9]{5}$"),)
+    params = (("regex", "^(sh|sz)(6|0|3)\d{5}(?:)"),)
 
 
 class FundFilter(Filter):
 
-    params = (("regex", "^[51|15]{4}$"),) 
+    params = (("regex", "^(51|15)\d{4}(?:)"),) 
 
 
 _filters = {

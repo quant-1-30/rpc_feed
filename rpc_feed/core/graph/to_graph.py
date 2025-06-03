@@ -99,6 +99,7 @@ class Graph(object):
 
     async def _run_with_async_tail(self, iterables):
         consumer_task = asyncio.create_task(self.async_consume())
+
         # for iter_item in iterables:
         #     print("iter_item", iter_item)
         #     processed_item = self.run_sync_pipeline(iter_item)
@@ -115,7 +116,7 @@ class Graph(object):
             initargs=(serialized_graph,)
         ) as pool:
             for processed_item in pool.imap_unordered(run_sync_pipeline_global, iterables):
-                print("put into queue", processed_item)
+                print("put into queue", len(processed_item))
                 await self.queue.put(processed_item)
         # set exit signal
         await self.queue.put(None)

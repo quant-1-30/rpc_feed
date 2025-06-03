@@ -16,17 +16,25 @@ class ProcessNa(Node):
 
     params = (
         ("na", 0),
-        ("exclude", "tick"), 
+        ("exclude", ["tick"]), 
         )
 
     def prenext(self, df):
-        # df.fillna(self.fill_value, inplace=True)
-        # this implementation is extremely slow
-        # df.fillna({col: self.fill_value for col in cols}, inplace=True)
-        # So we use numpy to accelerate filling values
-        nan_select = np.isnan(df.values)
-        nan_select[:, ~df.columns.isin(self.p.exclude)] = False
-        df.values[nan_select] = self.p.na  
+        # Convert only numeric columns to float to handle NaN
+        numeric_cols = df.select_dtypes(include=[np.number]).columns
+        numeric_df = df[numeric_cols].astype(float)
+        
+        # Create mask for NaN values in numeric columns
+        nan_select = np.isnan(numeric_df.values)
+        
+        # Apply mask only to non-excluded columns
+        exclude_mask = ~numeric_df.columns.isin(self.p.exclude)
+        nan_select[:, exclude_mask] = False
+        
+        # Fill NaN values
+        df.loc[:, numeric_cols] = numeric_df.values
+        df.loc[:, numeric_cols][nan_select] = self.p.na
+        
         return df
 
     def next(self, meta: pd.DataFrame, params: dict={}):

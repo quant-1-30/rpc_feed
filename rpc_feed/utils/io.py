@@ -134,5 +134,6 @@ def recursive_glob(root_path: str, suffix: str, filter: Callable[[str], bool]) -
         # 递归每个层级files
         for file in files:
             file_path = os.path.join(root, file)
-            if file.endswith(suffix) and filter(file_path):
+            if file.endswith(suffix) and filter(file):
+                print("recursive_glob ", file_path)
                 yield file_path

@@ -40,4 +40,7 @@ mysql tool:
 2\ 执行 struct data
 3\ df -h --- mac外接硬盘
 4\ rpc_server --- original data / quote --- calc adjustment coef as line pass to sdk
+5\  data sync  trading_day / asset 
 
+ALTER TABLE table_name 
+ALTER COLUMN column_name TYPE new_data_type;

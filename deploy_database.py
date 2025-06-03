@@ -49,7 +49,7 @@ async def create_partitions_by_quarter(start: str, end: str):
             q_start = utc_start.replace(day=1)
             q_end = q_start + relativedelta(months=3)
             table_suffix = f"{q_start.year}q{(q_start.month - 1)//3 + 1}"
-            table_name = f"stock_minute_data_{table_suffix}"
+            table_name = f"tick_{table_suffix}"
 
             sql = f"""
             CREATE TABLE IF NOT EXISTS {table_name}

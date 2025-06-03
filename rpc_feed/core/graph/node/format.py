@@ -32,7 +32,7 @@ class Decode(Node):
         return tick
     
     def next(self, meta: pd.DataFrame, params: dict={}):
-        if meta:
+        if len(meta):
             assert "dates" in meta.columns, "missing dates column"
             meta["tick"] = meta.loc[:, self.p.lines].apply(lambda _slice: self.prenext(_slice), axis=1)
         return meta
@@ -73,7 +73,7 @@ class UTC(Node):
             that we are losing the nanoseconds; however, this is intended.
             return pd.Timestamp(ts.to_pydatetime(warn=False), tz='UTC')
         """
-        if meta:
+        if len(meta):
             meta["tick"] = meta["tick"].apply(lambda x: self.prenext(x))
         return meta
 
@@ -96,6 +96,6 @@ class Multiply(Node):
         return df
 
     def next(self, meta: pd.DataFrame, params: dict={}):
-        if meta:
+        if len(meta):
             meta = self.prenext(meta)
         return meta

@@ -1,9 +1,8 @@
 #! /usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-import argparse
 import os
-import pytest
+import argparse
 
 from rpc_feed.feed import bt_feed
 
@@ -60,11 +59,3 @@ if __name__ == "__main__":
     xml = "../xml/tick.graphml"
     bt_feed.load(xml, dataset_path, prefix=".01", _filter="asset")
     
-   #  dataset_path = os.path.join(os.path.expanduser("~"), "Downloads/quant/adjustments")
-   #  xml = "../xml/adjustment.graphml"
-   #  bt_feed.load(xml, dataset_path, prefix="csv")
-
-   #  dataset_path = os.path.join(os.path.expanduser("~"), "Downloads/quant/rights")
-   #  xml = "../xml/rightment.graphml"
-   #  bt_feed.load(xml, dataset_path, prefix="csv")
-

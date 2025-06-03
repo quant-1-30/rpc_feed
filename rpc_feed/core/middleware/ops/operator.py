@@ -11,8 +11,9 @@ from contextlib import asynccontextmanager
 from functools import lru_cache
 
 from .schema import Base
-from rpc_feed.meta import with_metaclass, MetaParams, MetaSingleton
+from rpc_feed.meta import with_metaclass, MetaSingleton
 
+__all__ = ["async_ops"]
 
 class AsyncOps(with_metaclass(MetaSingleton, object)):
     """Local provider class
@@ -21,22 +22,25 @@ class AsyncOps(with_metaclass(MetaSingleton, object)):
 
     To keep compatible with old qlib provider.
     """
+    # psycopp / asyncpg
     params = (
         ("host", "localhost"),
         ("port", "5432"),
         ("user", "postgres"),
         ("pwd", "20210718"),
         ("db", "bt_feed"),
-        ("engine", "psycopg"),
+        ("engine", "asyncpg"),
         ("pool_size", 20),
         ("max_overflow", 10),
         ("pool_recycle", 3600),
         ("pool_pre_ping", True),
-        ("echo", True)
+        ("echo", False)
     )
 
     def __init__(self):
         self._initialized = False
+        self.session = None
+        self.engine = None
 
     async def __aenter__(self):
         await self._ensure_initialized()
@@ -87,25 +91,26 @@ class AsyncOps(with_metaclass(MetaSingleton, object)):
             MapBase = automap_base(metadata=Base.metadata)
             await conn.run_sync(MapBase.prepare)
         
-        setattr(self, "engine", engine)
-        # Table object
-        setattr(self, "_tables", Base.metadata.tables)
+        self.engine = engine
+        # # Table object
+        # setattr(self, "_tables", Base.metadata.tables)
         # tables to orm classes
-        setattr(self, "_orm_map", MapBase.classes)
+        self._orm_map = MapBase.classes
 
     @asynccontextmanager
     async def get_db(self):
-        await self._ensure_initialized()                
-        AsyncSessionLocal = sessionmaker(
-            bind=self.engine,
-            class_=AsyncSession,
-            expire_on_commit=False
-        )
-        session = AsyncSessionLocal()
+        if self.session is None:
+            await self._ensure_initialized()                
+            AsyncSessionLocal = sessionmaker(
+                bind=self.engine,
+                class_=AsyncSession,
+                expire_on_commit=False
+            )
+            self.session = AsyncSessionLocal()
         try:
-                yield session
+                yield self.session
         finally:
-                await session.close()
+                await self.session.close()
     
     async def on_query(self, query):
         # await self._ensure_initialized()
@@ -119,14 +124,14 @@ class AsyncOps(with_metaclass(MetaSingleton, object)):
                     yield row
 
     async def on_insert(self, table_name: str, data: Union[List[dict], dict]):
-        print("on_insert", table_name, data)
+        print(f"insert {len(data)} into {table_name}")
         # await self._ensure_initialized()
         async with self.get_db() as session:
             async with session.begin():
-                # if isinstance(data, pd.DataFrame):
-                #     inserts = list(data.T.to_dict().values())
+                if isinstance(data, pd.DataFrame):
+                    inserts = list(data.T.to_dict().values())
                 # Iterable 可迭代对象 __iter__ 使用for / Iterator 迭代器 __iter__ , __next__ yield
-                if isinstance(data, Iterable):
+                elif isinstance(data, Iterable):
                     inserts = data
                 else:
                     inserts = [data]
@@ -153,7 +158,6 @@ class AsyncOps(with_metaclass(MetaSingleton, object)):
         # await self._ensure_initialized()
         async with self.get_db() as session:
             async with session.begin():
-                print("on_insert_obj", objs)
                 objs = [objs] if not isinstance(objs, Iterable) else objs
                 session.add_all(objs)
                 # session.bulk_save_objects(objs)
@@ -181,13 +185,12 @@ class AsyncOps(with_metaclass(MetaSingleton, object)):
                 print(f"Error: {exc_type}, {exc_value}, {traceback}")
             # True mean suppress exception
             return True
+    
+    async def cleanup(self):
+        if self.engine:
+            await self.engine.dispose()
+            self.engine = None
+        self._initialized = False
 
-# self.conn.execute(
-#     "CREATE INDEX IF NOT EXISTS stock_dividends_payouts_ex_date "
-#     "ON stock_dividend_payouts(ex_date)"
-# )
-# # kwargs = {"pool_size":100}
 
 async_ops = AsyncOps()
-
-__all__ = ["async_ops"]

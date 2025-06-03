@@ -4,7 +4,7 @@
 from typing import List
 from typing import Optional
 from sqlalchemy import func
-from sqlalchemy import Integer, String, ForeignKey, BigInteger, UUID
+from sqlalchemy import Integer, String, ForeignKey, BigInteger, UUID, Float
 from sqlalchemy.orm import DeclarativeBase
 from sqlalchemy.orm import Mapped
 from sqlalchemy.orm import mapped_column
@@ -59,7 +59,7 @@ class Line(Base):
    
     __tablename__ = "tick"
     __table_args__ = (
-        PrimaryKeyConstraint("sid", "tick", name="pk_sid_tick_line"),
+        PrimaryKeyConstraint("sid", "tick", name="pk_sid_tick"),
         {'postgresql_partition_by': 'RANGE (tick)', "extend_existing": True},
     )
     # 在 PostgreSQL 中，只有当某个字段是主键或有 SERIAL 或 IDENTITY 声明时，它才会自动自增。
@@ -68,7 +68,7 @@ class Line(Base):
     sid: Mapped[str] = mapped_column(String(20), 
                                      ForeignKey("asset.sid", onupdate="CASCADE", ondelete="CASCADE"), 
                                      nullable=False, use_existing_column=True)
-    tick: Mapped[int] = mapped_column(BigInteger, unique=True, nullable=False, use_existing_column=True, index=True)
+    tick: Mapped[int] = mapped_column(BigInteger, nullable=False, use_existing_column=True, index=True)
     open: Mapped[int] = mapped_column(Integer, nullable=False, use_existing_column=True)
     high: Mapped[int] = mapped_column(Integer, nullable=False, use_existing_column=True)
     low: Mapped[int] = mapped_column(Integer, nullable=False, use_existing_column=True)
@@ -95,7 +95,7 @@ class Adjustment(Base):
 
     __tablename__ = "adjustment"
     __table_args__ = (
-        UniqueConstraint("sid", "register_date", name="uq_sid_register_date_adjustment"),
+        UniqueConstraint("sid", "report_date", name="uq_sid_report_date_adjustment"),
         {"extend_existing": True},
     )
 
@@ -103,11 +103,12 @@ class Adjustment(Base):
     sid: Mapped[str] = mapped_column(String(20), 
                                      ForeignKey("asset.sid", onupdate="CASCADE", ondelete="CASCADE"), 
                                      nullable=False, use_existing_column=True)
+    report_date: Mapped[int] = mapped_column(Integer, nullable=False, use_existing_column=True)
     register_date: Mapped[int] = mapped_column(Integer, nullable=False, use_existing_column=True)
     ex_date: Mapped[int] = mapped_column(Integer, nullable=False, use_existing_column=True)
-    share: Mapped[int] = mapped_column(Integer, nullable=True, use_existing_column=True)
-    transfer: Mapped[int] = mapped_column(Integer, nullable=True, use_existing_column=True)
-    interest: Mapped[int] = mapped_column(Integer, nullable=True, use_existing_column=True)
+    bonus_share: Mapped[float] = mapped_column(Float, nullable=True, use_existing_column=True)
+    transfer: Mapped[float] = mapped_column(Float, nullable=True, use_existing_column=True)
+    bonus: Mapped[float] = mapped_column(Float, nullable=True, use_existing_column=True)
 
     asset: Mapped["Asset"] = relationship("Asset", back_populates="adjustment")
 
@@ -121,7 +122,7 @@ class Rightment(Base):
 
     __tablename__ = "rightment"
     __table_args__ = (
-        UniqueConstraint("sid", "register_date", name="uq_sid_register_date_rightment"),
+        UniqueConstraint("sid", "ex_date", name="uq_sid_ex_date_rightment"),
         {"extend_existing": True},
     )
 
@@ -132,14 +133,14 @@ class Rightment(Base):
     register_date: Mapped[int] = mapped_column(Integer, nullable=False, use_existing_column=True)
     ex_date: Mapped[int] = mapped_column(Integer, nullable=False, use_existing_column=True)
     # effective_date: Mapped[int] = mapped_column(Integer, nullable=False, use_existing_column=True)
-    price: Mapped[int] = mapped_column(Integer, nullable=True, use_existing_column=True)
-    ratio: Mapped[int] = mapped_column(Integer, nullable=True, use_existing_column=True)
+    price: Mapped[float] = mapped_column(Float, nullable=True, use_existing_column=True)
+    ratio: Mapped[float] = mapped_column(Float, nullable=True, use_existing_column=True)
 
     asset: Mapped["Asset"] = relationship("Asset", back_populates="rightment")
 
 
-# --- Partitioning Support ---
-# compile create table with partition by or raw sql ddl
+# # --- Partitioning Support ---
+# # compile create table with partition by or raw sql ddl
 @compiles(CreateTable)
 def compile_create_partition_table(element, compiler, **kw):
     table = element.element
