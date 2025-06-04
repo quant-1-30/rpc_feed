@@ -25,12 +25,12 @@ class StructUnpacker(Node):
         ("subset", None),
     )
 
-    def next(self, meta, params: dict={}):
-        if not meta:
+    def next(self, path, params: dict={}):
+        if not path:
             return pd.DataFrame()
-        sid = os.path.basename(meta).split(self.p.sep)[0][2:]
+        sid = os.path.basename(path).split(self.p.sep)[0][2:]
         frame = pd.DataFrame()
-        with open(meta, 'rb') as f:
+        with open(path, 'rb') as f:
             buf = f.read()
             size = int(len(buf) / self.p.buflen)
             data = []
@@ -54,13 +54,13 @@ class AvroUnpacker(Node):
         ("subset", None),
         )
 
-    def next(self, meta, params: dict={}):
-        if not meta:
+    def next(self, path, params: dict={}):
+        if not path:
             return pd.DataFrame()
         frame = pd.DataFrame()
         # tick.avro
         arrays = []
-        reader = DataFileReader(open(meta, "rb"), DatumReader())
+        reader = DataFileReader(open(path, "rb"), DatumReader())
         for ele in reader:
             arrays.append(ele)
         reader.close()
@@ -84,21 +84,21 @@ class TextLoader(Node):
         ("subset", None),
     )
 
-    def prenext(self, meta):
+    def prenext(self, path):
         lines = []
-        with open(meta, "r") as f:
+        with open(path, "r") as f:
             for line in f.readlines:
                 lines.append(line)
             return lines
 
-    def next(self, meta, params: dict={}):
-        if not meta:
+    def next(self, path, params: dict={}):
+        if not path:
             return []
 
-        if meta.endswith(".csv"):
-            frame = pd.read_csv(meta, dtype=self.p.dtype, sep=self.p.csvsep)
+        if path.endswith(".csv"):
+            frame = pd.read_csv(path, dtype=self.p.dtype, sep=self.p.csvsep)
             frame.drop_duplicates(subset=self.p.subset, inplace=True) if self.p.subset else frame.drop_duplicates(inplace=True)
             values = list(frame.T.to_dict().values())
         else:
-            values = self.prenext(meta)
+            values = self.prenext(path)
         return values

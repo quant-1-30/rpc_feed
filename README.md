@@ -44,3 +44,9 @@ mysql tool:
 
 ALTER TABLE table_name 
 ALTER COLUMN column_name TYPE new_data_type;
+
+
+minute data ---> via parquet
+
+dimension:
+1\ year / quarter

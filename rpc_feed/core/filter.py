@@ -25,7 +25,7 @@ class Nullfilter(Filter):
 
 class AssetFilter(Filter):
 
-    params = (("regex", "^(sh|sz)(6|0|3)\d{5}(?:)"),)
+    params = (("regex", "^(sh6|sz0|sz3)\d{5}(?:)"),)
 
 
 class FundFilter(Filter):

@@ -46,6 +46,7 @@ def get_quarter_path(base_path, date_str, fmt="%Y-%m-%d"):
     date = str2date(date_str, _format=fmt)
     year = date.year
     quarter = (date.month - 1) // 3 + 1
+    base_path = os.path.expanduser(base_path)
     quarter_path = os.path.join(base_path, str(year), f"Q{quarter}")
     os.makedirs(quarter_path, exist_ok=True)
     return quarter_path
