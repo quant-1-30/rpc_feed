@@ -8,7 +8,7 @@ import psycopg
 from sqlalchemy import text
 from dateutil.relativedelta import relativedelta
 from rpc_feed.core.middleware.ops.operator import async_ops
-from rpc_feed.utils.dt_utilty import loc2utc
+from rpc_feed.utils.dt_utilty import ensure_utc
 
 
 async def create_database():
@@ -41,8 +41,8 @@ async def init_orm():
 
 
 async def create_partitions_by_quarter(start: str, end: str):
-    utc_start = loc2utc(start, fmt="%Y-%m-%d")
-    utc_end = loc2utc(end, fmt="%Y-%m-%d")
+    utc_start = ensure_utc(start, fmt="%Y-%m-%d")
+    utc_end = ensure_utc(end, fmt="%Y-%m-%d")
 
     async with async_ops as ctx:
         while utc_start < utc_end:

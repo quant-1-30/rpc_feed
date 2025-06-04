@@ -11,25 +11,70 @@ import pytz
 import bisect
 from datetime import timedelta
 from typing import Union
+from typing import Any
 
 MAX_MONTH_RANGE = 23
 MAX_WEEK_RANGE = 5
 
-def loc2utc(dt: datetime.datetime, localize_tz="Asia/Shanghai", fmt="%Y-%m-%d"):
-    # datetime.timestamp()：无论当前对象是哪个时区的（只要是 aware datetime），它都转换为 UTC 再计算秒数。
-    # 所以 .astimezone(pytz.UTC).timestamp() 和 .timestamp() 是一样的
-    native_tz = pytz.timezone(localize_tz)
+
+def ensure_utc(dt: Any, tz="Asia/Shanghai", fmt="%Y-%m-%d") -> float:
+    """
+    支持 datetime / timestamp(float) / string → UTC timestamp(float)
+    """
+    local_tz = pytz.timezone(tz)
+    utc_tz = pytz.utc
+
+    # 1. datetime.datetime 对象
     if isinstance(dt, datetime.datetime):
-        localized = native_tz.localize(dt)
-    elif isinstance(dt, int):
-        localized = datetime.datetime.fromtimestamp(dt, tz=native_tz)
+        if dt.tzinfo is None:
+            dt = local_tz.localize(dt)
+        dt_utc = dt.astimezone(utc_tz)
+
+    # 2. float/int timestamp（秒）
+    elif isinstance(dt, (float, int)):
+        dt = datetime.datetime.fromtimestamp(dt, tz=local_tz)
+        dt_utc = dt.astimezone(utc_tz)
+
+    # 3. 字符串
     elif isinstance(dt, str):
-        dt_ = datetime.datetime.strptime(dt, fmt)
-        localized = native_tz.localize(dt_)
+        dt = datetime.datetime.strptime(dt, fmt)
+        dt = local_tz.localize(dt)
+        dt_utc = dt.astimezone(utc_tz)
+
     else:
-        raise ValueError(f"Invalid type: {type(dt)}")
-    utc_dt = localized.astimezone(tz=pytz.timezone("UTC"))
-    return utc_dt
+        raise ValueError(f"Unsupported datetime format: {type(dt)}")
+    # return dt_utc.timestamp()
+    return dt_utc 
+
+def date2utc(date, tzinfo="Asia/Shanghai"):
+    struct_dt = datetime.datetime.strptime(str(date), '%Y%m%d')
+    struct_dt = struct_dt.astimezone(tz=pytz.timezone(tzinfo))
+    struct_dt = struct_dt.replace(tzinfo=datetime.timezone.utc) 
+    return struct_dt
+
+def market_utc(date, tzinfo="Asia/Shanghai"):
+    format_dt = date2utc(date, tzinfo=tzinfo)
+    m_open = format_dt + datetime.timedelta(hours=9, minutes=30)
+    m_close = format_dt + datetime.timedelta(hours=15, minutes=0)
+    # trans to utc
+    return m_open, m_close
+
+def naive_to_utc(ts):
+    """
+    Converts a UTC tz-naive timestamp to a tz-aware timestamp.
+    """
+    # Drop the nanoseconds field. warn=False suppresses the warning
+    # that we are losing the nanoseconds; however, this is intended.
+    return pd.Timestamp(ts.to_pydatetime(warn=False), tz='UTC')
+
+
+# def ensure_utc(time, tz='UTC'):
+#     """
+#     Normalize a time. If the time is tz-naive, assume it is UTC.
+#     """
+#     if not time.tzinfo:
+#         time = time.replace(tzinfo=pytz.timezone(tz))
+#     return time.replace(tzinfo=pytz.utc)
 
 
 def get_trading_range(date: Union[str, int], freq="M", opens=("9:30", "13:00"), closes=("11:30", "15:00")):
@@ -44,7 +89,6 @@ def get_trading_range(date: Union[str, int], freq="M", opens=("9:30", "13:00"), 
         ranges = pd.date_range(open, close, freq=freq, inclusive="left")
         ticks.extend(list(ranges))
     return ticks
-
 
 def locate_index(calendar, start_time, end_time):
         """Locate the start time index and end time index in a calendar under certain frequency.
@@ -74,37 +118,14 @@ def locate_index(calendar, start_time, end_time):
         # loc = np.searchsorted(data["date"], cur_time_int, side="right")
         return s, e
 
-
-def date2utc(date, tzinfo="Asia/Shanghai"):
-    struct_dt = datetime.datetime.strptime(str(date), '%Y%m%d')
-    struct_dt = struct_dt.astimezone(tz=pytz.timezone(tzinfo))
-    struct_dt = struct_dt.replace(tzinfo=datetime.timezone.utc) 
-    return struct_dt
-
-
-def market_utc(date, tzinfo="Asia/Shanghai"):
-    format_dt = date2utc(date, tzinfo=tzinfo)
-    m_open = format_dt + datetime.timedelta(hours=9, minutes=30)
-    m_close = format_dt + datetime.timedelta(hours=15, minutes=0)
-    # trans to utc
-    return m_open, m_close
-
-
-# def transformat(dt, _format="%Y%m%d"):
-#     """
-#         e.g. 20240101 --> 202401010000
-#     """
-#     dt_time = datetime.datetime.strptime(str(dt), _format)
-#     format_dt = dt_time.strftime("%Y%m%d%H%M")
-#     return format_dt
-
-
 def calc_delta(tick, _format="%Y%m%d%H%M"):
     # %-m 不补0
     formate_date = datetime.datetime.strptime(str(tick), _format)
     delta = formate_date - datetime.datetime(year=formate_date.year, month=formate_date.month, day=formate_date.day, hours=9, minutes=30)
     return delta.seconds, formate_date
-    
+
+def str2date(date_str, _format):
+    return datetime.datetime.strptime(str(date_str), _format)
 
 def parse_date_str_series(format_str, tz, date_str_series):
     tz_str = str(tz)
@@ -124,23 +145,6 @@ def parse_date_str_series(format_str, tz, date_str_series):
         ).tz_localize(tz_str).tz_convert('UTC')
     return parsed
 
-
-def naive_to_utc(ts):
-    """
-    Converts a UTC tz-naive timestamp to a tz-aware timestamp.
-    """
-    # Drop the nanoseconds field. warn=False suppresses the warning
-    # that we are losing the nanoseconds; however, this is intended.
-    return pd.Timestamp(ts.to_pydatetime(warn=False), tz='UTC')
-
-
-def ensure_utc(time, tz='UTC'):
-    """
-    Normalize a time. If the time is tz-naive, assume it is UTC.
-    """
-    if not time.tzinfo:
-        time = time.replace(tzinfo=pytz.timezone(tz))
-    return time.replace(tzinfo=pytz.utc)
 
 def _out_of_range_error(a, b=None, var='offset'):
     start = 0

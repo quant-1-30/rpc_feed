@@ -26,21 +26,23 @@ class StructUnpacker(Node):
     )
 
     def next(self, meta, params: dict={}):
-        frame=pd.DataFrame()
-        if meta:
-            sid = os.path.basename(meta).split(self.p.sep)[0][2:]
-            with open(meta, 'rb') as f:
-                buf = f.read()
-                size = int(len(buf) / self.p.buflen)
-                data = []
-                for num in range(size):
-                    idx = 32 * num
-                    line = struct.unpack(self.p.pack, buf[idx:idx + self.p.buflen])
-                    data.append(line)
-                frame = pd.DataFrame(data, columns=self.p.lines)
-                # frame.index = [sid] * len(frame)
-            frame.drop_duplicates(subset=self.p.subset, inplace=True) if self.p.subset else frame.drop_duplicates(inplace=True)
-            frame.loc[:, "sid"] = sid
+        if not meta:
+            return pd.DataFrame()
+        sid = os.path.basename(meta).split(self.p.sep)[0][2:]
+        frame = pd.DataFrame()
+        with open(meta, 'rb') as f:
+            buf = f.read()
+            size = int(len(buf) / self.p.buflen)
+            data = []
+            for num in range(size):
+                idx = 32 * num
+                line = struct.unpack(self.p.pack, buf[idx:idx + self.p.buflen])
+                data.append(line)
+            frame = pd.DataFrame(data, columns=self.p.lines)
+        # postprocess
+        frame.drop(columns="appendix", inplace=True)
+        frame.drop_duplicates(subset=self.p.subset, inplace=True) if self.p.subset else frame.drop_duplicates(inplace=True)
+        frame.loc[:, "sid"] = sid
         return frame
 
 
@@ -53,16 +55,17 @@ class AvroUnpacker(Node):
         )
 
     def next(self, meta, params: dict={}):
+        if not meta:
+            return pd.DataFrame()
         frame = pd.DataFrame()
-        if meta:
-            # tick.avro
-            arrays = []
-            reader = DataFileReader(open(meta, "rb"), DatumReader())
-            for ele in reader:
-                arrays.append(ele)
-            reader.close()
-            frame = pd.DataFrame(arrays)
-            frame.drop_duplicates(subset=self.p.subset, inplace=True) if self.p.subset else frame.drop_duplicates(inplace=True)
+        # tick.avro
+        arrays = []
+        reader = DataFileReader(open(meta, "rb"), DatumReader())
+        for ele in reader:
+            arrays.append(ele)
+        reader.close()
+        frame = pd.DataFrame(arrays)
+        frame.drop_duplicates(subset=self.p.subset, inplace=True) if self.p.subset else frame.drop_duplicates(inplace=True)
         return frame
 
 
@@ -89,10 +92,13 @@ class TextLoader(Node):
             return lines
 
     def next(self, meta, params: dict={}):
+        if not meta:
+            return []
+
         if meta.endswith(".csv"):
             frame = pd.read_csv(meta, dtype=self.p.dtype, sep=self.p.csvsep)
+            frame.drop_duplicates(subset=self.p.subset, inplace=True) if self.p.subset else frame.drop_duplicates(inplace=True)
+            values = list(frame.T.to_dict().values())
         else:
-            frame = self.prenext(meta)
-        frame.drop_duplicates(subset=self.p.subset, inplace=True) if self.p.subset else frame.drop_duplicates(inplace=True)
-        values = list(frame.T.to_dict().values())
+            values = self.prenext(meta)
         return values

@@ -9,6 +9,7 @@ import matplotlib.pyplot as plt
 import multiprocessing
 from collections import namedtuple
 from concurrent.futures import ThreadPoolExecutor
+from pyvis.network import Network
 
 from .node import *
 from rpc_feed.utils.loader import get_module_by_module_path
@@ -28,24 +29,10 @@ class Graph(object):
 
     def __init__(self) -> None:
         self.graph = []
-        # 重新初始化这些属性
-        self.queue = asyncio.Queue()
+        self.edges = None
+        # 重新初始化这些属性 / backpressure
+        self.queue = asyncio.Queue(maxsize=500)
 
-    # def __getstate__(self):
-    #     """定义序列化时的状态"""
-    #     state = self.__dict__.copy()
-    #     # 不序列化这些属性
-    #     state['queue'] = None
-    #     state['thread_pool'] = None
-    #     return state
-
-    # def __setstate__(self, state):
-    #     """定义反序列化时的状态恢复"""
-    #     self.__dict__.update(state)
-    #     # 重新初始化这些属性
-    #     self.queue = asyncio.Queue()
-    #     self.thread_pool = ThreadPoolExecutor(max_workers=os.cpu_count())
-   
     @classmethod
     def get_cfg(cls, cfg_path):
         basename = os.path.basename(cfg_path)
@@ -62,6 +49,7 @@ class Graph(object):
     def _build_graph(self, graph_xml):
         # 从 GraphML 文件加载图
         G = nx.read_graphml(graph_xml)
+        self.edges = G.edges
         # 检查是否为 DAG
         if nx.is_directed_acyclic_graph(G):
             # Topological sort to determine execution order
@@ -88,8 +76,8 @@ class Graph(object):
             if instance.p.is_async:
                 await instance.next(item, params)
             else:
-                #with ThreadPoolExecutor(max_workers=os.cpu_count()) as executor:
-                await asyncio.get_event_loop().run_in_executor(None, instance.next, item, params)
+                # await asyncio.to_thread(instance.next, item, params)
+                await asyncio.get_event_loop().run_in_executor(None, instance.next, item, params) # ThreadPoolExecutor
     
     def run_sync_pipeline(self, item):
         for node in self.graph[:-1]:
@@ -98,6 +86,7 @@ class Graph(object):
         return item
 
     async def _run_with_async_tail(self, iterables):
+
         consumer_task = asyncio.create_task(self.async_consume())
 
         # for iter_item in iterables:
@@ -118,7 +107,8 @@ class Graph(object):
             for processed_item in pool.imap_unordered(run_sync_pipeline_global, iterables):
                 print("put into queue", len(processed_item))
                 await self.queue.put(processed_item)
-        # set exit signal
+
+        # exit signal
         await self.queue.put(None)
         await consumer_task
         
@@ -136,3 +126,22 @@ class Graph(object):
         nx.draw(self.graph, pos, with_labels=True, node_size=2000, node_color='lightblue', font_size=10, font_weight='bold')
         plt.title("Graph Visualization")
         plt.show()
+
+    def visual_graph_html(self, output_path="dag_pipeline.html"):
+        net = Network(directed=True, notebook=False, height='750px', width='100%')
+        net.barnes_hut()  # 使用物理布局算法
+    
+        for meta in self.graph:
+            node_data = meta.params
+            node = meta.node
+            label = f"{node}\n{node_data.get('type', '')}"
+            title = json.dumps(node_data.get("params", {}), indent=2)
+            net.add_node(node, label=label, title=title, shape="box", color="#A7C7E7")
+    
+        for src, dst in self.edges:
+            net.add_edge(src, dst)
+    
+        net.show_buttons(filter_=['physics'])  # 可交互设置布局算法
+        net.show(output_path)
+        print(f"[Graph] DAG 可视化已生成: {output_path}")
+    

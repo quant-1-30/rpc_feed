@@ -2,7 +2,6 @@
 # -*- coding: utf-8 -*-
 
 import re
-from typing import List, Any
 from rpc_feed.meta import MetaParams, with_metaclass
 
 

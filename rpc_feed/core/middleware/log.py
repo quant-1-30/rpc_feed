@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 import logging
-from meta import MetaParams, with_metaclass
+from rpc_feed.meta import MetaParams, with_metaclass
 
 
 class MetaLogger(MetaParams):

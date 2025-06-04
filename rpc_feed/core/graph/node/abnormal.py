@@ -3,7 +3,6 @@
 
 import numpy as np
 import pandas as pd
-from toolz import valmap
 
 from rpc_feed.core.graph.base import Node
 from rpc_feed.utils.registry import registry

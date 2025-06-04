@@ -4,7 +4,7 @@
 import os
 import argparse
 
-from rpc_feed.feed import bt_feed
+from rpc_feed.core.feed import bt_feed
 
 
 def parse_args():
@@ -55,7 +55,7 @@ if __name__ == "__main__":
    #  xml = "../xml/asset.graphml"
    #  bt_feed.load(xml, dataset_path, prefix="csv")
     
-    dataset_path = os.path.join(os.path.expanduser("~"), "/Volumes/hengxin/quant/raw_data/minutes")
+    dataset_path = os.path.join(os.path.expanduser("~"), "/Volumes/hengxin/quant/raw_data/minutes/201911/sh/minline/sh600225.01")
     xml = "../xml/tick.graphml"
     bt_feed.load(xml, dataset_path, prefix=".01", _filter="asset")
     

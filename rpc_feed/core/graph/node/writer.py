@@ -1,11 +1,15 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8; py-indent-offset:4 -*-
 
+import asyncio
 import io
 import sys
 import avro.schema
 import pandas as pd
-from typing import Any, Union, List
+import pyarrow as pa
+import pyarrow.parquet as pq
+
+from typing import Any, Union, List, Optional
 from avro.datafile import DataFileReader, DataFileWriter
 from avro.io import DatumReader, DatumWriter
 from avro.datafile import DataFileWriter
@@ -13,6 +17,7 @@ from avro.datafile import DataFileWriter
 from rpc_feed.core.graph.base import Node
 from rpc_feed.utils.registry import registry
 from rpc_feed.core.middleware.ops.operator import async_ops
+from rpc_feed.utils.io import get_quarter_path
 
 
 @registry
@@ -169,3 +174,123 @@ class WriterStringIO(Node):
                 fd.write(str(chunk))
         # self.fetch_size = fd.tell()
         fd.close()
+
+
+# @registry
+# class ParquetWriter(Node):
+
+#     params = (
+#         ("partition", ["sid", "date"]),
+#         ("is_async", False),
+#         # parquet 参数
+#         ("max_partitions", 2048),  # 最大分区数，增加以适应更多股票
+#         ("max_open_files", 2048),  # 最大打开文件数，增加以提高并发
+#         ("max_rows_per_file", 500000),  # 每个文件最大行数，减小以优化读取性能
+#         ("max_file_size", "128MB"),  # 最大文件大小
+#         ("compression", "snappy"),  # 压缩方式
+#         ("row_group_size", 100000),  # 行组大小，影响读取性能
+#         ("use_dictionary", True),  # 使用字典编码
+#         ("write_statistics", True),  # 写入统计信息
+#         ("coerce_timestamps", "ms"),  # 时间戳精度
+#         ("allow_truncated_timestamps", False),  # 是否允许截断时间戳
+#         )
+
+#     def _make_schema(self, df: pd.DataFrame) -> pa.Schema:
+#         fields = []
+#         # for col in df.columns.difference(self.p.partition):
+#         for col in df.columns:
+#             print("col", col)
+#             if col == "datetime":
+#                 fields.append(pa.field(col, pa.timestamp("ms")))
+#             elif col in self.p.partition:
+#                 fields.append(pa.field(col, pa.string()))
+#             else:
+#                 fields.append(pa.field(col, pa.from_numpy_dtype(df[col].dtype)))
+#         return pa.schema(fields)
+
+#     def next(
+#         self,
+#         meta: pd.DataFrame,
+#         params: dict={}
+#     ):
+#         root_path = get_quarter_path(params["root_path"], meta["date"].iloc[0], fmt="%Y%m")
+#         # set parquet schema
+#         schema = self._make_schema(meta)
+#         # preserve_index 不作为单独一列 
+#         table = pa.Table.from_pandas(meta, schema=schema, preserve_index=False)
+#         # pq.write_table(table, out_file, compression='snappy')
+#         pq.write_to_dataset(
+#             table,
+#             root_path=root_path,
+#             # 作为分区字段, 不在数据文件
+#             partition_cols=self.p.partition,
+#             coerce_timestamps="ms",
+#             # 自动自增 / sid date must in columns already replace in partition_cols
+#             basename_template="data-{i}.parquet",
+#             # gzip / 6  zstd / 3  lz4
+#             compression='snappy',
+#             # use_deprecated_int96_timestamps=False
+#         )
+
+
+@registry
+class ParquetWriter(Node):
+
+    params = (
+        ("partition", ["sid", "date"]),
+        ("is_async", True),
+        # parquet 参数
+        ("max_partitions", 10000),  # 最大分区数，增加以适应更多股票
+        ("max_open_files", 1000),  # 最大打开文件数，增加以提高并发
+        ("max_rows_per_file", 1000000),  # 每个文件最大行数，减小以优化读取性能
+        ("max_file_size", "128MB"),  # 最大文件大小
+        ("compression", "snappy"),  # 压缩方式
+        ("row_group_size", 100000),  # 行组大小，影响读取性能
+        ("use_dictionary", True),  # 使用字典编码
+        ("write_statistics", True),  # 写入统计信息
+        ("coerce_timestamps", "ms"),  # 时间戳精度
+        ("allow_truncated_timestamps", False),  # 是否允许截断时间戳
+        )
+
+    def _make_schema(self, df: pd.DataFrame) -> pa.Schema:
+        fields = []
+        # for col in df.columns.difference(self.p.partition):
+        for col in df.columns:
+            print("col", col)
+            if col == "datetime":
+                fields.append(pa.field(col, pa.timestamp("ms")))
+            elif col in self.p.partition:
+                fields.append(pa.field(col, pa.string()))
+            else:
+                fields.append(pa.field(col, pa.from_numpy_dtype(df[col].dtype)))
+        return pa.schema(fields)
+
+    def _write_parquet(
+        self,
+        meta: pd.DataFrame,
+        params: dict={}
+    ):
+        root_path = get_quarter_path(params["root_path"], meta["date"].iloc[0], fmt="%Y%m")
+        # set parquet schema
+        schema = self._make_schema(meta)
+        # preserve_index 不作为单独一列 
+        table = pa.Table.from_pandas(meta, schema=schema, preserve_index=False)
+        # pq.write_table(table, out_file, compression='snappy')
+        pq.write_to_dataset(
+            table,
+            root_path=root_path,
+            # 作为分区字段, 不在数据文件
+            partition_cols=self.p.partition,
+            coerce_timestamps="ms",
+            # 自动自增 / sid date must in columns already replace in partition_cols
+            basename_template="data-{i}.parquet",
+            # gzip / 6  zstd / 3  lz4
+            compression='snappy',
+            # use_deprecated_int96_timestamps=False
+        )
+
+    async def next(self, meta: pd.DataFrame, params: dict = {}):
+        """
+        Async entry point for writing parquet using `to_thread` to avoid blocking.
+        """
+        self._write_parquet(meta, params)

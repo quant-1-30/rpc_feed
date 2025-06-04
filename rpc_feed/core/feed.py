@@ -2,13 +2,11 @@
 # -*- coding: utf-8 -*-
 
 import os
-from typing import Dict,Any
 
+from .graph import Graph
+from .datasets import _providers, Request
+from .filter import _filters
 from rpc_feed.meta import with_metaclass, MetaParams
-from rpc_feed.core.graph import Graph
-from rpc_feed.core.datasets import _providers, Request
-
-from rpc_feed.filter import _filters
 from rpc_feed.utils.io import recursive_glob
 from rpc_feed.utils.loader import get_module_by_module_path
 from rpc_feed.utils.cache import lazyproperty

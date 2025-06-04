@@ -94,19 +94,19 @@ class Tick(Provider):
         Returns
         ----------
         """
-        async with async_ops as ctx:
-            stmt = select(Line).where(
-                and_(
-                    Line.tick >= req.start_date,
-                    Line.tick <= req.end_date
-                )
-            ).order_by(Line.tick)
-            if req.sid:
-                stmt = stmt.where(Line.sid.in_(req.sid))
+        # async with async_ops as ctx:
+        #     stmt = select(Line).where(
+        #         and_(
+        #             Line.tick >= req.start_date,
+        #             Line.tick <= req.end_date
+        #         )
+        #     ).order_by(Line.tick)
+        #     if req.sid:
+        #         stmt = stmt.where(Line.sid.in_(req.sid))
 
-            async for item in ctx.on_query(stmt):
-                row = item[0].serialize()
-                yield LineModel(**row).model_dump()
+        #     async for item in ctx.on_query(stmt):
+        #         row = item[0].serialize()
+        #         yield LineModel(**row).model_dump()
 
 
 class Adjust(Provider):
