@@ -4,7 +4,6 @@
 import numpy as np
 from functools import total_ordering
 from pydantic import BaseModel, Field
-# from functools import total_ordering
 from typing import List, Union, Optional, Dict
 
 

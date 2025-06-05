@@ -1,7 +1,9 @@
 # !/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
+import os
 import pandas as pd
+from dotenv import  load_dotenv
 from sqlalchemy import Select
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
 from sqlalchemy.ext.automap import automap_base
@@ -10,10 +12,13 @@ from typing import Union, Dict, Iterable, Any, List
 from contextlib import asynccontextmanager
 from functools import lru_cache
 
-from .schema import Base
 from rpc_feed.meta import with_metaclass, MetaSingleton
+from rpc_feed.core.schema import Base
 
 __all__ = ["async_ops"]
+
+load_dotenv()
+
 
 class AsyncOps(with_metaclass(MetaSingleton, object)):
     """Local provider class
@@ -24,17 +29,17 @@ class AsyncOps(with_metaclass(MetaSingleton, object)):
     """
     # psycopp / asyncpg
     params = (
-        ("host", "localhost"),
-        ("port", "5432"),
-        ("user", "postgres"),
-        ("pwd", "20210718"),
-        ("db", "bt_feed"),
-        ("engine", "asyncpg"),
-        ("pool_size", 20),
-        ("max_overflow", 10),
-        ("pool_recycle", 3600),
-        ("pool_pre_ping", True),
-        ("echo", False)
+        # ("host", "localhost"),
+        # ("port", "5432"),
+        # ("user", "postgres"),
+        # ("pwd", "20210718"),
+        # ("db", "bt_feed"),
+        # ("engine", "asyncpg"),
+        # ("pool_size", 20),
+        # ("max_overflow", 10),
+        # ("pool_recycle", 3600),
+        # ("pool_pre_ping", True),
+        # ("echo", False)
     )
 
     def __init__(self):
@@ -69,19 +74,20 @@ class AsyncOps(with_metaclass(MetaSingleton, object)):
         # postgresql+psycopg2://me@localhost/mydb
         # postgresql+asyncpg://me@localhost/mydb
         print("builder ", self)
-        url = f"postgresql+{self.p.engine}://{self.p.user}:{self.p.pwd}@{self.p.host}:{self.p.port}/{self.p.db}"
+        url = f'postgresql+{os.getenv("PGENGINE")}://{os.getenv("PGUSER")}:{os.getenv("PGPWD")}@{os.getenv("PGHOST")}:{os.getenv("PGPORT")}/{os.getenv("PGDB")}'
         # isolation_level="AUTOCOMMIT"
         engine = create_async_engine(url, 
-                               pool_size=self.p.pool_size, 
-                               max_overflow=self.p.max_overflow,
+                               pool_size=int(os.getenv("PGPOOLSIZE")),
+                               pool_timeout=int(os.getenv("PGTIMEOUT")),
+                               max_overflow=int(os.getenv("PGMAXOVERFLOW")),
                                # 每小时回收连接
-                               pool_recycle=3600, 
+                               pool_recycle=int(os.getenv("PGPOOLRECYCLE")), 
                                # 使用 ping 检查连接有效性 
-                               pool_pre_ping=self.p.pool_pre_ping,
+                               pool_pre_ping=bool(int(os.getenv("PGPOOLPREPING"))),
                                # stream_results = True/ False
                                # autocommit = True/ False
                                # compiled_cache = True/ False
-                               echo=self.p.echo).execution_options(compiled_cache={})
+                               echo=bool(int(os.getenv("PGECHO")))).execution_options(compiled_cache={})
         
         # Create tables and reflect schema asynchronously
         async with engine.begin() as conn:

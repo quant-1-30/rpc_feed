@@ -40,31 +40,31 @@ async def init_orm():
         pass 
 
 
-async def create_partitions_by_quarter(start: str, end: str):
-    utc_start = ensure_utc(start, fmt="%Y-%m-%d")
-    utc_end = ensure_utc(end, fmt="%Y-%m-%d")
+# async def create_partitions_by_quarter(start: str, end: str):
+#     utc_start = ensure_utc(start, fmt="%Y-%m-%d")
+#     utc_end = ensure_utc(end, fmt="%Y-%m-%d")
 
-    async with async_ops as ctx:
-        while utc_start < utc_end:
-            q_start = utc_start.replace(day=1)
-            q_end = q_start + relativedelta(months=3)
-            table_suffix = f"{q_start.year}q{(q_start.month - 1)//3 + 1}"
-            table_name = f"tick_{table_suffix}"
+#     async with async_ops as ctx:
+#         while utc_start < utc_end:
+#             q_start = utc_start.replace(day=1)
+#             q_end = q_start + relativedelta(months=3)
+#             table_suffix = f"{q_start.year}q{(q_start.month - 1)//3 + 1}"
+#             table_name = f"tick_{table_suffix}"
 
-            sql = f"""
-            CREATE TABLE IF NOT EXISTS {table_name}
-            PARTITION OF tick
-            FOR VALUES FROM ({q_start.timestamp()}) TO ({q_end.timestamp()});
-            """
-            await ctx.on_execute(text(sql))
-            print(f"✅ Created partition: {table_name}")
-            utc_start = q_end
+#             sql = f"""
+#             CREATE TABLE IF NOT EXISTS {table_name}
+#             PARTITION OF tick
+#             FOR VALUES FROM ({q_start.timestamp()}) TO ({q_end.timestamp()});
+#             """
+#             await ctx.on_execute(text(sql))
+#             print(f"✅ Created partition: {table_name}")
+#             utc_start = q_end
 
 
 async def sequential_execute(intervals):
     await create_database()
     await init_orm()
-    await create_partitions_by_quarter(*intervals)
+    # await create_partitions_by_quarter(*intervals)
 
 
 if __name__ == "__main__":

@@ -18,13 +18,11 @@ from typing import Callable, Generator
 from .registry import registry
 from .dt_utilty import str2date
 
-
 @contextmanager
 def get_temp_dir():
     dirpath = mkdtemp()
     yield dirpath
     shutil.rmtree(dirpath)
-
 
 def decode_ini(ini_path="../alembic"):
     cf = configparser.ConfigParser()
@@ -32,13 +30,16 @@ def decode_ini(ini_path="../alembic"):
     url = cf["alembic"]["sqlalchemy.url"]
     return url
 
-
 def decode_yaml(yaml_path):
     with open(yaml_path, 'r') as f:
         data = yaml.load(f, Loader=SafeLoader)
         print('yaml', data)
     return data
 
+def expand_path(path):
+    p = os.path.expanduser(path)
+    os.makedirs(p, exist_ok=True)
+    return p
 
 def get_quarter_path(base_path, date_str, fmt="%Y-%m-%d"):
     """根据日期确定 dataset 路径"""
@@ -46,11 +47,10 @@ def get_quarter_path(base_path, date_str, fmt="%Y-%m-%d"):
     date = str2date(date_str, _format=fmt)
     year = date.year
     quarter = (date.month - 1) // 3 + 1
-    base_path = os.path.expanduser(base_path)
+    base_path = expand_path(base_path)
     quarter_path = os.path.join(base_path, str(year), f"Q{quarter}")
     os.makedirs(quarter_path, exist_ok=True)
     return quarter_path
-
 
 def build_from_cfg(obj_type):
     """Build a module from config dict.
@@ -75,7 +75,6 @@ def build_from_cfg(obj_type):
             "type must be a str or valid type, but got {}".format(type(obj_type))
         )
     return obj_cls()
-
         
 def read_bin(file_path: Union[str, Path], start_index, end_index):
     file_path = Path(file_path.expanduser().resolve())
@@ -92,7 +91,6 @@ def read_bin(file_path: Union[str, Path], start_index, end_index):
         data = np.frombuffer(f.read(4 * count), dtype="<f")
         series = pd.Series(data, index=pd.RangeIndex(si, si + len(data)))
     return series
-
 
 def recursive_glob(root_path: str, suffix: str, filter: Callable[[str], bool]) -> Generator[str, None, None]:
     """Recursively find all files under `root_path` ending with `suffix` and matching `filter` condition."""

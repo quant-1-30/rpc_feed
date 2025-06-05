@@ -16,6 +16,7 @@ from sqlalchemy import Identity
 
 __all__ = ["Calendar", "Asset", "Adjustment", "Rightment"]
 
+
 # declarative base class
 class Base(DeclarativeBase):
     

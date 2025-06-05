@@ -10,8 +10,8 @@ from sqlalchemy import and_
 
 from .base import Provider
 from .model import *
-from rpc_feed.core.middleware.ops.schema import *
-from rpc_feed.core.middleware.ops.operator import async_ops
+from rpc_feed.core.schema import *
+from rpc_feed.core.middleware.operator import async_ops, duck_mgr
 
 
 class TradingCalendar(Provider):
@@ -78,10 +78,9 @@ class Instrument(Provider):
                 row = item[0].serialize()
                 yield AssetModel(**row).model_dump()
 
-    
+
 class Tick(Provider):
-    """Dataset provider class
-    Provide Dataset data.
+    """Dataset provider class via duckdb
     """
 
     async def __call__(self, req: Request):
@@ -107,6 +106,25 @@ class Tick(Provider):
         #     async for item in ctx.on_query(stmt):
         #         row = item[0].serialize()
         #         yield LineModel(**row).model_dump()
+
+        # SELECT * FROM stock
+        # WHERE datetime >= TIMESTAMP '2024-06-01 09:30:00'
+        # DuckDB 会自动把 '2024-06-01 09:30:00' 解析为内部 TIMESTAMP 类型，与 Parquet 里的 datetime 字段对齐
+        
+        # 读取并查询（可用 glob 模式、支持 partition pushdown）
+        # hive_partitioning  --- automate path to key=value in partition cols 
+        # df = con.execute(f"""
+        # SELECT *
+        # FROM stock
+        # WHERE year = 2025
+        #   AND quarter = 'Q1'
+        #   AND sid IN ('600001', '600002')
+        #   AND month IN ('202501', '202502')
+        #   AND datetime BETWEEN '2025-01-05 09:30:00' AND '2025-01-10 15:00:00'
+        # ORDER BY sid, datetime
+        # """).fetch_df()
+        # df = duckdb.sql(sql).to_df()
+        pass
 
 
 class Adjust(Provider):

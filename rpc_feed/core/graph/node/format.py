@@ -37,7 +37,7 @@ class DateParser(Node):
             assert "dates" in meta.columns, "missing dates column"
             meta["datetime"] = meta.loc[:, self.p.lines].apply(lambda ele: self.prenext(ele), axis=1)
             meta["tick"] = (meta["datetime"].astype("int64") // 10**9).astype("int64")
-            meta["date"] = meta["datetime"].dt.strftime("%Y%m")
+            # meta["date_str"] = meta["datetime"].dt.strftime("%Y%m")
             # remove
             meta.drop(columns=["dates", "sub_dates"], inplace=True)
         return meta
@@ -52,7 +52,7 @@ class Multiply(Node):
 
     params = (
         ("multiply", 1000),
-        ("exclude", ["sid", "date", "datetime", "tick"]),
+        ("exclude", ["sid", "datetime", "tick"]),
     )
 
     def prenext(self, ele: pd.DataFrame):
