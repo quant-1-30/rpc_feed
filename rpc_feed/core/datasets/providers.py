@@ -12,6 +12,7 @@ from .base import Provider
 from .model import *
 from rpc_feed.core.schema import *
 from rpc_feed.core.middleware.operator import async_ops, duck_mgr
+from rpc_feed.utils.duck_utils import request_to_sql
 
 
 class TradingCalendar(Provider):
@@ -79,6 +80,35 @@ class Instrument(Provider):
                 yield AssetModel(**row).model_dump()
 
 
+# class Tick(Provider):
+#     """Dataset provider class via duckdb
+#     """
+
+#     async def __call__(self, req: Request):
+#         """Get dataset data.
+
+#         Parameters
+#         ----------
+#         request:  DataRequest
+
+#         Returns
+#         ----------
+#         """
+#         async with async_ops as ctx:
+#             stmt = select(Line).where(
+#                 and_(
+#                     Line.tick >= req.start_date,
+#                     Line.tick <= req.end_date
+#                 )
+#             ).order_by(Line.tick)
+#             if req.sid:
+#                 stmt = stmt.where(Line.sid.in_(req.sid))
+
+#             async for item in ctx.on_query(stmt):
+#                 row = item[0].serialize()
+#                 yield LineModel(**row).model_dump()
+
+
 class Tick(Provider):
     """Dataset provider class via duckdb
     """
@@ -92,39 +122,20 @@ class Tick(Provider):
 
         Returns
         ----------
-        """
-        # async with async_ops as ctx:
-        #     stmt = select(Line).where(
-        #         and_(
-        #             Line.tick >= req.start_date,
-        #             Line.tick <= req.end_date
-        #         )
-        #     ).order_by(Line.tick)
-        #     if req.sid:
-        #         stmt = stmt.where(Line.sid.in_(req.sid))
-
-        #     async for item in ctx.on_query(stmt):
-        #         row = item[0].serialize()
-        #         yield LineModel(**row).model_dump()
-
         # SELECT * FROM stock
         # WHERE datetime >= TIMESTAMP '2024-06-01 09:30:00'
         # DuckDB 会自动把 '2024-06-01 09:30:00' 解析为内部 TIMESTAMP 类型，与 Parquet 里的 datetime 字段对齐
         
-        # 读取并查询（可用 glob 模式、支持 partition pushdown）
+        # 读取并查询（可用 glob 模式、支持 partition pushdown)
         # hive_partitioning  --- automate path to key=value in partition cols 
-        # df = con.execute(f"""
-        # SELECT *
-        # FROM stock
-        # WHERE year = 2025
-        #   AND quarter = 'Q1'
-        #   AND sid IN ('600001', '600002')
-        #   AND month IN ('202501', '202502')
-        #   AND datetime BETWEEN '2025-01-05 09:30:00' AND '2025-01-10 15:00:00'
-        # ORDER BY sid, datetime
-        # """).fetch_df()
-        # df = duckdb.sql(sql).to_df()
-        pass
+        """
+        # request to sql
+        sql = request_to_sql(req)
+        print("tick sql", sql)
+        async with duck_mgr as ctx:
+            async for row in ctx.query(sql):
+                print("tick row", row)
+                yield row
 
 
 class Adjust(Provider):

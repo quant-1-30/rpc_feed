@@ -42,7 +42,7 @@ class StructUnpacker(Node):
         # postprocess
         frame.drop(columns="appendix", inplace=True)
         frame.drop_duplicates(subset=self.p.subset, inplace=True) if self.p.subset else frame.drop_duplicates(inplace=True)
-        frame.loc[:, "sid"] = sid
+        frame.attrs["sid"] = sid
         return frame
 
 

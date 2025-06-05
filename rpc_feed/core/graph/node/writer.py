@@ -8,6 +8,7 @@ import pandas as pd
 import pyarrow as pa
 import pyarrow.parquet as pq
 import pyarrow.dataset as ds
+import asyncio
 
 from typing import Any, Union, List, Optional
 from avro.datafile import DataFileReader, DataFileWriter
@@ -16,7 +17,7 @@ from avro.datafile import DataFileWriter
 
 from rpc_feed.core.graph.base import Node
 from rpc_feed.utils.registry import registry
-from rpc_feed.core.middleware.ops.operator import async_ops
+from rpc_feed.core.middleware.operator import async_ops
 from rpc_feed.utils.io import expand_path
 
 
@@ -181,7 +182,8 @@ class ParquetWriter(Node):
     params = (
         ("is_async", True),
         # parquet 参数
-        ("max_partitions", 10000),  # 最大分区数，增加以适应更多股票
+        ("partition_cols", ["year", "quarter", "sid", "date"]),
+        ("max_partitions", 100000),  # 增加最大分区数到 100000
         ("max_open_files", 1000),  # 最大打开文件数，增加以提高并发
         ("max_rows_per_file", 1000000),  # 每个文件最大行数，减小以优化读取性能
         ("max_rows_per_group", 100000),  # 每个行组 基础存储单位 列块
@@ -193,49 +195,116 @@ class ParquetWriter(Node):
         ("coerce_timestamps", "ms"),  # 时间戳精度
         ("allow_truncated_timestamps", False),  # 是否允许截断时间戳
         )
-    
-    def _make_partition(self, meta: pd.DataFrame) -> pd.DataFrame:
-        meta["year"] = meta["datetime"].dt.year
-        meta["quarter"] = meta['datetime'].apply(lambda x: f'Q{((x.month - 1) // 3) + 1}')
-        meta["date"] = meta["datetime"].dt.strftime("%Y%m")
-        partition_cols = ["year", "quarter", "sid", "date"]
-        return meta, partition_cols
 
     def _make_schema(self, df: pd.DataFrame) -> pa.Schema:
         fields = []
-        # for col in df.columns.difference(self.p.partition):
         for col in df.columns:
             if col == "datetime":
-                fields.append(pa.field(col, pa.timestamp("ms")))
-            elif col in ["quarter", "sid", "date"]:
+                fields.append(pa.field(col, pa.timestamp("ms"))) 
+            elif col in self.p.partition_cols:
                 fields.append(pa.field(col, pa.string()))
             else:
                 fields.append(pa.field(col, pa.from_numpy_dtype(df[col].dtype)))
         return pa.schema(fields)
+    
+    def _make_schema(self, df: pd.DataFrame) -> pa.Schema:
+        data_fields = []
+        for col in df.columns.difference(self.p.partition_cols):
+            if col == "datetime":
+                data_fields.append(pa.field(col, pa.timestamp("ms"))) 
+            else:
+                data_fields.append(pa.field(col, pa.from_numpy_dtype(df[col].dtype)))
+        
+        partition_fields = []
+        for col in self.p.partition_cols:
+            partition_fields.append(pa.field(col, pa.string()))
+        return pa.schema(data_fields+partition_fields), pa.schema(partition_fields)
+    
+    def _make_partition(self, meta: pd.DataFrame) -> pd.DataFrame:
+        meta["year"] = meta["datetime"].apply(lambda x: str(x.year))
+        meta["quarter"] = meta['datetime'].apply(lambda x: f'Q{((x.month - 1) // 3) + 1}')
+        meta["sid"] = meta.attrs["sid"]
+        meta["date"] = meta["datetime"].dt.strftime("%Y%m")
+        return meta
 
     def _write_parquet(
         self,
         meta: pd.DataFrame,
         params: dict={}
     ):
-        root_path = expand_path(params["root_path"])
-        # set parquet partition and schema
-        meta, partition_cols = self._make_partition(meta)
-        schema = self._make_schema(meta)
-        table = pa.Table.from_pandas(meta, schema=schema, preserve_index=False) # preserve_index 不作为单独一列 
-        # # pq.write_table(table, out_file, compression='snappy')
-        ds.write_dataset(
-            data=table,
-            base_dir=str(root_path),
-            format="parquet",
-            partitioning=partition_cols,  # 必须指定列名
-            existing_data_behavior="overwrite_or_ignore",  # 避免重复写入报错
-            max_rows_per_file=self.p.max_rows_per_file,  # 其他参数可参考写入优化
-            max_rows_per_group=self.p.max_rows_per_group
-        )
+        try:
+            meta = self._make_partition(meta)
+            schema, partition_schema = self._make_schema(meta)
+            table = pa.Table.from_pandas(meta, schema=schema, preserve_index=False)
+            root_path = expand_path(params["root_path"])
+            
+            ds.write_dataset(
+                data=table,
+                base_dir=str(root_path),
+                format="parquet",
+                partitioning=ds.partitioning(partition_schema, flavor="hive"),
+                existing_data_behavior="overwrite_or_ignore",
+                max_partitions=self.p.max_partitions,
+                max_rows_per_file=self.p.max_rows_per_file,
+                max_rows_per_group=self.p.max_rows_per_group,
+            )
+        except AttributeError as e:
+            print(f"属性错误: {e}")
+            raise
+        except TypeError as e:
+            print(f"类型错误: {e}")
+            raise
+        except ValueError as e:
+            print(f"值错误: {e}")
+            raise
+        except Exception as e:
+            print(f"其他错误: {e}")
+            raise
 
     async def next(self, meta: pd.DataFrame, params: dict = {}):
         """
         Async entry point for writing parquet using `to_thread` to avoid blocking.
         """
         self._write_parquet(meta, params)
+
+    async def query(self, sql: str, batch_size: int = 1000):
+        loop = asyncio.get_running_loop()
+        queue = asyncio.Queue(maxsize=self.max_queue_size)
+
+        def producer():
+            try:
+                for row in self._query_stream(sql, batch_size):
+                    print("put to queue", row)
+                    # 使用 call_soon_threadsafe 来安全地在线程中调用异步函数
+                    future = asyncio.run_coroutine_threadsafe(queue.put(row), loop)
+                    # 等待操作完成
+                    future.result()
+            finally:
+                # 发送结束标记
+                future = asyncio.run_coroutine_threadsafe(queue.put(None), loop)
+                future.result()
+
+        # 创建后台任务
+        task = asyncio.create_task(asyncio.to_thread(producer))
+        self._tasks.add(task)
+
+        # 清理已完成的任务
+        def _done(_):
+            self._tasks.discard(task)
+        task.add_done_callback(_done)
+
+        try:
+            while True:
+                row = await queue.get()
+                print("get from queue", row)
+                if row is None:
+                    break
+                yield row
+        finally:
+            # 确保任务被清理
+            if not task.done():
+                task.cancel()
+                try:
+                    await task
+                except asyncio.CancelledError:
+                    pass

@@ -11,7 +11,7 @@ from concurrent.futures import ThreadPoolExecutor
 from google.protobuf.json_format import MessageToDict
 from google.protobuf import empty_pb2
 
-from feed import *
+from rpc_feed.core.feed import *
 from core.datasets.model import Request
 from core.rpc.serialize.pb import service_pb2, service_pb2_grpc
 from core.middleware.interceptors import RateLimitInterceptor

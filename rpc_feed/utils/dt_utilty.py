@@ -124,9 +124,6 @@ def calc_delta(tick, _format="%Y%m%d%H%M"):
     delta = formate_date - datetime.datetime(year=formate_date.year, month=formate_date.month, day=formate_date.day, hours=9, minutes=30)
     return delta.seconds, formate_date
 
-def str2date(date_str, _format):
-    return datetime.datetime.strptime(str(date_str), _format)
-
 def parse_date_str_series(format_str, tz, date_str_series):
     tz_str = str(tz)
     if tz_str == pytz.utc.zone:

@@ -83,7 +83,7 @@ class AsyncOps(with_metaclass(MetaSingleton, object)):
                                # 每小时回收连接
                                pool_recycle=int(os.getenv("PGPOOLRECYCLE")), 
                                # 使用 ping 检查连接有效性 
-                               pool_pre_ping=bool(int(os.getenv("PGPOOLPREPING"))),
+                               pool_pre_ping=bool(int(os.getenv("PGPREPING"))),
                                # stream_results = True/ False
                                # autocommit = True/ False
                                # compiled_cache = True/ False
