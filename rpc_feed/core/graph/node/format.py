@@ -40,6 +40,7 @@ class DateParser(Node):
             # meta["date_str"] = meta["datetime"].dt.strftime("%Y%m")
             # remove
             meta.drop(columns=["dates", "sub_dates"], inplace=True)
+            # import pdb; pdb.set_trace()
         return meta
 
     def __repr__(self):
@@ -60,14 +61,14 @@ class Multiply(Node):
         cols_to_scale = ele.columns.difference(self.p.exclude)
         numeric_cols = ele[cols_to_scale].select_dtypes(include=[np.number]).columns
 
-        # 放大并压缩精度
-        ele[numeric_cols] = (ele[numeric_cols] * self.p.multiply).astype(np.int32)
-
+        # 放大并压缩精度 int32导致越界 负的
+        ele[numeric_cols] = (ele[numeric_cols] * self.p.multiply).astype(np.int64)
         return ele
 
     def next(self, meta: pd.DataFrame, params: dict = {}):
         if not meta.empty:
             meta = self.prenext(meta)
+            # import pdb; pdb.set_trace()
         return meta
 
 
@@ -105,5 +106,6 @@ class Dtypes(Node):
         is_parquet = params.get("is_parquet", self.p.is_parquet)
         if is_parquet:
             meta = self.dtype_for_parquet(meta)
+        # import pdb; pdb.set_trace()
         return meta
 

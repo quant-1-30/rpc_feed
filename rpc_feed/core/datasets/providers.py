@@ -135,7 +135,8 @@ class Tick(Provider):
         async with duck_mgr as ctx:
             async for row in ctx.query(sql):
                 print("tick row", row)
-                yield row
+                line = tuple_to_model(row, LineModel)
+                yield line.model_dump()
 
 
 class Adjust(Provider):

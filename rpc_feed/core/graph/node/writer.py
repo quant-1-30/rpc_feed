@@ -2,6 +2,8 @@
 # -*- coding: utf-8; py-indent-offset:4 -*-
 
 import io
+import os
+import warnings
 import sys
 import avro.schema
 import pandas as pd
@@ -41,26 +43,6 @@ class AvroWriter(Node):
             # element --- {"name": "Ben", "favorite_number": 7, "favorite_color": "red"}
             writer.append(element)
         writer.close()
-
-
-@registry
-class PgWriter(Node):
-    """
-        Postgresql Writer
-    """
-    params = (
-        ("is_async", True),
-    )
-    
-    async def next(self, meta: Union[pd.DataFrame, List[dict], dict], params: dict={}):
-        async with async_ops as ctx:
-            try:
-                await ctx.on_insert(params["table"], meta)
-                status = {"status": 0, "error": ""}
-            except Exception as e:
-                print("PgWriter Error", e)
-                status = {"status": 1, "error": str(e)}
-        return status
 
 
 @registry
@@ -176,6 +158,34 @@ class WriterStringIO(Node):
         # self.fetch_size = fd.tell()
         fd.close()
 
+
+@registry
+class PgWriter(Node):
+    """
+        Postgresql Writer
+    """
+    params = (
+        ("is_async", True),
+    )
+    
+    async def next(self, meta: Union[pd.DataFrame, List[dict], dict], params: dict={}):
+        operator = params.get("mode", "insert")
+        async with async_ops as ctx:
+            try:
+                if operator == "insert":
+                    await ctx.on_insert(params["table"], meta)
+                elif operator == "update":
+                    await ctx.on_update(params["table"], meta)
+                else:
+                    warnings.warn(f"PgWriter: {operator} is dangerous, please confirm")
+                    await ctx.on_delete(params["table"], meta)
+                status = {"status": 0, "error": ""}
+            except Exception as e:
+                print("PgWriter Error", e)
+                status = {"status": 1, "error": str(e)}
+        return status
+
+
 @registry
 class ParquetWriter(Node):
 
@@ -196,17 +206,6 @@ class ParquetWriter(Node):
         ("allow_truncated_timestamps", False),  # 是否允许截断时间戳
         )
 
-    def _make_schema(self, df: pd.DataFrame) -> pa.Schema:
-        fields = []
-        for col in df.columns:
-            if col == "datetime":
-                fields.append(pa.field(col, pa.timestamp("ms"))) 
-            elif col in self.p.partition_cols:
-                fields.append(pa.field(col, pa.string()))
-            else:
-                fields.append(pa.field(col, pa.from_numpy_dtype(df[col].dtype)))
-        return pa.schema(fields)
-    
     def _make_schema(self, df: pd.DataFrame) -> pa.Schema:
         data_fields = []
         for col in df.columns.difference(self.p.partition_cols):
@@ -232,34 +231,28 @@ class ParquetWriter(Node):
         meta: pd.DataFrame,
         params: dict={}
     ):
-        try:
-            meta = self._make_partition(meta)
-            schema, partition_schema = self._make_schema(meta)
-            table = pa.Table.from_pandas(meta, schema=schema, preserve_index=False)
-            root_path = expand_path(params["root_path"])
+        meta = self._make_partition(meta)
+        schema, partition_schema = self._make_schema(meta)
+        table = pa.Table.from_pandas(meta, schema=schema, preserve_index=False)
+        # import pdb; pdb.set_trace()
+        # # table transfer dataframe
+        # df = table.to_pandas()
+        # pa.Table.from_pandas(df, schema=table.schema)
+        root_path = expand_path(params["root_path"])
             
-            ds.write_dataset(
-                data=table,
-                base_dir=str(root_path),
-                format="parquet",
-                partitioning=ds.partitioning(partition_schema, flavor="hive"),
-                existing_data_behavior="overwrite_or_ignore",
-                max_partitions=self.p.max_partitions,
-                max_rows_per_file=self.p.max_rows_per_file,
-                max_rows_per_group=self.p.max_rows_per_group,
-            )
-        except AttributeError as e:
-            print(f"属性错误: {e}")
-            raise
-        except TypeError as e:
-            print(f"类型错误: {e}")
-            raise
-        except ValueError as e:
-            print(f"值错误: {e}")
-            raise
-        except Exception as e:
-            print(f"其他错误: {e}")
-            raise
+        ds.write_dataset(
+            data=table,
+            base_dir=str(root_path),
+            format="parquet",
+            partitioning=ds.partitioning(partition_schema, flavor="hive"),
+            # 目录是指分区路径, overwrite_or_ignore / append_or_ignore 如果目标目录已存在，则覆盖或忽略
+            # delete_matching  --- 删除匹配分区目录
+            # error: 如果目标目录已存在，则报错 / append 
+            existing_data_behavior="delete_matching",  # 删除匹配分区目录，支持同一分区下的增量更新
+            max_partitions=self.p.max_partitions,
+            max_rows_per_file=self.p.max_rows_per_file,
+            max_rows_per_group=self.p.max_rows_per_group,
+        )
 
     async def next(self, meta: pd.DataFrame, params: dict = {}):
         """
@@ -293,18 +286,19 @@ class ParquetWriter(Node):
             self._tasks.discard(task)
         task.add_done_callback(_done)
 
-        try:
-            while True:
-                row = await queue.get()
-                print("get from queue", row)
-                if row is None:
-                    break
-                yield row
-        finally:
-            # 确保任务被清理
+        while True:
+            row = await queue.get()
+            print("get from queue", row)
+            if row is None:
+                break
+            yield row
+
+        # 确保所有任务被清理
+        for task in list(self._tasks):  # 使用list创建副本避免在迭代时修改
             if not task.done():
                 task.cancel()
                 try:
                     await task
                 except asyncio.CancelledError:
                     pass
+            self._tasks.discard(task) # avoid remove keyerror

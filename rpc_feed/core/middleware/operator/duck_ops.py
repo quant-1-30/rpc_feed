@@ -88,12 +88,12 @@ class DuckDBManager:
                 print(f"✅ Registered view: {view_name} -> {dataset_path}")
         except IOError as e:
             print(f"❌ Error registering views: {e}")
-            self.conn.close()
-            raise e
+            # self.conn.close()
+            # raise e
         except Exception as e:
             print("unkown error", str(e))
-            self.conn.close()
-            raise e
+            # self.conn.close()
+            # raise e
         
     def _query(self, sql: str):
         return self.conn.execute(sql).fetchdf()
@@ -114,6 +114,10 @@ class DuckDBManager:
         def producer():
             try:
                 for row in self._query_stream(sql, batch_size):
+                    #loop.call_soon_threadsafe(sync_callback, *args) execute callback in loop / put_nowait cause memory pressure
+                    # loop.call_soon_threadsafe(queue.put, row)
+                    # if callback is async, use asyncio.to_thread(callback) 
+                    # 在非事件循环线程中安全地调度执行协程（async def 函数)
                     fut = asyncio.run_coroutine_threadsafe(queue.put(row), loop)
                     fut.add_done_callback(lambda f: f.exception())  # 异常处理
             finally:

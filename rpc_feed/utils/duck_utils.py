@@ -13,7 +13,7 @@ def request_to_sql(req: Request, tz="Asia/Shanghai"):
     end_time = datetime.datetime.fromtimestamp(req.end_date)
     end_str = end_time.strftime('%Y-%m-%d %H:%M:%S')
     sql = f"""
-    SELECT *
+    SELECT sid, tick, open, high, low, close, volume, amount
     FROM stock
     WHERE sid IN {sid_str}
       AND datetime BETWEEN TIMESTAMP '{start_str}' AND TIMESTAMP '{end_str}'

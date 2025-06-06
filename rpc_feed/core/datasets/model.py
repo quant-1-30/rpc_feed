@@ -3,8 +3,44 @@
 
 import numpy as np
 from functools import total_ordering
-from pydantic import BaseModel, Field
-from typing import List, Union, Optional, Dict
+from pydantic import BaseModel, Field, field_validator, model_validator
+from typing import List, Union, Optional, TypeVar, Type, Any
+
+
+__all__ = ["tuple_to_model", "Request", "CalendarModel", "AssetModel", "LineModel", "AdjustmentModel", "RightmentModel"]
+
+
+T = TypeVar('T', bound=BaseModel)
+
+def tuple_to_model(tuple_data: tuple, model_class: Type[T]) -> T:
+    """
+    将 SQL 查询返回的 tuple 转换为 Pydantic 对象
+    
+    Parameters
+    ----------
+    tuple_data : tuple
+        SQL 查询返回的元组数据
+    model_class : Type[T]
+        Pydantic 模型类
+        
+    Returns
+    -------
+    T
+        Pydantic 模型实例
+        
+    Examples
+    --------
+    >>> row = (1, "AAPL", 100)
+    >>> model = tuple_to_model(row, StockModel)
+    """
+    # 获取模型字段名
+    field_names = list(model_class.__annotations__.keys())
+    
+    # 创建字段名到值的映射
+    data_dict = dict(zip(field_names, tuple_data))
+    
+    # 创建并返回模型实例
+    return model_class(**data_dict)
 
 
 class Request(BaseModel):
@@ -70,6 +106,15 @@ class LineModel(BaseModel):
     volume: int = Field(ge=0)
     amount: int = Field(ge=0)
 
+    # 验证器在模型初始化时执行
+    @field_validator('sid', mode='before')
+    @classmethod
+    def convert_sid_to_str(cls, v: Any) -> str:
+        """强制将 sid 转换为字符串"""
+        if v is None:
+            return ""
+        return str(v)
+
     def __eq__(self, _value: object) -> bool:
         if not isinstance(_value, self):
             raise TypeError
@@ -79,6 +124,93 @@ class LineModel(BaseModel):
         if not isinstance(_value, self):
             raise TypeError
         return self.sid > _value.sid or (self.sid == _value.sid and self.tick > _value.tick)
+
+    @classmethod
+    def sort_series(cls, series: List['LineModel'], by: str = 'tick', ascending: bool = True) -> List['LineModel']:
+        """
+        对 LineModel 列表进行排序
+        
+        Parameters
+        ----------
+        series : List[LineModel]
+            要排序的 LineModel 列表
+        by : str
+            排序字段，可选值: 'sid', 'tick', 'open', 'high', 'low', 'close', 'volume', 'amount'
+        ascending : bool
+            是否升序排序
+            
+        Returns
+        -------
+        List[LineModel]
+            排序后的列表
+            
+        Examples
+        --------
+        >>> models = [LineModel(sid="AAPL", tick=100), LineModel(sid="GOOG", tick=200)]
+        >>> sorted_models = LineModel.sort_series(models, by='tick', ascending=True)
+        """
+        if not series:
+            return []
+            
+        # 验证排序字段
+        valid_fields = ['sid', 'tick', 'open', 'high', 'low', 'close', 'volume', 'amount']
+        if by not in valid_fields:
+            raise ValueError(f"Invalid sort field: {by}. Must be one of {valid_fields}")
+            
+        # 使用内置的排序方法
+        return sorted(series, key=lambda x: getattr(x, by), reverse=not ascending)
+
+    @classmethod
+    def sort_series_multi(cls, series: List['LineModel'], by: List[str], ascending: List[bool]) -> List['LineModel']:
+        """
+        对 LineModel 列表进行多字段排序
+        
+        Parameters
+        ----------
+        series : List[LineModel]
+            要排序的 LineModel 列表
+        by : List[str]
+            排序字段列表
+        ascending : List[bool]
+            每个字段的排序方向列表
+            
+        Returns
+        -------
+        List[LineModel]
+            排序后的列表
+            
+        Examples
+        --------
+        >>> models = [
+        ...     LineModel(sid="AAPL", tick=100),
+        ...     LineModel(sid="AAPL", tick=200),
+        ...     LineModel(sid="GOOG", tick=100)
+        ... ]
+        >>> sorted_models = LineModel.sort_series_multi(
+        ...     models,
+        ...     by=['sid', 'tick'],
+        ...     ascending=[True, False]
+        ... )
+        """
+        if not series:
+            return []
+            
+        # 验证参数
+        if len(by) != len(ascending):
+            raise ValueError("Length of 'by' and 'ascending' must be the same")
+            
+        # 验证排序字段
+        valid_fields = ['sid', 'tick', 'open', 'high', 'low', 'close', 'volume', 'amount']
+        for field in by:
+            if field not in valid_fields:
+                raise ValueError(f"Invalid sort field: {field}. Must be one of {valid_fields}")
+                
+        # 创建排序键函数
+        def sort_key(x):
+            return tuple(getattr(x, field) for field in by)
+            
+        # 使用内置的排序方法
+        return sorted(series, key=sort_key, reverse=any(not asc for asc in ascending))
 
 
 class AdjustmentModel(BaseModel):
