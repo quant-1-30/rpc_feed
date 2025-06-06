@@ -85,40 +85,38 @@ class Graph(object):
             item = instance.next(item, node.params)
         return item
 
-    async def _run_with_async_tail(self, iterables):
+    async def _run_with_async_tail(self, iterables, parallel):
 
         consumer_task = asyncio.create_task(self.async_consume())
-
-        for iter_item in iterables:
-            print("iter_item", iter_item)
-            processed_item = self.run_sync_pipeline(iter_item)
-            # async put asyncio writer into queue
-            await self.queue.put(processed_item)
-
-        # # 避免闭包\lambda\局部函数不可 pickled 对象,主进程中只将可序列化的结构（如：模块路径、参数）传给子进程；
-        # # 子进程中使用这些信息重建 node.instance；
-        # # 不再在子进程中共享复杂对象或闭包
-        # serialized_graph = list(map(convert_node_to_serializable, self.graph))
-        # with multiprocessing.Pool(
-        #     processes=os.cpu_count(),
-        #     initializer=init_worker,
-        #     initargs=(serialized_graph,)
-        # ) as pool:
-        #     for processed_item in pool.imap_unordered(run_sync_pipeline_global, iterables):
-        #         print("put into queue", len(processed_item))
-        #         await self.queue.put(processed_item)
+        if parallel:
+            # 避免闭包\lambda\局部函数不可 pickled 对象,主进程中只将可序列化的结构（如：模块路径、参数）传给子进程；
+            # 子进程中使用这些信息重建 node.instance / 不再在子进程中共享复杂对象或闭包
+            serialized_graph = list(map(convert_node_to_serializable, self.graph))
+            with multiprocessing.Pool(
+                processes=os.cpu_count(),
+                initializer=init_worker,
+                initargs=(serialized_graph,)
+            ) as pool:
+                for processed_item in pool.imap_unordered(run_sync_pipeline_global, iterables):
+                    print("put into queue", len(processed_item))
+                    await self.queue.put(processed_item)
+        else:
+            for iter_item in iterables:
+                print("iter_item", iter_item)
+                processed_item = self.run_sync_pipeline(iter_item)
+                await self.queue.put(processed_item)
 
         # exit signal
         await self.queue.put(None)
         await consumer_task
         
-    def run(self, iterables):
+    def run(self, iterables, parallel):
         loop = asyncio.get_event_loop()
-        loop.run_until_complete(self._run_with_async_tail(iterables))
+        loop.run_until_complete(self._run_with_async_tail(iterables, parallel))
 
-    def to_execute(self, graph_xml, iterables):
+    def to_execute(self, graph_xml, iterables, parallel=True):
         self._build_graph(graph_xml=graph_xml) 
-        self.run(iterables)
+        self.run(iterables, parallel)
 
     # def visual_graph(self):
     #     # nx.circular_layout / nx.shell_layout / nx.spring_layout / nx.spectral_layout / nx.random_layout

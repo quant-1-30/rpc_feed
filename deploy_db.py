@@ -7,8 +7,8 @@ import asyncio
 import psycopg
 from sqlalchemy import text
 from dateutil.relativedelta import relativedelta
-from rpc_feed.core.middleware.ops.operator import async_ops
 from rpc_feed.utils.dt_utilty import ensure_utc
+from rpc_feed.core.middleware.operator import async_ops
 
 
 async def create_database():
