@@ -51,6 +51,20 @@ def expand_path(path):
 #     os.makedirs(quarter_path, exist_ok=True)
 #     return quarter_path
 
+
+def get_subdirs(dataset_root):
+    """快速扫描数据集子目录，使用 pathlib 提高性能 比os.walk 效果高"""
+    root_path = Path(dataset_root)
+    if not root_path.exists():
+        print(f"❌ Dataset root path does not exist: {dataset_root}")
+        return []
+
+    return [
+        subdir.name for subdir in root_path.iterdir() 
+        if subdir.is_dir() and not subdir.name.startswith('.')
+    ]
+
+
 def build_from_cfg(obj_type):
     """Build a module from config dict.
     Args:

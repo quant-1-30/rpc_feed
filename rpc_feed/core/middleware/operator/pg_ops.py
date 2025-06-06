@@ -4,7 +4,7 @@
 import os
 import pandas as pd
 from dotenv import  load_dotenv
-from sqlalchemy import Select
+from sqlalchemy import Select  
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
 from sqlalchemy.ext.automap import automap_base
 from sqlalchemy.orm import sessionmaker

@@ -4,11 +4,11 @@
 from typing import List
 from typing import Optional
 from sqlalchemy import func
-from sqlalchemy import Integer, String, ForeignKey, BigInteger, UUID, Float
+from sqlalchemy import Integer, String, ForeignKey, BigInteger, Float
+from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import DeclarativeBase
-from sqlalchemy.orm import Mapped
 from sqlalchemy.orm import mapped_column
-from sqlalchemy.orm import relationship
+from sqlalchemy.orm import Mapped, relationship
 from sqlalchemy.inspection import inspect
 from sqlalchemy.schema import PrimaryKeyConstraint, CreateTable, UniqueConstraint
 from sqlalchemy.ext.compiler import compiles

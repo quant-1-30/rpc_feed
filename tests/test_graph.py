@@ -52,18 +52,16 @@ if __name__ == "__main__":
    #  xml = "../xml/asset.graphml"
    #  bt_feed.load(xml, dataset_path, prefix="csv")
 
-   # tick 
-   #  dataset_path = os.path.join(os.path.expanduser("~"), "/Volumes/hengxin/quant/raw_data/minutes/201911/sh/minline/sh600225.01")
+   # # tick 
+   # #  dataset_path = os.path.join(os.path.expanduser("~"), "/Volumes/hengxin/quant/raw_data/minutes/201911/sh/minline/sh600225.01")
+   #  dataset_path = os.path.join(os.path.expanduser("~"), "/Volumes/hengxin/quant/raw_data/minutes")
+   #  xml = "../xml/tick.graphml"
+   #  bt_feed.load(xml, dataset_path, prefix=".01", _filter="asset")
+
+    # fund
     dataset_path = os.path.join(os.path.expanduser("~"), "/Volumes/hengxin/quant/raw_data/minutes")
-    xml = "../xml/tick.graphml"
-    bt_feed.load(xml, dataset_path, prefix=".01", _filter="asset")
-
-   #  # fund
-   #  dataset_path = os.path.join(os.path.expanduser("~"), "/Volumes/hengxin/quant/raw_data/funds/201911/sh/fundline/sh510300.01")
-   # #  dataset_path = os.path.join(os.path.expanduser("~"), "/Volumes/hengxin/quant/raw_data/minutes")
-   #  xml = "../xml/fund.graphml"
-   #  bt_feed.load(xml, dataset_path, prefix=".01", _filter="fund")
-
+    xml = "../xml/fund.graphml"
+    bt_feed.load(xml, dataset_path, prefix=".01", _filter="fund")
 
    #  dataset_path = os.path.join(os.path.expanduser("~"), "Downloads/quant/calendar")
    #  xml = "../xml/calendar.graphml"

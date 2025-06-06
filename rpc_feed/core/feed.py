@@ -55,20 +55,19 @@ class FeedMeta(MetaParams):
 class BtFeed(with_metaclass(FeedMeta, object)):
 
     params = (
-        ("parallel", True),
     )
 
     def __init__(self, kwargs={}):
         super(BtFeed, self).__init__(**kwargs)
 
-    def load(self, graph_xml, dataset_path, prefix, _filter="null"):
+    def load(self, graph_xml, dataset_path, prefix, _filter="null", parallel=True):
         '''
         Adds a ``Data Feed`` instance to the mix.
         If ``name`` is not None it will be put into ``data._name`` which is
         meant for decoration/plotting purposes.
         '''
         iterables = recursive_glob(dataset_path, suffix=prefix, filter=_filters[_filter])
-        self.pipeline.to_execute(graph_xml, iterables, self.p.parallel)
+        self.pipeline.to_execute(graph_xml, iterables, parallel)
 
     async def __call__(self, dataset, request: Request):
          iterator = self.datasets[dataset](request)

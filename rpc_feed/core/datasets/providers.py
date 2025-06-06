@@ -5,8 +5,9 @@
 # Licensed under the MIT License.
 
 import datetime
-from sqlalchemy import select
-from sqlalchemy import and_
+# SQLAlchemy 2.0.39 正确的导入方式
+from sqlalchemy import select, and_, or_
+from sqlalchemy.sql import Select  # 如果需要使用 Select 类
 
 from .base import Provider
 from .model import *

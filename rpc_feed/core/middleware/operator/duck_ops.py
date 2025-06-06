@@ -7,10 +7,13 @@ import asyncio
 from typing import Optional
 from pathlib import Path
 from dotenv import load_dotenv
+import concurrent.futures
+from threading import Lock
+import time
+from rpc_feed.utils.io import get_subdirs
 
 
 __all__ = ["duck_mgr"]
-
 
 
 class DuckDBManager:
@@ -34,6 +37,8 @@ class DuckDBManager:
         self.conn = duckdb.connect(database=self.db_path)
         self.max_queue_size = int(os.getenv("DUCKQSIZE", 1000))
         self._tasks = set()
+        self._view_lock = Lock()  # 线程安全
+        self._registered_views = set()  # 缓存已注册的视图
         self._init_duckdb()
 
     async def __aenter__(self):
@@ -41,60 +46,121 @@ class DuckDBManager:
 
     def _init_duckdb(self):
         # 启用远程文件访问模块（S3 / HTTP）
-        # self.conn.execute(f"""
-        #     INSTALL httpfs;
-        #     LOAD httpfs;
-        #     SET enable_object_cache=true;
-        # """)
         self.conn.execute("INSTALL httpfs;")
         self.conn.execute("LOAD httpfs;")
         self.conn.execute("SET enable_object_cache=true;")  # 读取加速
-        self.register_parquet_views()
+        # self.conn.execute("INSTALL httpfs; LOAD httpfs; SET enable_object_cache=time;")
+        
+        # 根据环境变量选择注册方式
+        use_lazy_macros = os.getenv("DUCK_VIEW_LAZY", "true").lower() == "true"
+        
+        if use_lazy_macros:
+            # 🚀 使用最快的懒加载方式 (推荐)
+            print("🚀 Using lazy MACRO registration for maximum speed...")
+            self.register_parquet_views_lazy()
+        else:
+            # 🔄 使用并行 VIEW 注册 (兼容传统查询语法)
+            print("🔄 Using parallel VIEW registration for compatibility...")
+            self.register_parquet_views()
+    
+    def get_view_names(self) -> list[str]:
+        """获取所有已注册的视图名称"""
+        return list(self._registered_views)
 
-    # def register_view(self, view_name: str, dataset_path: str):
-    #     # once register not need to use FROM parquet_scan('/data/parquet', hive_partitioning=1)
-    #     dataset_path = Path(dataset_path).as_posix()  # 统一路径格式
-    #     self.conn.execute(f"DROP VIEW IF EXISTS {view_name};")  # 重建
-    #     self.conn.execute(f"""
-    #         CREATE VIEW {view_name} AS 
-    #         SELECT * FROM parquet_scan(
-    #             '{dataset_path}/**',
-    #             HIVE_PARTITIONING=TRUE
-    #         );
-    #     """)
+    def view_exists(self, view_name: str) -> bool:
+        """检查视图是否存在"""
+        try:
+            result = self.conn.execute(f"SELECT 1 FROM information_schema.views WHERE table_name = '{view_name}'").fetchone()
+            return result is not None
+        except:
+            return False
+
+    def _register_single_view(self, view_name: str) -> tuple[str, bool, str]:
+        """注册单个视图，返回 (view_name, success, error_msg)"""
+        try:
+            dataset_path = os.path.join(self.dataset_root, view_name)
+            # 检查是否已经注册过
+            if view_name in self._registered_views:
+                return view_name, True, "already registered"
+            
+            # UNION_BY_NAME=TRUE —— 确保了你的股票数据系统的数据完整性和正确性 避免了schema变化
+            query = f"""
+                CREATE OR REPLACE VIEW {view_name} AS
+                SELECT * FROM parquet_scan('{dataset_path}/**/*.parquet', 
+                                         HIVE_PARTITIONING=TRUE, 
+                                         UNION_BY_NAME=TRUE);
+            """
+            with self._view_lock:
+                self.conn.execute(query)
+                self._registered_views.add(view_name)
+            
+            return view_name, True, f"-> {dataset_path}"
+            
+        except Exception as e:
+            return view_name, False, str(e)
 
     def register_parquet_views(self):
         """
-        自动扫描 root_path 下的所有子目录，并为每个子目录注册 DuckDB 视图。
-        要求每个子目录都是一个独立的 Parquet Dataset 目录，支持 Hive 分区结构。
+        优化版本：并行扫描和注册 DuckDB 视图
+        - 使用 pathlib 提高文件系统扫描性能
+        - 并行处理视图注册
+        - 缓存已注册的视图避免重复
+        - 延迟加载避免立即扫描所有 parquet 文件
         """
-        subdirs = [
-            name for name in os.listdir(self.dataset_root)
-            if os.path.isdir(os.path.join(self.dataset_root, name))
-        ]
-
-        self.conn.execute("INSTALL httpfs; LOAD httpfs; SET enable_object_cache=true;")
+        success_count = 0
+        error_count = 0
+        subdirs = get_subdirs(self.dataset_root)
+        if not subdirs:
+            print("⚠️  No dataset subdirectories found")
+            return
         
+        print(f"🔄 Registering {len(subdirs)} parquet views with multi-threading...")
         try:
-            for subdir in subdirs:
-                dataset_path = os.path.join(self.dataset_root, subdir)
-                # view_name = subdir.replace("-", "_").replace(".", "_")
-                view_name = subdir
-                query = f"""
-                    CREATE OR REPLACE VIEW {view_name} AS
-                    SELECT * FROM parquet_scan('{dataset_path}/**/*.parquet', HIVE_PARTITIONING=TRUE);
-                """
-                self.conn.execute(query)
-                print(f"✅ Registered view: {view_name} -> {dataset_path}")
-        except IOError as e:
-            print(f"❌ Error registering views: {e}")
-            # self.conn.close()
-            # raise e
+            # 并行注册视图
+            with concurrent.futures.ThreadPoolExecutor(max_workers=os.cpu_count() * 2) as executor:
+                # 提交所有任务
+                future_to_subdir = {
+                    executor.submit(self._register_single_view, subdir): subdir 
+                    for subdir in subdirs
+                }
+                for future in concurrent.futures.as_completed(future_to_subdir):
+                    view_name, success, msg = future.result()
+                    if success:
+                        success_count += 1
+                        print(f"✅ Registered view: {view_name} {msg}")
+                    else:
+                        error_count += 1
+                        print(f"❌ Failed to register view {view_name}: {msg}")
+                
+                print(f"🎉 Registration complete: {success_count} success, {error_count} errors")
+                
         except Exception as e:
-            print("unkown error", str(e))
-            # self.conn.close()
-            # raise e
+            print(f"❌ Error during parallel view registration: {e}")
+
+    def register_parquet_views_lazy(self):
+        """
+        超级优化版本：仅记录目录路径，真正使用时才创建视图（按需加载）
+        这是最快的方法，因为不会立即扫描任何 parquet 文件
+        """
+        subdirs = get_subdirs(self.dataset_root)
         
+        for subdir in subdirs:
+            dataset_path = os.path.join(self.dataset_root, subdir)
+            view_name = subdir
+            
+            # 使用 duckdb 的函数形式，只有查询时才会实际扫描文件 避免了视图创建时的昂贵扫描操作
+            # UNION_BY_NAME=TRUE —— 确保了你的股票数据系统的数据完整性和正确性 避免了schema变化
+            query = f"""
+                CREATE OR REPLACE MACRO {view_name}() AS TABLE parquet_scan('{dataset_path}/**/*.parquet', 
+                                                                           HIVE_PARTITIONING=TRUE, 
+                                                                           UNION_BY_NAME=TRUE);
+            """
+            try:
+                self.conn.execute(query)
+                print(f"✅ Registered lazy macro: {view_name} -> {dataset_path}")
+            except Exception as e:
+                print(f"❌ Failed to register macro {view_name}: {e}")
+
     def _query(self, sql: str):
         return self.conn.execute(sql).fetchdf()
     

@@ -31,7 +31,7 @@ class Graph(object):
         self.graph = []
         self.edges = None
         # 重新初始化这些属性 / backpressure
-        self.queue = asyncio.Queue(maxsize=500)
+        self.queue = asyncio.Queue(maxsize=os.cpu_count() * 2)
 
     @classmethod
     def get_cfg(cls, cfg_path):
@@ -88,6 +88,7 @@ class Graph(object):
     async def _run_with_async_tail(self, iterables, parallel):
 
         consumer_task = asyncio.create_task(self.async_consume())
+
         if parallel:
             # 避免闭包\lambda\局部函数不可 pickled 对象,主进程中只将可序列化的结构（如：模块路径、参数）传给子进程；
             # 子进程中使用这些信息重建 node.instance / 不再在子进程中共享复杂对象或闭包
