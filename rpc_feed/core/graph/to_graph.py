@@ -16,6 +16,10 @@ from rpc_feed.utils.loader import get_module_by_module_path
 from rpc_feed.utils.io import build_from_cfg
 from rpc_feed.utils.wrapper import singleton
 from .util import init_worker, convert_node_to_serializable, run_sync_pipeline_global
+from rpc_feed.utils.mp_fix import fix_macos_mp
+
+# 🔧 修复 macOS multiprocessing 问题
+fix_macos_mp()
 
 Node = namedtuple("Node", ["instance", "params"])
 

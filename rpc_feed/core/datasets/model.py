@@ -124,7 +124,7 @@ class LineModel(BaseModel):
         if not isinstance(_value, self):
             raise TypeError
         return self.sid > _value.sid or (self.sid == _value.sid and self.tick > _value.tick)
-
+    
     @classmethod
     def sort_series(cls, series: List['LineModel'], by: str = 'tick', ascending: bool = True) -> List['LineModel']:
         """
