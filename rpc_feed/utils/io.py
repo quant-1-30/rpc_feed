@@ -40,17 +40,6 @@ def expand_path(path):
     os.makedirs(p, exist_ok=True)
     return p
 
-# def get_quarter_path(base_path, date_str, fmt="%Y-%m-%d"):
-#     """根据日期确定 dataset 路径"""
-#     # path = os.path.dirname(os.path.dirname(Path(__file__)))
-#     date = datetime.datetime.strptime(str(date_str), _format)
-#     year = date.year
-#     quarter = (date.month - 1) // 3 + 1
-#     base_path = expand_path(base_path)
-#     quarter_path = os.path.join(base_path, str(year), f"Q{quarter}")
-#     os.makedirs(quarter_path, exist_ok=True)
-#     return quarter_path
-
 
 def get_subdirs(dataset_root):
     """快速扫描数据集子目录，使用 pathlib 提高性能 比os.walk 效果高"""
