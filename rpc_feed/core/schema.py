@@ -127,9 +127,9 @@ class Rightment(Base):
     sid: Mapped[str] = mapped_column(String(20), 
                                      ForeignKey("asset.sid", onupdate="CASCADE", ondelete="CASCADE"), 
                                      nullable=False, primary_key=True, use_existing_column=True)
+    report_date: Mapped[int] = mapped_column(Integer, nullable=False, use_existing_column=True)
     register_date: Mapped[int] = mapped_column(Integer, nullable=False, use_existing_column=True)
     ex_date: Mapped[int] = mapped_column(Integer, nullable=False, use_existing_column=True)
-    # effective_date: Mapped[int] = mapped_column(Integer, nullable=False, use_existing_column=True)
     price: Mapped[float] = mapped_column(Float, nullable=True, use_existing_column=True)
     ratio: Mapped[float] = mapped_column(Float, nullable=True, use_existing_column=True)
 
