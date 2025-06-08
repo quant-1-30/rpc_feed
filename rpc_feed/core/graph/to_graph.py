@@ -12,10 +12,11 @@ from concurrent.futures import ThreadPoolExecutor
 from pyvis.network import Network
 
 from .node import *
+from .memory import GraphMemoryManager
+from .util import init_worker, convert_node_to_serializable, run_sync_pipeline_global
 from rpc_feed.utils.loader import get_module_by_module_path
 from rpc_feed.utils.io import build_from_cfg
 from rpc_feed.utils.wrapper import singleton
-from .util import init_worker, convert_node_to_serializable, run_sync_pipeline_global
 from rpc_feed.utils.mp_fix import fix_macos_mp
 
 # 🔧 修复 macOS multiprocessing 问题
@@ -35,7 +36,11 @@ class Graph(object):
         self.graph = []
         self.edges = None
         # 重新初始化这些属性 / backpressure
-        self.queue = asyncio.Queue(maxsize=os.cpu_count() * 2)
+        self.queue = asyncio.Queue(maxsize=os.cpu_count())
+        self.consumer_workers = int(os.getenv("CONSUMER_WORKERS", os.cpu_count() * 2))
+        # memory manager
+        self.memory_mgr = GraphMemoryManager()
+        self.gc_interval = int(os.getenv("GC_INTERVAL", 10))
 
     @classmethod
     def get_cfg(cls, cfg_path):
@@ -82,6 +87,27 @@ class Graph(object):
             else:
                 # await asyncio.to_thread(instance.next, item, params)
                 await asyncio.get_event_loop().run_in_executor(None, instance.next, item, params) # ThreadPoolExecutor
+
+    # ✅ 多协程并发消费
+    async def async_consume_worker(self, instance, params):
+        while True:
+            item = await self.queue.get()
+            if item is None:
+                break
+            if instance.p.is_async:
+                await instance.next(item, params)
+            else:
+                await asyncio.get_event_loop().run_in_executor(None, instance.next, item, params)
+
+    async def async_consume(self):
+        print("enter into async_consume")
+        instance = self.graph[-1].instance
+        params = self.graph[-1].params
+        tasks = [
+            asyncio.create_task(self.async_consume_worker(instance, params))
+            for _ in range(self.consumer_workers)
+        ]
+        await asyncio.gather(*tasks)
     
     def run_sync_pipeline(self, item):
         for node in self.graph[:-1]:
@@ -102,14 +128,18 @@ class Graph(object):
                 initializer=init_worker,
                 initargs=(serialized_graph,)
             ) as pool:
-                for processed_item in pool.imap_unordered(run_sync_pipeline_global, iterables):
+                for count, processed_item in enumerate(pool.imap_unordered(run_sync_pipeline_global, iterables)):
                     print("put into queue", len(processed_item))
                     await self.queue.put(processed_item)
+                    if count % self.memory_check_interval == 0:
+                        self.memory_mgr.check_memory_usage()
         else:
-            for iter_item in iterables:
+            for count, iter_item in enumerate(iterables):
                 print("iter_item", iter_item)
                 processed_item = self.run_sync_pipeline(iter_item)
                 await self.queue.put(processed_item)
+                if count % self.memory_check_interval == 0:
+                    self.memory_mgr.check_memory_usage()
 
         # exit signal
         await self.queue.put(None)
@@ -123,14 +153,12 @@ class Graph(object):
         self._build_graph(graph_xml=graph_xml) 
         self.run(iterables, parallel)
 
-    # def visual_graph(self):
-    #     # nx.circular_layout / nx.shell_layout / nx.spring_layout / nx.spectral_layout / nx.random_layout
-    #     pos = nx.spring_layout(self.graph)
-    #     nx.draw(self.graph, pos, with_labels=True, node_size=2000, node_color='lightblue', font_size=10, font_weight='bold')
-    #     plt.title("Graph Visualization")
-    #     plt.show()
-
     def visual_graph_html(self, output_path="dag_pipeline.html"):
+        # # nx.circular_layout / nx.shell_layout / nx.spring_layout / nx.spectral_layout / nx.random_layout
+        # pos = nx.spring_layout(self.graph)
+        # nx.draw(self.graph, pos, with_labels=True, node_size=2000, node_color='lightblue', font_size=10, font_weight='bold')
+        # plt.title("Graph Visualization")
+        # plt.show()
         net = Network(directed=True, notebook=False, height='750px', width='100%')
         net.barnes_hut()  # 使用物理布局算法
     
