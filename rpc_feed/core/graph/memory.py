@@ -10,22 +10,26 @@ import os
 import gc
 import psutil
 import numpy as np
-from typing import Dict, Optional
+from typing import Dict, Optional, Tuple
 
 
 class GraphMemoryManager:
     def __init__(self):
         self.threshold = float(os.getenv("GRAPH_MAX_MEMORY_PERCENT", "75"))
-        self.per_item_mb = float(os.getenv("PER_ITEM_SIZE_MB", "300.0"))
-        self.q_size, self.max_mem = self.calc_threshold()
+        self.per_item_mb = float(os.getenv("PER_ITEM_SIZE_MB", "500.0"))
+        self.memory_check_interval = int(os.getenv("MEMORY_CHECK_INTERVAL", "10"))
+        # check threshold
+        self.alert_threshold = float(os.getenv("GRAPH_MEM_ALERT_THRESHOLD", "80"))
+        self.critical_threshold = float(os.getenv("GRAPH_MEM_CRITICAL_THRESHOLD", "90"))
+        
+        self.q_size, self.max_mem = self._init()
 
-        self.memory_check_interval = int(os.getenv("MEMORY_CHECK_INTERVAL", "18"))
-
-    def calc_threshold(self) -> int:
+    def _init(self) -> Tuple[int, float]:
+        threshold = float(os.getenv("GRAPH_QSIZE_MEMORY_PERCENT", "75")) / 100
         try:
             # 获取系统内存信息
             memory = psutil.virtual_memory()
-            available_mb = self.threshold * memory.available / (1024 * 1024 * 100)
+            available_mb = threshold * memory.available / (1024 * 1024)
             q_size = max(1, int(available_mb / self.per_item_mb))
             print(f"🧠 内存优化: 分配最大内存 {available_mb:.0f}MB, 队列大小设置为 {q_size}")
             return q_size, available_mb
@@ -50,8 +54,8 @@ class GraphMemoryManager:
             memory_status = {
                 'process_memory_mb': round(memory_mb, 1),
                 'system_memory_percent': round(system_usage_percent, 1),
-                'is_high_usage': memory_mb > self.max_mem * 0.8,
-                'is_critical': memory_mb > self.max_mem or system_usage_percent > 90
+                'is_high_usage': memory_mb > self.max_mem * self.alert_threshold / 100,
+                'is_critical': memory_mb > self.max_mem or system_usage_percent > self.critical_threshold
             }
             
             if force_check or memory_status['is_high_usage']:

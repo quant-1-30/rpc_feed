@@ -35,12 +35,11 @@ class Graph(object):
     def __init__(self) -> None:
         self.graph = []
         self.edges = None
-        # 重新初始化这些属性 / backpressure
-        self.queue = asyncio.Queue(maxsize=os.cpu_count())
-        self.consumer_workers = int(os.getenv("CONSUMER_WORKERS", os.cpu_count() * 2))
         # memory manager
         self.memory_mgr = GraphMemoryManager()
-        self.gc_interval = int(os.getenv("GC_INTERVAL", 10))
+        # 重新初始化这些属性 / backpressure
+        self.queue = asyncio.Queue(maxsize=self.memory_mgr.q_size)
+        self.consumer_workers = int(os.getenv("CONSUMER_WORKERS", os.cpu_count() * 2))
 
     @classmethod
     def get_cfg(cls, cfg_path):
@@ -131,14 +130,14 @@ class Graph(object):
                 for count, processed_item in enumerate(pool.imap_unordered(run_sync_pipeline_global, iterables)):
                     print("put into queue", len(processed_item))
                     await self.queue.put(processed_item)
-                    if count % self.memory_check_interval == 0:
+                    if count % self.memory_mgr.memory_check_interval == 0:
                         self.memory_mgr.check_memory_usage()
         else:
             for count, iter_item in enumerate(iterables):
                 print("iter_item", iter_item)
                 processed_item = self.run_sync_pipeline(iter_item)
                 await self.queue.put(processed_item)
-                if count % self.memory_check_interval == 0:
+                if count % self.memory_mgr.memory_check_interval == 0:
                     self.memory_mgr.check_memory_usage()
 
         # exit signal
