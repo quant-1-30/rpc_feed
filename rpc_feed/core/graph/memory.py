@@ -15,9 +15,9 @@ from typing import Dict, Optional, Tuple
 
 class GraphMemoryManager:
     def __init__(self):
-        self.q_size, self.max_mem = self._init()
         # check threshold
         self.threshold = float(os.getenv("GRAPH_MAX_MEMORY_PERCENT", "75")) / 100
+        self.q_size, self.max_mem = self._init()
         
     def _init(self) -> Tuple[int, float]:
         try:

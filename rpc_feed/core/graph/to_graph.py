@@ -41,16 +41,17 @@ class Graph(object):
         self.loop = None
         # memory manager backpressure
         # ensure consumer workers exceed q_size to avoid oom and restricted cores 
-        self.procs = int(os.getenv("CONCURRENT_PROCS", int(os.cpu_count() * 0.75)))
+        self.procs = int(os.getenv("CONCURRENT_PROCS", int(os.cpu_count() * 0.5)))
         self.memory_mgr = GraphMemoryManager()
         self.queue = asyncio.Queue(maxsize=self.memory_mgr.q_size)
         self.consumer_workers = int(os.getenv("CONSUMER_WORKERS", os.cpu_count() * 2))
         self.memory_check_interval = int(os.getenv("MEMORY_CHECK_INTERVAL", "5"))
 
-    def _init_async_resource(self):
+    def _init_async_resource(self, loop):
         # ENSURE UNDER ASYNCIO.LOOP OTHERWISE DEFAULT LOOP (CAUSE DIFFERENT EVENT LOOP)
+        # self.loop = asyncio.get_running_loop() # not running
+        self.loop = loop
         self.queue = asyncio.Queue(maxsize=self.memory_mgr.q_size)
-        self.loop = asyncio.get_running_loop()
 
     @classmethod
     def get_cfg(cls, cfg_path):
@@ -119,6 +120,19 @@ class Graph(object):
         ]
         await asyncio.gather(*tasks)
 
+    async def async_produce(self, pool, iterables):
+        def gen():
+            for item in pool.imap_unordered(run_sync_pipeline_global, iterables):
+                print("put into queue", len(item))
+                yield item
+
+        for p_item in gen():
+            await self.queue.put(p_item)
+        
+        # put exit signal
+        for _ in range(self.consumer_workers): # 确保所有消费者都收到 None 信号
+            await self.queue.put(None)
+
     async def monitor_background(self):
         while True:
             await self.loop.run_in_executor(None, self.memory_mgr.check_memory_usage)
@@ -144,18 +158,15 @@ class Graph(object):
                 initializer=init_worker,
                 initargs=(serialized_graph,)
             ) as pool:
-                for count, processed_item in enumerate(pool.imap_unordered(run_sync_pipeline_global, iterables)):
-                    print("put into queue", len(processed_item))
-                    await self.queue.put(processed_item)
+                await self.async_produce(pool, iterables)
+                # ensure to avoid BrokenPipeError maybe due to main thread finish
+                pool.close()
+                pool.join()
         else:
             for _, iter_item in enumerate(iterables):
                 print("iter_item", iter_item)
                 processed_item = self.run_sync_pipeline(iter_item)
                 await self.queue.put(processed_item)
-
-        # exit signal
-        for _ in range(self.consumer_workers):  # 确保所有消费者都收到 None 信号
-            await self.queue.put(None)
 
         await asyncio.gather(consumer_task, monitor_task) # concurrent
 
@@ -163,7 +174,7 @@ class Graph(object):
         # new version get_event_loop is deprecated ( will automated create event loop old version)
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
-        self._init_async_resource()
+        self._init_async_resource(loop) # or delay get_running_loop with await 
         loop.run_until_complete(self._run_with_async_tail(iterables, parallel))
 
     def to_execute(self, graph_xml, iterables, parallel=True):
