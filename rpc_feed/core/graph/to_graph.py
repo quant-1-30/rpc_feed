@@ -40,8 +40,9 @@ class Graph(object):
         self.queue = None
         self.loop = None
         # memory manager backpressure
+        # ensure consumer workers exceed q_size to avoid oom and restricted cores 
+        self.procs = int(os.getenv("CONCURRENT_PROCS", int(os.cpu_count() * 0.75)))
         self.memory_mgr = GraphMemoryManager()
-        # ensure consumer workers exceed q_size to avoid oom
         self.queue = asyncio.Queue(maxsize=self.memory_mgr.q_size)
         self.consumer_workers = int(os.getenv("CONSUMER_WORKERS", os.cpu_count() * 2))
         self.memory_check_interval = int(os.getenv("MEMORY_CHECK_INTERVAL", "5"))
@@ -139,7 +140,7 @@ class Graph(object):
             # 子进程中使用这些信息重建 node.instance / 不再在子进程中共享复杂对象或闭包
             serialized_graph = list(map(convert_node_to_serializable, self.graph))
             with multiprocessing.get_context("spawn").Pool( # 使用 spawn 模式，避免 fork 模式下子进程无法访问主进程的 asyncio 事件循环
-                processes=os.cpu_count(),
+                processes=self.procs,
                 initializer=init_worker,
                 initargs=(serialized_graph,)
             ) as pool:

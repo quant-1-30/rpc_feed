@@ -54,7 +54,7 @@ class GraphMemoryManager:
             }
             
             if memory_status['[Monitor] Memory Critical']:
-                print(f"🚨 内存使用率{memory_status['[Monitor] Memory Usage']}%过高，触发垃圾回收: ")
+                print(f"🚨 内存使用率{memory_status['[Monitor] Memory Usage']}过高，触发垃圾回收: ")
                 print(f"[Monitor] RSS Memory: {memory_status['[Monitor] RSS Memory']} MB")
                 print(f"[Monitor] CPU Usage: {memory_status['[Monitor] CPU Usage']}%")
                 gc.collect()
