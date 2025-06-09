@@ -33,14 +33,23 @@ class Graph(object):
     cfg_cache = {}
 
     def __init__(self) -> None:
+        # Graph
         self.graph = []
         self.edges = None
-        # memory manager
+        # async resource
+        self.queue = None
+        self.loop = None
+        # memory manager backpressure
         self.memory_mgr = GraphMemoryManager()
-        # 重新初始化这些属性 / backpressure
+        # ensure consumer workers exceed q_size to avoid oom
         self.queue = asyncio.Queue(maxsize=self.memory_mgr.q_size)
         self.consumer_workers = int(os.getenv("CONSUMER_WORKERS", os.cpu_count() * 2))
         self.memory_check_interval = int(os.getenv("MEMORY_CHECK_INTERVAL", "5"))
+
+    def _init_async_resource(self):
+        # ENSURE UNDER ASYNCIO.LOOP OTHERWISE DEFAULT LOOP (CAUSE DIFFERENT EVENT LOOP)
+        self.queue = asyncio.Queue(maxsize=self.memory_mgr.q_size)
+        self.loop = asyncio.get_running_loop()
 
     @classmethod
     def get_cfg(cls, cfg_path):
@@ -86,7 +95,7 @@ class Graph(object):
                 await instance.next(item, params)
             else:
                 # await asyncio.to_thread(instance.next, item, params)
-                await asyncio.get_running_loop().run_in_executor(None, instance.next, item, params) # ThreadPoolExecutor
+                await self.loop.run_in_executor(None, instance.next, item, params) # ThreadPoolExecutor
 
     # ✅ 多协程并发消费
     async def async_consume_worker(self, instance, params):
@@ -97,7 +106,7 @@ class Graph(object):
             if instance.p.is_async:
                 await instance.next(item, params)
             else:
-                await asyncio.get_running_loop().run_in_executor(None, instance.next, item, params)
+                await self.loop.run_in_executor(None, instance.next, item, params)
 
     async def async_consume(self):
         print("enter into async_consume")
@@ -110,9 +119,8 @@ class Graph(object):
         await asyncio.gather(*tasks)
 
     async def monitor_background(self):
-        loop = asyncio.get_running_loop()
         while True:
-            await loop.run_in_executor(None, self.memory_mgr.check_memory_usage)
+            await self.loop.run_in_executor(None, self.memory_mgr.check_memory_usage)
             await asyncio.sleep(self.memory_check_interval)
     
     def run_sync_pipeline(self, item):
@@ -139,7 +147,7 @@ class Graph(object):
                     print("put into queue", len(processed_item))
                     await self.queue.put(processed_item)
         else:
-            for count, iter_item in enumerate(iterables):
+            for _, iter_item in enumerate(iterables):
                 print("iter_item", iter_item)
                 processed_item = self.run_sync_pipeline(iter_item)
                 await self.queue.put(processed_item)
@@ -152,22 +160,10 @@ class Graph(object):
 
     def run(self, iterables, parallel):
         # new version get_event_loop is deprecated ( will automated create event loop old version)
-        coro = self._run_with_async_tail(iterables, parallel)
-        try:
-            asyncio.run(coro)
-        except RuntimeError as e:
-            if "asyncio.run()" in str(e):
-                try:
-                    loop = asyncio.get_running_loop()
-                    if loop.is_running():
-                        return loop.create_task(coro)
-                except RuntimeError:
-                    pass
-                loop = asyncio.new_event_loop()
-                asyncio.set_event_loop(loop)
-                return loop.run_until_complete(coro)
-            else:
-                raise
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        self._init_async_resource()
+        loop.run_until_complete(self._run_with_async_tail(iterables, parallel))
 
     def to_execute(self, graph_xml, iterables, parallel=True):
         self._build_graph(graph_xml=graph_xml) 

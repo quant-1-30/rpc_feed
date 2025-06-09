@@ -15,20 +15,16 @@ from typing import Dict, Optional, Tuple
 
 class GraphMemoryManager:
     def __init__(self):
-        self.threshold = float(os.getenv("GRAPH_MAX_MEMORY_PERCENT", "75"))
-        # check threshold
-        self.alert_threshold = float(os.getenv("GRAPH_MEM_ALERT_THRESHOLD", "80"))
-        self.critical_threshold = float(os.getenv("GRAPH_MEM_CRITICAL_THRESHOLD", "85"))
-        
         self.q_size, self.max_mem = self._init()
-
+        # check threshold
+        self.threshold = float(os.getenv("GRAPH_MAX_MEMORY_PERCENT", "75")) / 100
+        
     def _init(self) -> Tuple[int, float]:
-        threshold = float(os.getenv("GRAPH_QSIZE_MEMORY_PERCENT", "75")) / 100
         try:
             # 获取系统内存信息
             memory = psutil.virtual_memory()
-            available_mb = threshold * memory.available / (1024 * 1024)
-            q_size = int(os.getenv("GRAPH_QSIZE", os.cpu_count()))
+            available_mb = self.threshold * memory.available / (1024 * 1024)
+            q_size = int(os.getenv("GRAPH_QSIZE", int(os.cpu_count() / 2)))
             print(f"🧠 内存优化: 分配最大内存 {available_mb:.0f}MB, 队列大小设置为 {q_size}")
             return q_size, available_mb
             
@@ -47,14 +43,14 @@ class GraphMemoryManager:
             memory_mb = memory_info.rss / (1024 * 1024)
             
             system_memory = psutil.virtual_memory()
-            system_usage_percent = system_memory.percent
+            system_usage_percent = system_memory.percent / 100
             
             memory_status = {
                 '[Monitor] RSS Memory': round(memory_mb, 1),
                 '[Monitor] Memory Usage': round(system_usage_percent, 1),
                 '[Monitor] CPU Usage': round(process.cpu_percent(interval=1.0), 1),
-                '[Monitor] Memory Threshold': self.max_mem * self.alert_threshold / 100,
-                '[Monitor] Memory Critical': system_usage_percent > self.critical_threshold,
+                '[Monitor] Memory Threshold': self.max_mem * self.threshold,
+                '[Monitor] Memory Critical': system_usage_percent > self.threshold,
             }
             
             if memory_status['[Monitor] Memory Critical']:
