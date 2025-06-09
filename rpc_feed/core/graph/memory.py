@@ -16,11 +16,9 @@ from typing import Dict, Optional, Tuple
 class GraphMemoryManager:
     def __init__(self):
         self.threshold = float(os.getenv("GRAPH_MAX_MEMORY_PERCENT", "75"))
-        self.per_item_mb = float(os.getenv("PER_ITEM_SIZE_MB", "500.0"))
-        self.memory_check_interval = int(os.getenv("MEMORY_CHECK_INTERVAL", "10"))
         # check threshold
         self.alert_threshold = float(os.getenv("GRAPH_MEM_ALERT_THRESHOLD", "80"))
-        self.critical_threshold = float(os.getenv("GRAPH_MEM_CRITICAL_THRESHOLD", "90"))
+        self.critical_threshold = float(os.getenv("GRAPH_MEM_CRITICAL_THRESHOLD", "85"))
         
         self.q_size, self.max_mem = self._init()
 
@@ -30,7 +28,7 @@ class GraphMemoryManager:
             # 获取系统内存信息
             memory = psutil.virtual_memory()
             available_mb = threshold * memory.available / (1024 * 1024)
-            q_size = max(1, int(available_mb / self.per_item_mb))
+            q_size = int(os.getenv("GRAPH_QSIZE", os.cpu_count()))
             print(f"🧠 内存优化: 分配最大内存 {available_mb:.0f}MB, 队列大小设置为 {q_size}")
             return q_size, available_mb
             
@@ -43,7 +41,7 @@ class GraphMemoryManager:
         检查当前内存使用情况
         """
         try:
-            process = psutil.Process()
+            process = psutil.Process(os.getpid())
             memory_info = process.memory_info()
             # rss 表示进程占用的物理内存大小，包括代码、数据、堆栈等
             memory_mb = memory_info.rss / (1024 * 1024)
@@ -52,26 +50,25 @@ class GraphMemoryManager:
             system_usage_percent = system_memory.percent
             
             memory_status = {
-                'process_memory_mb': round(memory_mb, 1),
-                'system_memory_percent': round(system_usage_percent, 1),
-                'is_high_usage': memory_mb > self.max_mem * self.alert_threshold / 100,
-                'is_critical': memory_mb > self.max_mem or system_usage_percent > self.critical_threshold
+                '[Monitor] RSS Memory': round(memory_mb, 1),
+                '[Monitor] Memory Usage': round(system_usage_percent, 1),
+                '[Monitor] CPU Usage': round(process.cpu_percent(interval=1.0), 1),
+                '[Monitor] Memory Threshold': self.max_mem * self.alert_threshold / 100,
+                '[Monitor] Memory Critical': system_usage_percent > self.critical_threshold,
             }
             
-            if force_check or memory_status['is_high_usage']:
-                print(f"🧠 内存使用: 进程 {memory_status['process_memory_mb']}MB, "
-                      f"系统 {memory_status['system_memory_percent']}%")
-                
-                if memory_status['is_critical']:
-                    print("🚨 内存使用率过高，触发垃圾回收")
-                    gc.collect()
+            if memory_status['[Monitor] Memory Critical']:
+                print(f"🚨 内存使用率{memory_status['[Monitor] Memory Usage']}%过高，触发垃圾回收: ")
+                print(f"[Monitor] RSS Memory: {memory_status['[Monitor] RSS Memory']} MB")
+                print(f"[Monitor] CPU Usage: {memory_status['[Monitor] CPU Usage']}%")
+                gc.collect()
             
             return memory_status
             
         except Exception as e:
             print(f"⚠️ 内存检查失败: {e}")
             return {'error': str(e)}
-   
+        
     def get_memory_stats(self) -> Dict:
         """
         获取内存统计信息
@@ -80,9 +77,7 @@ class GraphMemoryManager:
         
         return {
             'processed_count': self.processed_count,
-            'max_memory_mb': self.max_memory_mb,
-            'memory_check_interval': self.memory_check_interval,
-            'force_gc_threshold': self.force_gc_threshold,
+            'max_memory_mb': self.max_mem,
             **status
         }
     

@@ -40,6 +40,7 @@ class Graph(object):
         # 重新初始化这些属性 / backpressure
         self.queue = asyncio.Queue(maxsize=self.memory_mgr.q_size)
         self.consumer_workers = int(os.getenv("CONSUMER_WORKERS", os.cpu_count() * 2))
+        self.memory_check_interval = int(os.getenv("MEMORY_CHECK_INTERVAL", "5"))
 
     @classmethod
     def get_cfg(cls, cfg_path):
@@ -85,7 +86,7 @@ class Graph(object):
                 await instance.next(item, params)
             else:
                 # await asyncio.to_thread(instance.next, item, params)
-                await asyncio.get_event_loop().run_in_executor(None, instance.next, item, params) # ThreadPoolExecutor
+                await asyncio.get_running_loop().run_in_executor(None, instance.next, item, params) # ThreadPoolExecutor
 
     # ✅ 多协程并发消费
     async def async_consume_worker(self, instance, params):
@@ -96,7 +97,7 @@ class Graph(object):
             if instance.p.is_async:
                 await instance.next(item, params)
             else:
-                await asyncio.get_event_loop().run_in_executor(None, instance.next, item, params)
+                await asyncio.get_running_loop().run_in_executor(None, instance.next, item, params)
 
     async def async_consume(self):
         print("enter into async_consume")
@@ -107,6 +108,12 @@ class Graph(object):
             for _ in range(self.consumer_workers)
         ]
         await asyncio.gather(*tasks)
+
+    async def monitor_background(self):
+        loop = asyncio.get_running_loop()
+        while True:
+            await loop.run_in_executor(None, self.memory_mgr.check_memory_usage)
+            await asyncio.sleep(self.memory_check_interval)
     
     def run_sync_pipeline(self, item):
         for node in self.graph[:-1]:
@@ -116,13 +123,14 @@ class Graph(object):
 
     async def _run_with_async_tail(self, iterables, parallel):
 
+        monitor_task = asyncio.create_task(self.monitor_background())
         consumer_task = asyncio.create_task(self.async_consume())
 
         if parallel:
             # 避免闭包\lambda\局部函数不可 pickled 对象,主进程中只将可序列化的结构（如：模块路径、参数）传给子进程；
             # 子进程中使用这些信息重建 node.instance / 不再在子进程中共享复杂对象或闭包
             serialized_graph = list(map(convert_node_to_serializable, self.graph))
-            with multiprocessing.Pool(
+            with multiprocessing.get_context("spawn").Pool( # 使用 spawn 模式，避免 fork 模式下子进程无法访问主进程的 asyncio 事件循环
                 processes=os.cpu_count(),
                 initializer=init_worker,
                 initargs=(serialized_graph,)
@@ -130,23 +138,36 @@ class Graph(object):
                 for count, processed_item in enumerate(pool.imap_unordered(run_sync_pipeline_global, iterables)):
                     print("put into queue", len(processed_item))
                     await self.queue.put(processed_item)
-                    if count % self.memory_mgr.memory_check_interval == 0:
-                        self.memory_mgr.check_memory_usage()
         else:
             for count, iter_item in enumerate(iterables):
                 print("iter_item", iter_item)
                 processed_item = self.run_sync_pipeline(iter_item)
                 await self.queue.put(processed_item)
-                if count % self.memory_mgr.memory_check_interval == 0:
-                    self.memory_mgr.check_memory_usage()
 
         # exit signal
-        await self.queue.put(None)
-        await consumer_task
-        
+        for _ in range(self.consumer_workers):  # 确保所有消费者都收到 None 信号
+            await self.queue.put(None)
+
+        await asyncio.gather(consumer_task, monitor_task) # concurrent
+
     def run(self, iterables, parallel):
-        loop = asyncio.get_event_loop()
-        loop.run_until_complete(self._run_with_async_tail(iterables, parallel))
+        # new version get_event_loop is deprecated ( will automated create event loop old version)
+        coro = self._run_with_async_tail(iterables, parallel)
+        try:
+            asyncio.run(coro)
+        except RuntimeError as e:
+            if "asyncio.run()" in str(e):
+                try:
+                    loop = asyncio.get_running_loop()
+                    if loop.is_running():
+                        return loop.create_task(coro)
+                except RuntimeError:
+                    pass
+                loop = asyncio.new_event_loop()
+                asyncio.set_event_loop(loop)
+                return loop.run_until_complete(coro)
+            else:
+                raise
 
     def to_execute(self, graph_xml, iterables, parallel=True):
         self._build_graph(graph_xml=graph_xml) 

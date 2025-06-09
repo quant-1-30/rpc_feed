@@ -32,7 +32,7 @@ dotenv = "^0.9.9"
 [[tool.poetry.source]]
 name = "tuna"
 url = "https://pypi.tuna.tsinghua.edu.cn/simple/"
-priority = "default"  
+priority = "primary"  
 
 [build-system]
 requires = ["setuptools>=42", "wheel"]
