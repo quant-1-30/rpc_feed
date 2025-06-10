@@ -6,9 +6,12 @@ Created on Tue Mar 12 15:37:47 2019
 @author: python
 """
 import os
-import inspect
 import numpy as np
 import pandas as pd
+import asyncio
+import signal
+import platform
+import inspect
 import logging
 from copy import deepcopy
 from .wrapper import  ignore_pandas_nan_categorical_warning
@@ -17,6 +20,20 @@ from .wrapper import  ignore_pandas_nan_categorical_warning
 def no_hup():
     pass
 
+
+def signal_handler(loop):
+
+    def _shutdown_handler(loop):
+        print("Signal received, cancelling tasks...")
+        for task in asyncio.all_tasks(loop):
+            task.cancel()
+        
+    if platform.system() != "Windows":
+        # 🔧 添加 Ctrl+C 捕获
+        for sig in (signal.SIGINT, signal.SIGTERM):
+            loop.add_signal_handler(sig, lambda: _shutdown_handler(loop))
+    else:
+        print("Windows system, no signal handler")
 
 # def asymmetric_round_price(price, prefer_round_down, tick_size, diff=0.95):
 #     """

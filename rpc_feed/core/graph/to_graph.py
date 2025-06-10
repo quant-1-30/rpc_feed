@@ -8,6 +8,7 @@ import signal
 import networkx as nx
 import matplotlib.pyplot as plt
 import multiprocessing
+from multiprocessing import Semaphore
 from collections import namedtuple
 from concurrent.futures import ThreadPoolExecutor
 from pyvis.network import Network
@@ -19,7 +20,7 @@ from rpc_feed.utils.loader import get_module_by_module_path
 from rpc_feed.utils.io import build_from_cfg
 from rpc_feed.utils.wrapper import singleton
 from rpc_feed.utils.mp_fix import fix_macos_mp
-from rpc_feed.utils.signal_handler import _shutdown_handler
+from rpc_feed.utils.utility import signal_handler
 
 # 🔧 修复 macOS multiprocessing 问题
 fix_macos_mp()
@@ -43,10 +44,12 @@ class Graph(object):
         self.loop = None
         # memory manager backpressure
         # ensure consumer workers exceed q_size to avoid oom and restricted cores 
-        self.procs = int(os.getenv("CONCURRENT_PROCS", int(os.cpu_count() * 0.5)))
         self.memory_mgr = GraphMemoryManager()
+        self.procs = int(os.getenv("CONCURRENT_PROCS", int(os.cpu_count() * 0.25)))
         self.queue = asyncio.Queue(maxsize=self.memory_mgr.q_size)
-        self.consumer_workers = int(os.getenv("CONSUMER_WORKERS", os.cpu_count() * 2))
+        self.consumer_workers = int(os.getenv("CONSUMER_WORKERS", os.cpu_count() * 4))
+        # self.sema = Semaphore(self.consumer_workers) # control concurrency
+
         self.memory_check_interval = int(os.getenv("MEMORY_CHECK_INTERVAL", "5"))
 
     def _init_async_resource(self, loop):
@@ -99,6 +102,7 @@ class Graph(object):
             item = await self.queue.get()
             if item is None:
                 break
+            # async with sema # control concurrency
             if instance.p.is_async:
                 await instance.next(item, params)
             else:
@@ -171,9 +175,7 @@ class Graph(object):
         asyncio.set_event_loop(loop)
         self._init_async_resource(loop) # or delay get_running_loop with await 
 
-            # 🔧 添加 Ctrl+C 捕获
-        for sig in (signal.SIGINT, signal.SIGTERM):
-            loop.add_signal_handler(sig, lambda: _shutdown_handler(loop))
+        signal_handler(loop)
 
         try:
             loop.run_until_complete(self._run_with_async_tail(iterables, parallel))
