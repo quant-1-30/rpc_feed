@@ -4,6 +4,7 @@
 import json
 import asyncio
 import os
+import signal
 import networkx as nx
 import matplotlib.pyplot as plt
 import multiprocessing
@@ -18,6 +19,7 @@ from rpc_feed.utils.loader import get_module_by_module_path
 from rpc_feed.utils.io import build_from_cfg
 from rpc_feed.utils.wrapper import singleton
 from rpc_feed.utils.mp_fix import fix_macos_mp
+from rpc_feed.utils.signal_handler import _shutdown_handler
 
 # 🔧 修复 macOS multiprocessing 问题
 fix_macos_mp()
@@ -83,21 +85,13 @@ class Graph(object):
         else:
             raise ValueError("The graph is not a DAG")
         print("fininsh build graph")
-
-    async def async_consume(self):
-        print("enter into async_consume")
-        instance = self.graph[-1].instance
-        params = self.graph[-1].params
-
+    
+    async def monitor_background(self):
         while True:
-            item = await self.queue.get()
-            if item is None:
-                break
-            if instance.p.is_async:
-                await instance.next(item, params)
-            else:
-                # await asyncio.to_thread(instance.next, item, params)
-                await self.loop.run_in_executor(None, instance.next, item, params) # ThreadPoolExecutor
+            await self.loop.run_in_executor(None, self.memory_mgr.check_memory_usage)
+            await asyncio.sleep(self.memory_check_interval)
+
+# -----------------------------------consumer----------------------------------------
 
     # ✅ 多协程并发消费
     async def async_consume_worker(self, instance, params):
@@ -108,7 +102,7 @@ class Graph(object):
             if instance.p.is_async:
                 await instance.next(item, params)
             else:
-                await self.loop.run_in_executor(None, instance.next, item, params)
+                await self.loop.run_in_executor(None, instance.next, item, params) # ThreadPoolExecutor
 
     async def async_consume(self):
         print("enter into async_consume")
@@ -119,6 +113,8 @@ class Graph(object):
             for _ in range(self.consumer_workers)
         ]
         await asyncio.gather(*tasks)
+
+# -----------------------------------produce----------------------------------------
 
     async def async_produce(self, pool, iterables):
         def gen():
@@ -133,10 +129,7 @@ class Graph(object):
         for _ in range(self.consumer_workers): # 确保所有消费者都收到 None 信号
             await self.queue.put(None)
 
-    async def monitor_background(self):
-        while True:
-            await self.loop.run_in_executor(None, self.memory_mgr.check_memory_usage)
-            await asyncio.sleep(self.memory_check_interval)
+# -----------------------------------run pipeline----------------------------------------
     
     def run_sync_pipeline(self, item):
         for node in self.graph[:-1]:
@@ -159,27 +152,41 @@ class Graph(object):
                 initargs=(serialized_graph,)
             ) as pool:
                 await self.async_produce(pool, iterables)
+                pool.close() # stop receive new task
+                await asyncio.gather(consumer_task, monitor_task) # ensure consumer and monitor under pool
                 # ensure to avoid BrokenPipeError maybe due to main thread finish
-                pool.close()
                 pool.join()
         else:
             for _, iter_item in enumerate(iterables):
                 print("iter_item", iter_item)
                 processed_item = self.run_sync_pipeline(iter_item)
                 await self.queue.put(processed_item)
+                await asyncio.gather(consumer_task, monitor_task) # ensure consumer and monitor
 
-        await asyncio.gather(consumer_task, monitor_task) # concurrent
+# ----------------------------------- entrypoint ----------------------------------------
 
     def run(self, iterables, parallel):
         # new version get_event_loop is deprecated ( will automated create event loop old version)
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
         self._init_async_resource(loop) # or delay get_running_loop with await 
-        loop.run_until_complete(self._run_with_async_tail(iterables, parallel))
+
+            # 🔧 添加 Ctrl+C 捕获
+        for sig in (signal.SIGINT, signal.SIGTERM):
+            loop.add_signal_handler(sig, lambda: _shutdown_handler(loop))
+
+        try:
+            loop.run_until_complete(self._run_with_async_tail(iterables, parallel))
+        except asyncio.CancelledError:
+            print("CancelledError caught, shutting down...")
+        finally:
+            loop.close()
 
     def to_execute(self, graph_xml, iterables, parallel=True):
         self._build_graph(graph_xml=graph_xml) 
         self.run(iterables, parallel)
+
+# ----------------------------------- visual graph ----------------------------------------
 
     def visual_graph_html(self, output_path="dag_pipeline.html"):
         # # nx.circular_layout / nx.shell_layout / nx.spring_layout / nx.spectral_layout / nx.random_layout

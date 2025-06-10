@@ -1,1 +1,0 @@
-# parquet file to big parquet file based on month
