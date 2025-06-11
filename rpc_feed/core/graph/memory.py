@@ -8,7 +8,9 @@ Graph 内存管理模块
 """
 import os
 import gc
+import time
 import psutil
+import threading
 import numpy as np
 from typing import Dict, Optional, Tuple
 
@@ -57,14 +59,44 @@ class GraphMemoryManager:
                 print(f"🚨 内存使用率{memory_status['[Monitor] Memory Usage']}过高，触发垃圾回收: ")
                 print(f"[Monitor] RSS Memory: {memory_status['[Monitor] RSS Memory']} MB")
                 print(f"[Monitor] CPU Usage: {memory_status['[Monitor] CPU Usage']}%")
-                gc.collect()
-            
+
+                self._trigger_gc(memory_mb)
             return memory_status
             
         except Exception as e:
             print(f"⚠️ 内存检查失败: {e}")
             return {'error': str(e)}
         
+    # def _choose_optimal_generation(self) -> int:
+    #     """
+    #     选择最优的回收代
+    #     策略：
+    #     1. 优先回收第0代 新对象 回收效率高
+    #     2. 定期回收第1代
+    #     3. 少量回收第2代 避免长时间阻塞
+    #     """
+    #     counts = gc.get_count()
+    #     if counts[0] > self.gen0_threshold:  # 📊 第0代对象过多，优先回收
+    #         return 0
+    #     if counts[1] > self.gen1_threshold:   # 📊 第1代对象积累较多，定期回收
+    #         return 1
+    #     if counts[2] > self.gen2_threshold or self.processed_count > 1000:  # 📊 第2代对象过多，或处理了大量数据后回收
+    #         return 2
+    #     return 0  # 默认回收第0代（最轻量）
+        
+    def _trigger_gc(self, rss_before: float): # 每次触发都是thread
+        def async_gc():
+            t0 = time.perf_counter()
+            gen_count = gc.get_count()
+            gc.collect()
+            gen_count_after = gc.get_count()
+            t1 = time.perf_counter()
+            rss_after = psutil.Process(os.getpid()).memory_info().rss / (1024 * 1024)
+            print(f"🧹 GC 完成: 用时 {t1 - t0:.2f}s, 释放 {(rss_after - rss_before):.1f} MB, 回收 {np.sum(gen_count) - np.sum(gen_count_after)} 个对象")
+        
+        print(f"🚨 内存超限，异步触发 GC")
+        threading.Thread(target=async_gc, daemon=True).start()
+
     def get_memory_stats(self) -> Dict:
         """
         获取内存统计信息

@@ -45,10 +45,11 @@ class Graph(object):
         # memory manager backpressure
         # ensure consumer workers exceed q_size to avoid oom and restricted cores 
         self.memory_mgr = GraphMemoryManager()
-        self.procs = int(os.getenv("CONCURRENT_PROCS", int(os.cpu_count() * 0.25)))
         self.queue = asyncio.Queue(maxsize=self.memory_mgr.q_size)
+        self.procs = int(os.getenv("CONCURRENT_PROCS", int(os.cpu_count() * 0.25)))
         self.consumer_workers = int(os.getenv("CONSUMER_WORKERS", os.cpu_count() * 4))
         # self.sema = Semaphore(self.consumer_workers) # control concurrency
+        self._gc_event = asyncio.Event()
 
         self.memory_check_interval = int(os.getenv("MEMORY_CHECK_INTERVAL", "5"))
 
@@ -88,11 +89,15 @@ class Graph(object):
         else:
             raise ValueError("The graph is not a DAG")
         print("fininsh build graph")
+
+# -----------------------------------monitor----------------------------------------
     
     async def monitor_background(self):
-        while True:
+        # while True:
+        while not self._gc_event.is_set():
             await self.loop.run_in_executor(None, self.memory_mgr.check_memory_usage)
             await asyncio.sleep(self.memory_check_interval)
+        print("monitor_background exit")
 
 # -----------------------------------consumer----------------------------------------
 
@@ -117,6 +122,7 @@ class Graph(object):
             for _ in range(self.consumer_workers)
         ]
         await asyncio.gather(*tasks)
+        self._gc_event.set() # exit monitor_background
 
 # -----------------------------------produce----------------------------------------
 
@@ -157,6 +163,7 @@ class Graph(object):
             ) as pool:
                 await self.async_produce(pool, iterables)
                 pool.close() # stop receive new task
+
                 await asyncio.gather(consumer_task, monitor_task) # ensure consumer and monitor under pool
                 # ensure to avoid BrokenPipeError maybe due to main thread finish
                 pool.join()
@@ -166,7 +173,7 @@ class Graph(object):
                 processed_item = self.run_sync_pipeline(iter_item)
                 await self.queue.put(processed_item)
                 await asyncio.gather(consumer_task, monitor_task) # ensure consumer and monitor
-
+        
 # ----------------------------------- entrypoint ----------------------------------------
 
     def run(self, iterables, parallel):
