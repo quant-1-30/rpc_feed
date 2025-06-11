@@ -23,14 +23,15 @@ class StructUnpacker(Node):
         ("lines", ["dates", "sub_dates", "open", "high", "low", "close", "amount", "volume", "appendix"]),
         ("duplicate", False),
         ("subset", None),
+        ("path", ""),
     )
 
-    def next(self, path, params: dict={}):
-        if not path:
+    def next(self, input_path):
+        if not input_path:
             return pd.DataFrame()
-        sid = os.path.basename(path).split(self.p.sep)[0][2:]
+        sid = os.path.basename(input_path).split(self.p.sep)[0][2:]
         frame = pd.DataFrame()
-        with open(path, 'rb') as f:
+        with open(input_path, 'rb') as f:
             buf = f.read()
             size = int(len(buf) / self.p.buflen)
             data = []
@@ -43,7 +44,6 @@ class StructUnpacker(Node):
         frame.drop(columns="appendix", inplace=True)
         frame.drop_duplicates(subset=self.p.subset, inplace=True) if self.p.subset else frame.drop_duplicates(inplace=True)
         frame.attrs["sid"] = sid
-        # import pdb; pdb.set_trace()
         return frame
 
 
@@ -55,13 +55,13 @@ class AvroUnpacker(Node):
         ("subset", None),
         )
 
-    def next(self, path, params: dict={}):
-        if not path:
+    def next(self, input_path):
+        if not input_path:
             return pd.DataFrame()
         frame = pd.DataFrame()
         # tick.avro
         arrays = []
-        reader = DataFileReader(open(path, "rb"), DatumReader())
+        reader = DataFileReader(open(input_path, "rb"), DatumReader())
         for ele in reader:
             arrays.append(ele)
         reader.close()
@@ -85,21 +85,21 @@ class TextLoader(Node):
         ("subset", None),
     )
 
-    def prenext(self, path):
+    def prenext(self, input_path):
         lines = []
-        with open(path, "r") as f:
+        with open(input_path, "r") as f:
             for line in f.readlines:
                 lines.append(line)
             return lines
 
-    def next(self, path, params: dict={}):
-        if not path:
+    def next(self, input_path):
+        if not input_path:
             return []
 
-        if path.endswith(".csv"):
-            frame = pd.read_csv(path, dtype=self.p.dtype, sep=self.p.csvsep)
+        if input_path.endswith(".csv"):
+            frame = pd.read_csv(input_path, dtype=self.p.dtype, sep=self.p.csvsep)
             frame.drop_duplicates(subset=self.p.subset, inplace=True) if self.p.subset else frame.drop_duplicates(inplace=True)
             values = list(frame.T.to_dict().values())
         else:
-            values = self.prenext(path)
+            values = self.prenext(input_path)
         return values

@@ -36,7 +36,7 @@ class ProcessNa(Node):
         
         return df
 
-    def next(self, meta: pd.DataFrame, params: dict={}):
+    def next(self, meta: pd.DataFrame):
         # inf and na
         if len(meta):
             meta = self.prenext(meta)  
@@ -53,18 +53,20 @@ class ProcessInf(Node):
         ("lines", ["open", "high", "low", "close", "volume", "amount"])
         )
 
-    def __init__(self):
-        self.proc = getattr(np, self.p.inf, "")
-
     def prenext(self, df):
+        try:
+            proc = getattr(np, self.p.inf)
+        except AttributeError:
+            proc = lambda x: 0
+
         for col in self.p.lines:
             # FIXME: Such behavior is very weird
             # df[col] = df[col].replace([np.inf, -np.inf], df[col][~np.isinf(df[col])].mean())
-            df[col] = df[col].replace([np.inf, -np.inf], self.proc(df[col][~np.isinf(df[col])]))
+            df[col] = df[col].replace([np.inf, -np.inf], proc(df[col][~np.isinf(df[col])]))
         df.sort_index(inplace=True)
         return df
 
-    def next(self, meta: pd.DataFrame, params: dict={}):
+    def next(self, meta: pd.DataFrame):
         # # validate columns
         if len(meta):
             meta = self.prenext(meta)

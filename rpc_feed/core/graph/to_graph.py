@@ -14,8 +14,8 @@ from concurrent.futures import ThreadPoolExecutor
 from pyvis.network import Network
 
 from .node import *
-from .memory import GraphMemoryManager
-from .util import init_worker, convert_node_to_serializable, run_sync_pipeline_global
+from .graph_memory import GraphMemoryManager
+from .mp_util import init_worker, convert_node_to_serializable, run_sync_pipeline_global
 from rpc_feed.utils.loader import get_module_by_module_path
 from rpc_feed.utils.io import build_from_cfg
 from rpc_feed.utils.wrapper import singleton
@@ -25,7 +25,7 @@ from rpc_feed.utils.utility import signal_handler
 # 🔧 修复 macOS multiprocessing 问题
 fix_macos_mp()
 
-Node = namedtuple("Node", ["instance", "params"])
+NamedNode = namedtuple("Node", ["instance", "params"])
 
 
 @singleton
@@ -66,7 +66,7 @@ class Graph(object):
             cls.cfg_cache[basename] = get_module_by_module_path(cfg_path)
         return cls.cfg_cache[basename]
     
-    def add_node(self, node: Node):
+    def add_node(self, node: NamedNode):
         self.graph.append(node)
 
     def remove(self, nodeName: str):
@@ -83,9 +83,9 @@ class Graph(object):
             print("Topological Sort (NetworkX):", topological_order)
             # setup pipeline
             for node in topological_order:
-                node_obj = build_from_cfg(node)
                 node_params = json.loads(G.nodes[node].get("params", "{}"))
-                self.add_node(Node(node_obj, node_params))
+                node_obj = build_from_cfg(node, node_params)
+                self.add_node(NamedNode(node_obj, node_params))
         else:
             raise ValueError("The graph is not a DAG")
         print("fininsh build graph")
@@ -93,32 +93,34 @@ class Graph(object):
 # -----------------------------------monitor----------------------------------------
     
     async def monitor_background(self):
-        # while True:
         while not self._gc_event.is_set():
             await self.loop.run_in_executor(None, self.memory_mgr.check_memory_usage)
             await asyncio.sleep(self.memory_check_interval)
-        print("monitor_background exit")
+
+        print("exit monitor_background")
+        self.memory_mgr.cleanup_gc()
+        print("cleanup gc of self.memory_mgr")
 
 # -----------------------------------consumer----------------------------------------
 
     # ✅ 多协程并发消费
-    async def async_consume_worker(self, instance, params):
+    async def async_consume_worker(self, instance):
         while True:
             item = await self.queue.get()
             if item is None:
                 break
             # async with sema # control concurrency
             if instance.p.is_async:
-                await instance.next(item, params)
+                await instance.next(item)
             else:
-                await self.loop.run_in_executor(None, instance.next, item, params) # ThreadPoolExecutor
+                await self.loop.run_in_executor(None, instance.next, item) # ThreadPoolExecutor
 
     async def async_consume(self):
         print("enter into async_consume")
         instance = self.graph[-1].instance
-        params = self.graph[-1].params
+        # params = self.graph[-1].params
         tasks = [
-            asyncio.create_task(self.async_consume_worker(instance, params))
+            asyncio.create_task(self.async_consume_worker(instance))
             for _ in range(self.consumer_workers)
         ]
         await asyncio.gather(*tasks)
@@ -144,7 +146,7 @@ class Graph(object):
     def run_sync_pipeline(self, item):
         for node in self.graph[:-1]:
             instance = node.instance
-            item = instance.next(item, node.params)
+            item = instance.next(item)
         return item
 
     async def _run_with_async_tail(self, iterables, parallel):

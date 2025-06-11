@@ -26,18 +26,21 @@ from rpc_feed.utils.io import expand_path
 @registry
 class AvroWriter(Node):
 
-    params = (("is_async", True),)
+    params = (
+            ("is_async", True),
+            ("schema_path", ""),
+            ("data_path", ""),
+              )
 
-    def next(self, meta: pd.DataFrame, params: dict={}) -> Any:
-        schema_path, data_path = params.values()
+    def next(self, meta: pd.DataFrame) -> Any:
         # ticker.avsc
-        schema = avro.schema.parse(open(schema_path, "rb").read())
+        schema = avro.schema.parse(open(self.p.schema_path, "rb").read())
         # users.avro 
         # reader = DataFileReader(open("users.avro", "rb"), DatumReader())
         # for user in reader:
         #     print (user)
         # reader.close()
-        writer = DataFileWriter((open(data_path), "wb"), DatumWriter(), schema)
+        writer = DataFileWriter((open(self.p.data_path), "wb"), DatumWriter(), schema)
         dicts = meta.to_dict()
         for element in dicts.values:
             # element --- {"name": "Ben", "favorite_number": 7, "favorite_color": "red"}
@@ -120,7 +123,7 @@ class CsvWriter(Node):
             csv_header = sep.join(headers)
             await self._writeline(csv_header)
 
-    async def next(self, meta, params: dict={}):
+    async def next(self, meta):
         if meta:
             await self.writelineseparator()
             for l in meta:
@@ -148,7 +151,7 @@ class WriterStringIO(Node):
         # Leave the file positioned at the beginning
         self.out.seek(0)
 
-    def next(self, meta, params: dict={}):
+    def next(self, meta):
         fd = self.p.fd()
         if isinstance(meta, str):
             fd.write(meta)
@@ -166,19 +169,20 @@ class PgWriter(Node):
     """
     params = (
         ("is_async", True),
+        ("table", ""),
+        ("mode", "insert"),
     )
     
-    async def next(self, meta: Union[pd.DataFrame, List[dict], dict], params: dict={}):
-        operator = params.get("mode", "insert")
+    async def next(self, meta: Union[pd.DataFrame, List[dict], dict]):
         async with async_ops as ctx:
             try:
-                if operator == "insert":
-                    await ctx.on_insert(params["table"], meta)
-                elif operator == "update":
-                    await ctx.on_update(params["table"], meta)
+                if self.p.mode == "insert":
+                    await ctx.on_insert(self.p.table, meta)
+                elif self.p.mode == "update":
+                    await ctx.on_update(self.p.table, meta)
                 else:
-                    warnings.warn(f"PgWriter: {operator} is dangerous, please confirm")
-                    await ctx.on_delete(params["table"], meta)
+                    warnings.warn(f"PgWriter: {self.p.mode} is dangerous, please confirm")
+                    await ctx.on_delete(self.p.table, meta)
                 status = {"status": 0, "error": ""}
             except Exception as e:
                 print("PgWriter Error", e)
@@ -191,6 +195,7 @@ class ParquetWriter(Node):
 
     params = (
         ("is_async", True),
+        ("root_path", ""),
         # parquet 参数
         ("partition_cols", ["year", "quarter", "sid", "date"]),
         ("max_partitions", 100000),  # 增加最大分区数到 100000
@@ -229,7 +234,6 @@ class ParquetWriter(Node):
     def _write_parquet(
         self,
         meta: pd.DataFrame,
-        params: dict={}
     ):
         meta = self._make_partition(meta)
         schema, partition_schema = self._make_schema(meta)
@@ -238,7 +242,7 @@ class ParquetWriter(Node):
         # # table transfer dataframe
         # df = table.to_pandas()
         # pa.Table.from_pandas(df, schema=table.schema)
-        root_path = expand_path(params["root_path"])
+        root_path = expand_path(self.p.root_path)
             
         ds.write_dataset(
             data=table,
@@ -254,51 +258,8 @@ class ParquetWriter(Node):
             max_rows_per_group=self.p.max_rows_per_group,
         )
 
-    async def next(self, meta: pd.DataFrame, params: dict = {}):
+    async def next(self, meta: pd.DataFrame):
         """
         Async entry point for writing parquet using `to_thread` to avoid blocking.
         """
-        self._write_parquet(meta, params)
-
-    async def query(self, sql: str, batch_size: int = 1000):
-        loop = asyncio.get_running_loop()
-        queue = asyncio.Queue(maxsize=self.max_queue_size)
-
-        def producer():
-            try:
-                for row in self._query_stream(sql, batch_size):
-                    print("put to queue", row)
-                    # 使用 call_soon_threadsafe 来安全地在线程中调用异步函数
-                    future = asyncio.run_coroutine_threadsafe(queue.put(row), loop)
-                    # 等待操作完成
-                    future.result()
-            finally:
-                # 发送结束标记
-                future = asyncio.run_coroutine_threadsafe(queue.put(None), loop)
-                future.result()
-
-        # 创建后台任务
-        task = asyncio.create_task(asyncio.to_thread(producer))
-        self._tasks.add(task)
-
-        # 清理已完成的任务
-        def _done(_):
-            self._tasks.discard(task)
-        task.add_done_callback(_done)
-
-        while True:
-            row = await queue.get()
-            print("get from queue", row)
-            if row is None:
-                break
-            yield row
-
-        # 确保所有任务被清理
-        for task in list(self._tasks):  # 使用list创建副本避免在迭代时修改
-            if not task.done():
-                task.cancel()
-                try:
-                    await task
-                except asyncio.CancelledError:
-                    pass
-            self._tasks.discard(task) # avoid remove keyerror
+        self._write_parquet(meta)

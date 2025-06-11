@@ -32,7 +32,7 @@ class DateParser(Node):
         dt = datetime.datetime(year, month, day, hour, minute)
         return pd.to_datetime(dt)
     
-    def next(self, meta: pd.DataFrame, params: dict={}):
+    def next(self, meta: pd.DataFrame):
         if len(meta):
             assert "dates" in meta.columns, "missing dates column"
             meta["datetime"] = meta.loc[:, self.p.lines].apply(lambda ele: self.prenext(ele), axis=1)
@@ -55,7 +55,6 @@ class Multiply(Node):
         ("multiply", 1000),
         ("exclude", ["sid", "datetime", "tick"]),
     )
-
     def prenext(self, ele: pd.DataFrame):
         # 获取非排除列 & 数值列
         cols_to_scale = ele.columns.difference(self.p.exclude)
@@ -65,10 +64,9 @@ class Multiply(Node):
         ele[numeric_cols] = (ele[numeric_cols] * self.p.multiply).astype(np.int64)
         return ele
 
-    def next(self, meta: pd.DataFrame, params: dict = {}):
+    def next(self, meta: pd.DataFrame):
         if not meta.empty:
             meta = self.prenext(meta)
-            # import pdb; pdb.set_trace()
         return meta
 
 
@@ -76,7 +74,7 @@ class Multiply(Node):
 class Dtypes(Node):
 
     params = (
-        ("is_parquet", False),
+        ("pd_api_types", False),
         ("dtypes", {
             "open": "int64",
             "high": "int64",
@@ -97,15 +95,13 @@ class Dtypes(Node):
                 meta[col] = meta[col].astype(str)
         return meta
     
-    def next(self, meta: pd.DataFrame, params: dict={}):
+    def next(self, meta: pd.DataFrame):
             # 设置数据类型
         for col, dtype in self.p.dtypes.items():
             if col in meta.columns:
                 meta[col] = meta[col].astype(dtype)
         
-        is_parquet = params.get("is_parquet", self.p.is_parquet)
-        if is_parquet:
+        if self.p.pd_api_types:
             meta = self.dtype_for_parquet(meta)
-        # import pdb; pdb.set_trace()
         return meta
 

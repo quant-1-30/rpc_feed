@@ -189,7 +189,7 @@ class DuckDBManager:
             finally:
                 asyncio.run_coroutine_threadsafe(queue.put(None), loop)
 
-        task = asyncio.create_task(asyncio.to_thread(producer))
+        task = asyncio.create_task(asyncio.to_thread(producer)) # daemon execute
         self._tasks.add(task)
         task.add_done_callback(lambda _: self._tasks.discard(task))
 

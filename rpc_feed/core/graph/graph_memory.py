@@ -20,6 +20,7 @@ class GraphMemoryManager:
         # check threshold
         self.threshold = float(os.getenv("GRAPH_MAX_MEMORY_PERCENT", "75")) / 100
         self.q_size, self.max_mem = self._init()
+        self.gc_threads = []
         
     def _init(self) -> Tuple[int, float]:
         try:
@@ -95,7 +96,14 @@ class GraphMemoryManager:
             print(f"🧹 GC 完成: 用时 {t1 - t0:.2f}s, 释放 {(rss_after - rss_before):.1f} MB, 回收 {np.sum(gen_count) - np.sum(gen_count_after)} 个对象")
         
         print(f"🚨 内存超限，异步触发 GC")
-        threading.Thread(target=async_gc, daemon=True).start()
+        thd = threading.Thread(target=async_gc, daemon=True).start() # main thread finish and gc thread will be killed
+        self.gc_thread.append(thd)
+
+    def cleanup_gc(self):
+        for thread in self.gc_threads:
+            if thread.is_alive():
+                thread.join()
+        self.gc_threads.clear() 
 
     def get_memory_stats(self) -> Dict:
         """
@@ -152,6 +160,5 @@ class GraphMemoryContext:
     
     def __exit__(self, exc_type, exc_val, exc_tb):
         # 退出时进行最终清理
-        self.manager.force_gc()
         self.manager.print_stats()
-
+        self.manager.cleanup_gc()

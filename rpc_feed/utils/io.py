@@ -54,7 +54,7 @@ def get_subdirs(dataset_root):
     ]
 
 
-def build_from_cfg(obj_type):
+def build_from_cfg(obj_type, params):
     """Build a module from config dict.
     Args:
         cfg (dict): Config dict. It should at least contain the key "type".
@@ -76,7 +76,7 @@ def build_from_cfg(obj_type):
         raise TypeError(
             "type must be a str or valid type, but got {}".format(type(obj_type))
         )
-    return obj_cls()
+    return obj_cls(**params)
         
 def read_bin(file_path: Union[str, Path], start_index, end_index):
     file_path = Path(file_path.expanduser().resolve())

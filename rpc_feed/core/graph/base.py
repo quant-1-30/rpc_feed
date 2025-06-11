@@ -24,8 +24,12 @@ class MetaNode(MetaParams):
 
         return _obj, args, kwargs
     
+    def __call__(cls, *args, **kwargs):
+        return super().__call__(*args, **kwargs)
+    
 
 class Node(with_metaclass(MetaNode, object)):
+    # metabase __call__ include doinit ，so just use Node() will automate replace params
 
     params = (
         ("refname", None),
@@ -52,3 +56,4 @@ class Node(with_metaclass(MetaNode, object)):
     def __eq__(self, other):
         is_same = self.next == other.next
         return is_same
+    

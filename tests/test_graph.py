@@ -59,7 +59,8 @@ if __name__ == "__main__":
    #  bt_feed.load(xml, dataset_path, prefix=".01", _filter="asset")
 
     # fund
-    dataset_path = os.path.join(os.path.expanduser("~"), "/Volumes/hengxin/quant/raw_data/minutes")
+   #  dataset_path = os.path.join(os.path.expanduser("~"), "/Volumes/hengxin/quant/raw_data/minutes")
+    dataset_path = os.path.join(os.path.expanduser("~"), "Downloads/minutes")
     xml = "../xml/fund.graphml"
     bt_feed.load(xml, dataset_path, prefix=".01", _filter="fund")
 
