@@ -96,8 +96,9 @@ class GraphMemoryManager:
             print(f"🧹 GC 完成: 用时 {t1 - t0:.2f}s, 释放 {(rss_after - rss_before):.1f} MB, 回收 {np.sum(gen_count) - np.sum(gen_count_after)} 个对象")
         
         print(f"🚨 内存超限，异步触发 GC")
-        thd = threading.Thread(target=async_gc, daemon=True).start() # main thread finish and gc thread will be killed
-        self.gc_thread.append(thd)
+        thd = threading.Thread(target=async_gc, daemon=True)
+        thd.start() # main thread finish and gc thread will be killed
+        self.gc_threads.append(thd)
 
     def cleanup_gc(self):
         for thread in self.gc_threads:
