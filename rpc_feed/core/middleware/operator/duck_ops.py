@@ -53,27 +53,40 @@ class DuckDBManager:
         
         # 根据环境变量选择注册方式
         use_lazy_macros = os.getenv("DUCK_VIEW_LAZY", "true").lower() == "true"
-        
-        if use_lazy_macros:
-            # 🚀 使用最快的懒加载方式 (推荐)
-            print("🚀 Using lazy MACRO registration for maximum speed...")
-            self.register_parquet_views_lazy()
-        else:
-            # 🔄 使用并行 VIEW 注册 (兼容传统查询语法)
-            print("🔄 Using parallel VIEW registration for compatibility...")
-            self.register_parquet_views()
-    
-    def get_view_names(self) -> list[str]:
-        """获取所有已注册的视图名称"""
-        return list(self._registered_views)
 
-    def view_exists(self, view_name: str) -> bool:
-        """检查视图是否存在"""
-        try:
-            result = self.conn.execute(f"SELECT 1 FROM information_schema.views WHERE table_name = '{view_name}'").fetchone()
-            return result is not None
-        except:
-            return False
+        # if use_lazy_macros:
+        #     # 🚀 使用最快的懒加载方式 (推荐)
+        #     print("🚀 Using lazy MACRO registration for maximum speed...")
+        #     # self.register_parquet_views_lazy()
+        #     raise NotImplementedError("lazy macros is not supported")
+        # else:
+        #     # 🔄 使用并行 VIEW 注册 (兼容传统查询语法)
+        #     print("🔄 Using parallel VIEW registration for compatibility...")
+        #     self.register_parquet_views()
+    
+    # def register_parquet_views_lazy(self):
+    #     """
+    #     超级优化版本：仅记录目录路径，真正使用时才创建视图（按需加载）
+    #     这是最快的方法，因为不会立即扫描任何 parquet 文件
+    #     """
+    #     subdirs = get_subdirs(self.dataset_root)
+        
+    #     for subdir in subdirs:
+    #         dataset_path = os.path.join(self.dataset_root, subdir)
+    #         view_name = subdir
+            
+    #         # 使用 duckdb 的函数形式，只有查询时才会实际扫描文件 避免了视图创建时的昂贵扫描操作
+    #         # UNION_BY_NAME=TRUE —— 确保了你的股票数据系统的数据完整性和正确性 避免了schema变化
+    #         query = f"""
+    #             CREATE OR REPLACE MACRO {view_name}() AS TABLE parquet_scan('{dataset_path}/**/*.parquet', 
+    #                                                                        HIVE_PARTITIONING=TRUE, 
+    #                                                                        UNION_BY_NAME=TRUE);
+    #         """
+    #         try:
+    #             self.conn.execute(query)
+    #             print(f"✅ Registered lazy macro: {view_name} -> {dataset_path}")
+    #         except Exception as e:
+    #             print(f"❌ Failed to register macro {view_name}: {e}")
 
     def _register_single_view(self, view_name: str) -> tuple[str, bool, str]:
         """注册单个视图，返回 (view_name, success, error_msg)"""
@@ -136,30 +149,18 @@ class DuckDBManager:
                 
         except Exception as e:
             print(f"❌ Error during parallel view registration: {e}")
+    
+    def get_view_names(self) -> list[str]:
+        """获取所有已注册的视图名称"""
+        return list(self._registered_views)
 
-    def register_parquet_views_lazy(self):
-        """
-        超级优化版本：仅记录目录路径，真正使用时才创建视图（按需加载）
-        这是最快的方法，因为不会立即扫描任何 parquet 文件
-        """
-        subdirs = get_subdirs(self.dataset_root)
-        
-        for subdir in subdirs:
-            dataset_path = os.path.join(self.dataset_root, subdir)
-            view_name = subdir
-            
-            # 使用 duckdb 的函数形式，只有查询时才会实际扫描文件 避免了视图创建时的昂贵扫描操作
-            # UNION_BY_NAME=TRUE —— 确保了你的股票数据系统的数据完整性和正确性 避免了schema变化
-            query = f"""
-                CREATE OR REPLACE MACRO {view_name}() AS TABLE parquet_scan('{dataset_path}/**/*.parquet', 
-                                                                           HIVE_PARTITIONING=TRUE, 
-                                                                           UNION_BY_NAME=TRUE);
-            """
-            try:
-                self.conn.execute(query)
-                print(f"✅ Registered lazy macro: {view_name} -> {dataset_path}")
-            except Exception as e:
-                print(f"❌ Failed to register macro {view_name}: {e}")
+    def view_exists(self, view_name: str) -> bool:
+        """检查视图是否存在"""
+        try:
+            result = self.conn.execute(f"SELECT 1 FROM information_schema.views WHERE table_name = '{view_name}'").fetchone()
+            return result is not None
+        except:
+            return False
 
     def _query(self, sql: str):
         return self.conn.execute(sql).fetchdf()
@@ -175,7 +176,7 @@ class DuckDBManager:
     
     async def query(self, sql: str, batch_size: int = 1000):
         loop = asyncio.get_running_loop()
-        queue = asyncio.Queue(maxsize=self.max_queue_size)
+        queue = asyncio.Queue(maxsize=self.max_queue_size) # 每个请求单独的queue
 
         def producer():
             try:

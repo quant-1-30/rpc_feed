@@ -12,7 +12,7 @@ from rpc_feed.core.graph.base import Node
 
 
 @registry
-class DateParser(Node):
+class StructDateParser(Node):
 
     params = (
         ("lines", ["dates", "sub_dates"]),
@@ -34,18 +34,30 @@ class DateParser(Node):
     
     def next(self, meta: pd.DataFrame):
         if len(meta):
-            assert "dates" in meta.columns, "missing dates column"
+            # assert "dates" in meta.columns, "missing dates column"
             meta["datetime"] = meta.loc[:, self.p.lines].apply(lambda ele: self.prenext(ele), axis=1)
-            meta["tick"] = (meta["datetime"].astype("int64") // 10**9).astype("int64")
-            # meta["date_str"] = meta["datetime"].dt.strftime("%Y%m")
-            # remove
+            meta["tick"] = (meta["datetime"].astype("int64") // 10**9).astype("int64") # 纳秒 ---> 秒
             meta.drop(columns=["dates", "sub_dates"], inplace=True)
-            # import pdb; pdb.set_trace()
         return meta
 
     def __repr__(self):
         format_string = "format: %s" % self.__class__.__name__
         return format_string
+    
+
+@registry
+class UniverseDateParser(Node):
+    params = (
+        ("parser_col", "datetime"),
+        ("format", "%Y%m%d %H:%M:%S"),
+    )
+
+    def next(self, meta: pd.DataFrame): 
+        col = self.p.parser_col
+        if not meta.empty:
+            meta[col] = meta.loc[:, col].apply(lambda ele: datetime.datetime.strptime(ele, self.p.format))
+            meta["tick"] = (meta[col].astype("int64") // 10**9).astype("int64")
+        return meta
 
 
 @registry
@@ -61,7 +73,12 @@ class Multiply(Node):
         numeric_cols = ele[cols_to_scale].select_dtypes(include=[np.number]).columns
 
         # 放大并压缩精度 int32导致越界 负的
-        ele[numeric_cols] = (ele[numeric_cols] * self.p.multiply).astype(np.int64)
+        if isinstance(self.p.multiply, (int, float)):
+            ele[numeric_cols] = (ele[numeric_cols] * self.p.multiply).astype(np.int64)
+        else:
+            for col, multiply in self.p.multiply.items():
+                if col in numeric_cols:
+                    ele[col] = (ele[col] * multiply).astype(np.int64)
         return ele
 
     def next(self, meta: pd.DataFrame):

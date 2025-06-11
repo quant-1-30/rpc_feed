@@ -4,7 +4,6 @@
 import json
 import asyncio
 import os
-import signal
 import networkx as nx
 import matplotlib.pyplot as plt
 import multiprocessing
@@ -131,7 +130,7 @@ class Graph(object):
     async def async_produce(self, pool, iterables):
         def gen():
             for item in pool.imap_unordered(run_sync_pipeline_global, iterables):
-                print("put into queue", len(item))
+                print(f"put {len(item)} length frame into queue")
                 yield item
 
         for p_item in gen():
@@ -174,7 +173,10 @@ class Graph(object):
                 print("iter_item", iter_item)
                 processed_item = self.run_sync_pipeline(iter_item)
                 await self.queue.put(processed_item)
-                await asyncio.gather(consumer_task, monitor_task) # ensure consumer and monitor
+            # put exit signal
+            for _ in range(self.consumer_workers): # 确保所有消费者都收到 None 信号
+                await self.queue.put(None)
+            await asyncio.gather(consumer_task, monitor_task) # ensure consumer and monitor under pool
         
 # ----------------------------------- entrypoint ----------------------------------------
 

@@ -227,7 +227,7 @@ class ParquetWriter(Node):
     def _make_partition(self, meta: pd.DataFrame) -> pd.DataFrame:
         meta["year"] = meta["datetime"].apply(lambda x: str(x.year))
         meta["quarter"] = meta['datetime'].apply(lambda x: f'Q{((x.month - 1) // 3) + 1}')
-        meta["sid"] = meta.attrs["sid"]
+        # meta["sid"] = meta.attrs["sid"]
         meta["date"] = meta["datetime"].dt.strftime("%Y%m")
         return meta
 
@@ -237,8 +237,8 @@ class ParquetWriter(Node):
     ):
         meta = self._make_partition(meta)
         schema, partition_schema = self._make_schema(meta)
-        table = pa.Table.from_pandas(meta, schema=schema, preserve_index=False)
         # import pdb; pdb.set_trace()
+        table = pa.Table.from_pandas(meta, schema=schema, preserve_index=False)
         # # table transfer dataframe
         # df = table.to_pandas()
         # pa.Table.from_pandas(df, schema=table.schema)

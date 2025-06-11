@@ -25,7 +25,7 @@
             <data key="params">{}</data>
             <data key="version">2.1.0</data>
         </node>
-        <node id="DateParser">
+        <node id="StructDateParser">
             <data key="type">decoder</data>
             <data key="description">Decodes data from binary format</data>
             <data key="priority">1</data>
@@ -63,11 +63,12 @@
             <data key="enabled">true</data>
             
             <!-- 业务属性 -->
+            <!-- <data key="params">{"root_path": "~/Downloads/quant/parquet/fund"}</data> -->
             <data key="params">{"root_path": "~/Downloads/test"}</data>
             <data key="version">2.1.0</data>
         </node>
-        <edge source="StructUnpacker" target="DateParser"/>
-        <edge source="DateParser" target="Multiply"/>
+        <edge source="StructUnpacker" target="StructDateParser"/>
+        <edge source="StructDateParser" target="Multiply"/>
         <edge source="Multiply" target="Dtypes"/>
         <edge source="Dtypes" target="ParquetWriter"/>
     </graph>

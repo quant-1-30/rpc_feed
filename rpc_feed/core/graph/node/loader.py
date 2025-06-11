@@ -14,7 +14,9 @@ from rpc_feed.core.graph.base import Node
 @registry
 class StructUnpacker(Node):
  
-    """bytes ---> int () int.from_bytes() | struct.unpack(), 大端(human)与小端数据"""
+    """bytes ---> int () int.from_bytes() | struct.unpack(), 大端(human)与小端数据
+       ohlcv 默认放大100倍
+    """
 
     params=(
         ("pack", "HhIIIIfii"),
@@ -43,7 +45,8 @@ class StructUnpacker(Node):
         # postprocess
         frame.drop(columns="appendix", inplace=True)
         frame.drop_duplicates(subset=self.p.subset, inplace=True) if self.p.subset else frame.drop_duplicates(inplace=True)
-        frame.attrs["sid"] = sid
+        # frame.attrs["sid"] = sid
+        frame.loc[:, "sid"] = frame.loc[:, "sid"].astype(str)
         return frame
 
 
@@ -82,7 +85,8 @@ class TextLoader(Node):
         ('seplen', 79),
         ("dtype", {"sid": "str"}),
         ("alias", "avro"),
-        ("subset", None),
+        ("subset", []),
+        ("rename", {}),
     )
 
     def prenext(self, input_path):
@@ -98,8 +102,9 @@ class TextLoader(Node):
 
         if input_path.endswith(".csv"):
             frame = pd.read_csv(input_path, dtype=self.p.dtype, sep=self.p.csvsep)
+            frame.rename(columns=self.p.rename, inplace=True)
             frame.drop_duplicates(subset=self.p.subset, inplace=True) if self.p.subset else frame.drop_duplicates(inplace=True)
-            values = list(frame.T.to_dict().values())
         else:
-            values = self.prenext(input_path)
-        return values
+            lines = self.prenext(input_path)
+            frame = pd.DataFrame(lines, columns=self.p.keys())
+        return frame
