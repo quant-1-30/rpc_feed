@@ -46,7 +46,7 @@ class StructUnpacker(Node):
         frame.drop(columns="appendix", inplace=True)
         frame.drop_duplicates(subset=self.p.subset, inplace=True) if self.p.subset else frame.drop_duplicates(inplace=True)
         # frame.attrs["sid"] = sid
-        frame.loc[:, "sid"] = frame.loc[:, "sid"].astype(str)
+        frame.loc[:, "sid"] = sid
         return frame
 
 

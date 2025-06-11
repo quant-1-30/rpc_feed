@@ -2,7 +2,7 @@
 # -*- coding: utf-8; py-indent-offset:4 -*-
 
 import io
-import os
+import re
 import warnings
 import sys
 import avro.schema
@@ -227,7 +227,7 @@ class ParquetWriter(Node):
     def _make_partition(self, meta: pd.DataFrame) -> pd.DataFrame:
         meta["year"] = meta["datetime"].apply(lambda x: str(x.year))
         meta["quarter"] = meta['datetime'].apply(lambda x: f'Q{((x.month - 1) // 3) + 1}')
-        # meta["sid"] = meta.attrs["sid"]
+        meta["sid"] = meta["sid"].apply(lambda x: re.sub(r'[a-zA-Z\.]', '', x)) # 保留数字
         meta["date"] = meta["datetime"].dt.strftime("%Y%m")
         return meta
 

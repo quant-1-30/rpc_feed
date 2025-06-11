@@ -32,7 +32,6 @@ class AssetFilter(Filter):
 
 class FundFilter(Filter):
 
-
     # params = (("regex", "^(sh51|sz15|sz16)\d{4}(?:)"),) # sz16 --- lof(场内与场外) 每日更新 / etf 15s update 场内 
     params = (("regex", "^(SH\.51|SZ\.15|SZ\.16)\d{4}(?:)"),) 
 
