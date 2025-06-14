@@ -1,25 +1,19 @@
 # !/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
+import re
 import os
 import json
 import duckdb
 import asyncio
-import warnings
-from typing import Optional, Union, Any
 from pathlib import Path
 from dotenv import load_dotenv
-import concurrent.futures
 from threading import Lock
-import time
-from rpc_feed.utils.io import get_subdirs
-
+from rpc_feed.utils.duck_utils import schema_range, request_to_sql, create_parquet_macro
+from rpc_feed.core.filter import _filters
 
 __all__ = ["duck_mgr"]
 
-
-def _normalize_view_name(raw: str) -> str:
-    return raw.replace("=", "_").replace("-", "_").replace(".", "_")
 
 
 class DuckDBManager:
@@ -31,6 +25,11 @@ class DuckDBManager:
         # con = duckdb.connect('my_database.db')
         # # 临时数据库（会话结束后自动删除）
         # con = duckdb.connect(':temp:')
+        增强版注册视图功能：
+        - 线程隔离 duckdb connection
+        - 并发上限控制
+        - 注册进度可视化
+        - 注册缓存文件（避免重复注册）
 
         fetch_df --- zero copy execute().fetch_df() | to_df via relation (rel = duckdb.from_df(df) rel.fliter().t0_df())
         duckdb.register('people_view', df) and sql ( table is people_view)
@@ -47,6 +46,7 @@ class DuckDBManager:
         self._tasks = set()
         self._view_lock = Lock()  # 线程安全
         self._registered_views = set()  # 缓存已注册的视图
+        self.regex = "^(6|0|3)\d{5}(?:)" # 判断stock / fund 目录
         self._init_duckdb()
 
     async def __aenter__(self):
@@ -59,111 +59,23 @@ class DuckDBManager:
         self.conn.execute("SET enable_object_cache=true;")  # 读取加速
         # self.conn.execute("INSTALL httpfs; LOAD httpfs; SET enable_object_cache=time;")
         
-        # 根据环境变量选择注册方式
-        use_lazy_macros = os.getenv("DUCK_VIEW_LAZY", "true").lower() == "true"
-
-        if use_lazy_macros:
-            # 🚀 使用最快的懒加载方式 (推荐)
-            print("🚀 Using lazy MACRO registration for maximum speed...")
-            # query = f"""
-            #     CREATE OR REPLACE MACRO {view_name}() AS TABLE parquet_scan('{dataset_path}/**/*.parquet', 
-            #                                                                HIVE_PARTITIONING=TRUE, 
-            #                                                                UNION_BY_NAME=TRUE);
-            # """
-            warnings.warn("lazy macros as table is not supported and view instead")
-            self.register_parquet_views()
-        else:
-            # 🔄 使用并行 VIEW 注册 (兼容传统查询语法)
-            print("🔄 Using parallel VIEW registration for compatibility...")
-            self.register_parquet_views()
-     
-    def register_parquet_views(self):
-        """
-        增强版注册视图功能：
-        - 线程隔离 duckdb connection
-        - 并发上限控制
-        - 注册进度可视化
-        - 注册缓存文件（避免重复注册）
-        """
-    
-        success_count = 0
-        error_count = 0
-    
-        subdirs = get_subdirs(self.dataset_root)
-        if not subdirs:
-            print("⚠️  No dataset subdirectories found")
-            return
-    
-        # 尝试加载已注册缓存
-        cache_path = Path(self.cache_file)
-        if cache_path.exists():
+    def _load_cache(self):
+        if Path(self.cache_file).exists():
             try:
-                with open(cache_path, "r") as f:
+                with open(self.cache_file, "r") as f:
                     cached = json.load(f)
-                    self._registered_views.update(cached) # set() update inplace
+                    self._registered_views.update(cached)
+                print(f"💾 Loaded cached registered views: {len(self._registered_views)}")
             except Exception as e:
-                print(f"⚠️  Failed to load cache file: {e}")
-    
-        # 过滤已注册
-        pending_subdirs = [d for d in subdirs if d not in self._registered_views]
-        if not pending_subdirs:
-            print("✅ All views are already registered (from cache).")
-            return
-    
-        print(f"🔄 Registering {len(pending_subdirs)} parquet views with {self.max_workers} workers...")
-    
-        try:
-            with concurrent.futures.ThreadPoolExecutor(max_workers=self.max_workers) as executor:
-                future_to_subdir = {
-                    executor.submit(self._register_single_view, subdir): subdir
-                    for subdir in pending_subdirs
-                }
-    
-                for future in concurrent.futures.as_completed(future_to_subdir):
-                    view_name, success, msg = future.result()
-                    if success:
-                        success_count += 1
-                        self._registered_views.add(view_name)
-                    else:
-                        error_count += 1
-                        print(f"❌ Failed to register view {view_name}: {msg}")
-            # 写入缓存
-            try:
-                with open(self.cache_file, "w") as f:
-                    json.dump(list(self._registered_views), f, indent=2)
-                print(f"💾 Cache updated: {self.cache_file}")
-            except Exception as e:
-                print(f"⚠️  Failed to write cache file: {e}")
-    
-            print(f"🎉 Registration complete: {success_count} success, {error_count} errors")
-    
-        except Exception as e:
-            print(f"❌ Error during parallel view registration: {e}")
+                print(f"⚠️ Failed to load cache file: {e}")
 
-    def _register_single_view(self, subdir: str) -> tuple[str, bool, str]:
-        """注册单个视图，返回 (view_name, success, error_msg)"""
+    def _save_cache(self):
         try:
-            dataset_path = os.path.join(self.dataset_root, subdir)
-            view_name = _normalize_view_name(subdir)
-            
-            conn = duckdb.connect(self.db_path) # 使用独立连接，避免多线程争用同一个 conn
-            # 检查是否已经注册过
-            if view_name in self._registered_views:
-                return view_name, True, "already registered"
-            
-            # UNION_BY_NAME=TRUE —— 确保了你的股票数据系统的数据完整性和正确性 避免了schema变化
-            query = f"""
-                CREATE OR REPLACE VIEW {view_name} AS
-                SELECT * FROM parquet_scan('{dataset_path}/**/*.parquet', 
-                                         HIVE_PARTITIONING=TRUE, 
-                                         UNION_BY_NAME=TRUE);
-            """
-            conn.execute(query)
-            conn.close()
-            return view_name, True, f"-> {dataset_path}"
-            
+            with open(self.cache_file, "w") as f:
+                json.dump(list(self._registered_views), f, indent=2)
+            print(f"💾 Saved cache file: {self.cache_file}")
         except Exception as e:
-            return view_name, False, str(e)
+            print(f"⚠️ Failed to save cache file: {e}")
     
     def get_view_names(self) -> list[str]:
         """获取所有已注册的视图名称"""
@@ -177,11 +89,46 @@ class DuckDBManager:
         except:
             return False
 
-    # def _query(self, sql: str):
-    #     return self.conn.execute(sql).fetchdf()
+    def _view_name(self, sid: str, year: int, quarter: str, y_month: str) -> str:
+        return f"year{year}_quarter{quarter}_sid{sid}_date{y_month}"
+
+    def _glob_path(self, sid: str, year: int, quarter: str, y_month: str) -> Path:
+        category = "stock" if re.match(self.regex, sid) else "fund"
+        return os.path.join(self.dataset_root, category, f"year={year}", f"quarter={quarter}", f"sid={sid}", f"date={y_month}")
+
+    def _query(self, req: dict):
+        req_views = self.register_views(req)
+        req_sql = request_to_sql(req_views, req)
+        print("req_sql", req_sql)
+        cursor = self.conn.execute(req_sql)
+        return cursor.fetchdf()
+
+    def _register_macro_if_needed(self, sid: str, year: int, quarter: str, y_month: str):
+        view_name = self._view_name(sid, year, quarter, y_month)
+        with self._view_lock:
+            if view_name in self._registered_views:
+                return
+            path = self._glob_path(sid, year, quarter, y_month)
+            view_sql = create_parquet_macro(path, view_name)
+            self._registered_views.add(view_name)
+            print(f"⚙️ Registering: {view_name} → {path}")
+            self.conn.execute(view_sql)
+        return view_name
+        
+    def register_views(self, req: dict):
+        req_views = []
+        ranges = schema_range(req)
+        for sid in req["sid"]:
+            for _r in ranges:
+                view_name = self._register_macro_if_needed(sid, *_r)
+                req_views.append(view_name)
+        return req_views
     
-    def _query_stream(self, sql: str, batch_size: int = 1000):
-        cursor = self.conn.execute(sql)
+    def _query_stream(self, req: dict, batch_size: int = 1000):
+        req_views = self.register_views(req)
+        req_sql = request_to_sql(req_views, req)
+        print("req_sql", req_sql)
+        cursor = self.conn.execute(req_sql)
         while True:
             rows = cursor.fetchmany(batch_size)
             if not rows:
@@ -189,13 +136,13 @@ class DuckDBManager:
             for row in rows:
                 yield row  # 每次 yield 一行（或可改为 yield rows）
     
-    async def query(self, sql: str, batch_size: int = 1000):
+    async def query(self, req: dict, batch_size: int = 1000):
         loop = asyncio.get_running_loop()
         queue = asyncio.Queue(maxsize=self.max_queue_size) # 每个请求单独的queue
 
         def producer():
             try:
-                for row in self._query_stream(sql, batch_size):
+                for row in self._query_stream(req, batch_size):
                     #loop.call_soon_threadsafe(sync_callback, *args) execute callback in loop / put_nowait cause memory pressure
                     # loop.call_soon_threadsafe(queue.put, row)
                     # if callback is async, use asyncio.to_thread(callback) 

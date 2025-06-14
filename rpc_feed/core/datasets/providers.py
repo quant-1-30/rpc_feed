@@ -13,7 +13,6 @@ from .base import Provider
 from .model import *
 from rpc_feed.core.schema import *
 from rpc_feed.core.middleware.operator import async_ops, duck_mgr
-from rpc_feed.utils.duck_utils import request_to_sql
 
 
 class TradingCalendar(Provider):
@@ -130,11 +129,8 @@ class Tick(Provider):
         # 读取并查询（可用 glob 模式、支持 partition pushdown)
         # hive_partitioning  --- automate path to key=value in partition cols 
         """
-        # request to sql
-        sql = request_to_sql(req)
-        print("tick sql", sql)
         async with duck_mgr as ctx:
-            async for row in ctx.query(sql):
+            async for row in ctx.query(req.model_dump()):
                 print("tick row", row)
                 line = tuple_to_model(row, LineModel)
                 yield line.model_dump()

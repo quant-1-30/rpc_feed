@@ -41,17 +41,37 @@ def expand_path(path):
     return p
 
 
-def get_subdirs(dataset_root):
+# def get_subdirs(dataset_root, depth=1):
+#     """快速扫描数据集子目录，使用 pathlib 提高性能 比os.walk 效果高"""
+#     root_path = Path(dataset_root)
+#     if not root_path.exists():
+#         print(f"❌ Dataset root path does not exist: {dataset_root}")
+#         return []
+
+#     subdirs_1 = [
+#         subdir.name for subdir in root_path.iterdir() 
+#         if subdir.is_dir() and not subdir.name.startswith('.')
+#     ]
+#     if depth == 1:
+#         return subdirs_1
+#     else:
+#         subdirs_2 = []
+#         for subdir in subdirs_1:
+#             subdirs_2.extend(get_subdirs(os.path.join(dataset_root, subdir), depth=depth-1))
+#         return subdirs_2
+    
+def get_subdirs(dataset_root, depth=1):
     """快速扫描数据集子目录，使用 pathlib 提高性能 比os.walk 效果高"""
     root_path = Path(dataset_root)
     if not root_path.exists():
         print(f"❌ Dataset root path does not exist: {dataset_root}")
         return []
 
-    return [
+    subdirs = [
         subdir.name for subdir in root_path.iterdir() 
         if subdir.is_dir() and not subdir.name.startswith('.')
     ]
+    return subdirs
 
 
 def build_from_cfg(obj_type, params):

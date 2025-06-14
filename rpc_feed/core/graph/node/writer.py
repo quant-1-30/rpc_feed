@@ -229,6 +229,7 @@ class ParquetWriter(Node):
         meta["quarter"] = meta['datetime'].apply(lambda x: f'Q{((x.month - 1) // 3) + 1}')
         meta["sid"] = meta["sid"].apply(lambda x: re.sub(r'[a-zA-Z\.]', '', x)) # 保留数字
         meta["date"] = meta["datetime"].dt.strftime("%Y%m")
+        # meta["date"] = meta["datetime"].apply(lambda x: f"{x.month:02d}")
         return meta
 
     def _write_parquet(

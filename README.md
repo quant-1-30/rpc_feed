@@ -48,5 +48,10 @@ ALTER COLUMN column_name TYPE new_data_type;
 
 minute data ---> via parquet
 
-dimension:
-1\ parquet定时更新, 通过delete_matching参数更新
+duckdb 使用注意点
+1\ duckdb conn 非线程安全，多线程情况下共用会卡死，而且如果每个线程conn导致注册的table 与 主线程无关系
+2\ macro create not supported in duckdb
+3\ register when query and cache schem
+4\ parquet定时更新, 通过delete_matching参数更新
+5\ split view_schema according to req and concencate sql into one 
+

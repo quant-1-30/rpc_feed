@@ -42,7 +42,7 @@ def parse_args():
                            help='ncpu cores')
 
 
-if __name__ == "__main__":
+# if __name__ == "__main__":
 
    #  args = parse_args()
    #  print(args)
@@ -64,9 +64,9 @@ if __name__ == "__main__":
    #  dataset_path = os.path.join(os.path.expanduser("~"), "/Volumes/hengxin/quant/raw_data/minutes")
    #  xml = "../xml/fund.graphml"
    #  bt_feed.load(xml, dataset_path, prefix=".01", _filter="fund")
-    dataset_path = os.path.join(os.path.expanduser("~"), "Downloads/2022/fund")
-    xml = "../xml/csv.graphml"
-    bt_feed.load(xml, dataset_path, prefix=".csv", _filter="fund")
+   #  dataset_path = os.path.join(os.path.expanduser("~"), "Downloads/2022/fund")
+   #  xml = "../xml/csv.graphml"
+   #  bt_feed.load(xml, dataset_path, prefix=".csv", _filter="fund")
 
    #  dataset_path = os.path.join(os.path.expanduser("~"), "Downloads/quant/calendar")
    #  xml = "../xml/calendar.graphml"
