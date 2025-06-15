@@ -103,7 +103,7 @@ class RpcServer(service_pb2_grpc.btDataFeedServicer):
         
         await self._set_context(context)
 
-        logging.info("Received dataset")
+        logging.info("Received LineStreamCall")
 
         obj_map = MessageToDict(
             request, 
@@ -191,17 +191,34 @@ async def serve() -> None:
     address = os.getenv("RPC_FEED_ADDRESS", "localhost:50051")
     MAX_MESSAGE_LENGTH = int(os.getenv("MAX_MESSAGE_LENGTH", 1024 * 1024 * 1024))
 
+    # server_options = [
+    #     ("grpc.keepalive_time_ms", 20000),
+    #     ("grpc.keepalive_timeout_ms", 15000),
+    #     ("grpc.http2.min_ping_interval_without_data_ms", 5000), # 防止dos攻击 
+    #     ("grpc.keepalive_permit_without_calls", 1), # 允许客户端空闲时发 ping
+    #     ("grpc.http2.max_pings_without_data", 0), # no limit
+    #     ("grpc.max_connection_idle_ms", 0), # 取消空闲断开
+    #     ("grpc.max_connection_age_ms", 0), # 取消连接最大寿命限制
+    #     # ("grpc.max_connection_age_grace_ms", 5000),
+    #     ('grpc.max_send_message_length', MAX_MESSAGE_LENGTH),
+    #     ('grpc.max_receive_message_length', MAX_MESSAGE_LENGTH),
+    # ]
+
     server_options = [
-        ("grpc.keepalive_time_ms", 20000),
-        ("grpc.keepalive_timeout_ms", 10000),
-        ("grpc.http2.min_ping_interval_without_data_ms", 5000),
-        ("grpc.max_connection_idle_ms", 10000),
-        ("grpc.max_connection_age_ms", 30000),
-        ("grpc.max_connection_age_grace_ms", 5000),
-        ("grpc.http2.max_pings_without_data", 5),
-        ("grpc.keepalive_permit_without_calls", 1),
-        ('grpc.max_send_message_length', MAX_MESSAGE_LENGTH),
-        ('grpc.max_receive_message_length', MAX_MESSAGE_LENGTH),
+        ("grpc.keepalive_time_ms", 15000),  # ⏱ 每 15 秒向客户端 ping 一次
+        ("grpc.keepalive_timeout_ms", 10000),  # ⏳ ping 超时 10 秒断开
+        ("grpc.keepalive_permit_without_calls", 1),  # ✅ 即使无调用也允许 ping
+        ("grpc.http2.max_pings_without_data", 0),  # ✅ 无限制
+        ("grpc.http2.min_time_between_pings_ms", 10000),  # 防止 ping 滥用
+        
+        # 🚫 防止空闲断开
+        ("grpc.max_connection_idle_ms", 86400000),  # 24 小时
+        ("grpc.max_connection_age_ms", 86400000),  # 永不过期
+        ("grpc.max_connection_age_grace_ms", 86400000),
+    
+        # 📨 消息大小配置
+        ("grpc.max_send_message_length", MAX_MESSAGE_LENGTH),
+        ("grpc.max_receive_message_length", MAX_MESSAGE_LENGTH),
     ]
 
     server = grpc.aio.server(ThreadPoolExecutor(), compression=grpc.Compression.Gzip, 
