@@ -137,7 +137,8 @@ class RpcServer(service_pb2_grpc.btDataFeedServicer):
         response_iterator = bt_feed("adjust", Request(**obj_map))
         async for adjs in response_iterator:
             response = service_pb2.AdjFrame()
-            response.date = adjs["ex_date"]
+            response.ex_date = adjs.pop("ex_date")
+            # import pdb; pdb.set_trace()
             adjustments = service_pb2.Adjustment(**adjs)
             response.adj.extend([adjustments])
             print("AdjustmentStreamCall ticker repsonse size ", response.ByteSize())
@@ -161,7 +162,7 @@ class RpcServer(service_pb2_grpc.btDataFeedServicer):
         response_iterator = bt_feed("right", Request(**obj_map))
         async for rgts in response_iterator:
             response = service_pb2.RightmentFrame()
-            response.date = rgts["ex_date"]
+            response.ex_date = rgts.pop("ex_date")
             rights = service_pb2.Rightment(**rgts)
             response.rgt.extend([rights])
             print("RightStreamCall ticker repsonse size ", response.ByteSize())

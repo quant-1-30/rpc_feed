@@ -34,18 +34,16 @@ message  Line {
 message Adjustment {
   string sid = 1;
   int32 register_date = 2;
-  int32 ex_date = 3;
-  int32 share = 4;
-  int32 transfer = 5;
-  int32 interest = 6;
+  int32 bonus_share = 3;
+  int32 transfer = 4;
+  int32 bonus = 5;
 }
 
 message Rightment {
   string sid = 1;
   int32 register_date = 2;
-  int32 ex_date = 3;
-  int32 price = 4;
-  int32 ratio = 5;
+  int32 price = 3;
+  int32 ratio = 4;
 }
 
 
@@ -61,12 +59,12 @@ message TickFrame {
 }
 
 message AdjFrame {
-   int32 date = 1;
+   int32 ex_date = 1;
    repeated Adjustment adj = 2; 
 }
 
 message RightmentFrame {
-   int32 date = 1;
+   int32 ex_date = 1;
    repeated Rightment rgt = 2; 
 }
 

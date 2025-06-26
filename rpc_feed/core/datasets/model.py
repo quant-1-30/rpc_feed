@@ -3,7 +3,7 @@
 
 import numpy as np
 from functools import total_ordering
-from pydantic import BaseModel, Field, field_validator, model_validator
+from pydantic import BaseModel, Field, field_validator, model_validator, field_serializer
 from typing import List, Union, Optional, TypeVar, Type, Any
 
 
@@ -160,67 +160,15 @@ class LineModel(BaseModel):
         # 使用内置的排序方法
         return sorted(series, key=lambda x: getattr(x, by), reverse=not ascending)
 
-    @classmethod
-    def sort_series_multi(cls, series: List['LineModel'], by: List[str], ascending: List[bool]) -> List['LineModel']:
-        """
-        对 LineModel 列表进行多字段排序
-        
-        Parameters
-        ----------
-        series : List[LineModel]
-            要排序的 LineModel 列表
-        by : List[str]
-            排序字段列表
-        ascending : List[bool]
-            每个字段的排序方向列表
-            
-        Returns
-        -------
-        List[LineModel]
-            排序后的列表
-            
-        Examples
-        --------
-        >>> models = [
-        ...     LineModel(sid="AAPL", tick=100),
-        ...     LineModel(sid="AAPL", tick=200),
-        ...     LineModel(sid="GOOG", tick=100)
-        ... ]
-        >>> sorted_models = LineModel.sort_series_multi(
-        ...     models,
-        ...     by=['sid', 'tick'],
-        ...     ascending=[True, False]
-        ... )
-        """
-        if not series:
-            return []
-            
-        # 验证参数
-        if len(by) != len(ascending):
-            raise ValueError("Length of 'by' and 'ascending' must be the same")
-            
-        # 验证排序字段
-        valid_fields = ['sid', 'tick', 'open', 'high', 'low', 'close', 'volume', 'amount']
-        for field in by:
-            if field not in valid_fields:
-                raise ValueError(f"Invalid sort field: {field}. Must be one of {valid_fields}")
-                
-        # 创建排序键函数
-        def sort_key(x):
-            return tuple(getattr(x, field) for field in by)
-            
-        # 使用内置的排序方法
-        return sorted(series, key=sort_key, reverse=any(not asc for asc in ascending))
-
 
 class AdjustmentModel(BaseModel):
 
     sid: str = Field(default="")
-    register_date: int = Field(gt=0)
-    ex_date: int = Field(gt=0)
-    share: int = Field(default=0)
-    transfer: int = Field(default=0)
-    interest: int = Field(default=0)
+    register_date: int = Field(ge=0)
+    ex_date: int = Field(ge=0)
+    bonus_share: float = Field(default=0.0)
+    transfer: float = Field(default=0.0)
+    bonus: float = Field(default=0.0)
 
     def __eq__(self, _value: object) -> bool:
         if not isinstance(_value, self):
@@ -231,16 +179,20 @@ class AdjustmentModel(BaseModel):
         if not isinstance(_value, self):
             raise TypeError
         return self.register_date < _value.register_date
+    
+    @field_serializer("bonus_share", "transfer", "bonus")
+    def serialize_integer(self, v: float, info):
+        return int(v*1000)
 
 
 class RightmentModel(BaseModel):
 
     sid: str = Field(default="")
-    register_date: int = Field(gt=0)
-    ex_date: int = Field(gt=0)
+    register_date: int = Field(ge=0)
+    ex_date: int = Field(ge=0)
     # effective_date: int
-    price: int = Field(default=0)
-    ratio: int = Field(default=0)
+    price: float = Field(default=0.0)
+    ratio: float = Field(default=0.0)
 
     def __eq__(self, _value: object) -> bool:
         if not isinstance(_value, self):
@@ -251,3 +203,7 @@ class RightmentModel(BaseModel):
         if not isinstance(_value, self):
             raise TypeError
         return self.register_date < _value.register_date
+    
+    @field_serializer("price", "ratio")
+    def serialize_integer(self, v:float, info):
+        return int(v*1000)

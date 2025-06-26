@@ -5,9 +5,8 @@
 # Licensed under the MIT License.
 
 import datetime
-# SQLAlchemy 2.0.39 正确的导入方式
-from sqlalchemy import select, and_, or_
-from sqlalchemy.sql import Select  # 如果需要使用 Select 类
+import toolz
+from sqlalchemy import select, and_, or_ # SQLAlchemy 2.0.39 正确的导入方式
 
 from .base import Provider
 from .model import *
@@ -165,6 +164,7 @@ class Adjust(Provider):
             
             async for item in ctx.on_query(stmt):
                 row = item[0].serialize()
+                row = toolz.valmap(lambda x: 0 if x is None else x, row)
                 yield AdjustmentModel(**row).model_dump()
 
 

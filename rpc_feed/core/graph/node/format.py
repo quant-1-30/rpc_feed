@@ -64,7 +64,7 @@ class UniverseDateParser(Node):
 class Multiply(Node):
 
     params = (
-        ("multiply", 1000),
+        ("multiply", 1000), # int / map
         ("exclude", ["sid", "datetime", "tick"]),
     )
     def prenext(self, ele: pd.DataFrame):

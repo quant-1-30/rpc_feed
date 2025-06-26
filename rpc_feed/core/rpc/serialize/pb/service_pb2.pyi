@@ -44,34 +44,30 @@ class Line(_message.Message):
     def __init__(self, tick: _Optional[int] = ..., open: _Optional[int] = ..., high: _Optional[int] = ..., low: _Optional[int] = ..., close: _Optional[int] = ..., volume: _Optional[int] = ..., amount: _Optional[int] = ...) -> None: ...
 
 class Adjustment(_message.Message):
-    __slots__ = ("sid", "register_date", "ex_date", "share", "transfer", "interest")
+    __slots__ = ("sid", "register_date", "bonus_share", "transfer", "bonus")
     SID_FIELD_NUMBER: _ClassVar[int]
     REGISTER_DATE_FIELD_NUMBER: _ClassVar[int]
-    EX_DATE_FIELD_NUMBER: _ClassVar[int]
-    SHARE_FIELD_NUMBER: _ClassVar[int]
+    BONUS_SHARE_FIELD_NUMBER: _ClassVar[int]
     TRANSFER_FIELD_NUMBER: _ClassVar[int]
-    INTEREST_FIELD_NUMBER: _ClassVar[int]
+    BONUS_FIELD_NUMBER: _ClassVar[int]
     sid: str
     register_date: int
-    ex_date: int
-    share: int
+    bonus_share: int
     transfer: int
-    interest: int
-    def __init__(self, sid: _Optional[str] = ..., register_date: _Optional[int] = ..., ex_date: _Optional[int] = ..., share: _Optional[int] = ..., transfer: _Optional[int] = ..., interest: _Optional[int] = ...) -> None: ...
+    bonus: int
+    def __init__(self, sid: _Optional[str] = ..., register_date: _Optional[int] = ..., bonus_share: _Optional[int] = ..., transfer: _Optional[int] = ..., bonus: _Optional[int] = ...) -> None: ...
 
 class Rightment(_message.Message):
-    __slots__ = ("sid", "register_date", "ex_date", "price", "ratio")
+    __slots__ = ("sid", "register_date", "price", "ratio")
     SID_FIELD_NUMBER: _ClassVar[int]
     REGISTER_DATE_FIELD_NUMBER: _ClassVar[int]
-    EX_DATE_FIELD_NUMBER: _ClassVar[int]
     PRICE_FIELD_NUMBER: _ClassVar[int]
     RATIO_FIELD_NUMBER: _ClassVar[int]
     sid: str
     register_date: int
-    ex_date: int
     price: int
     ratio: int
-    def __init__(self, sid: _Optional[str] = ..., register_date: _Optional[int] = ..., ex_date: _Optional[int] = ..., price: _Optional[int] = ..., ratio: _Optional[int] = ...) -> None: ...
+    def __init__(self, sid: _Optional[str] = ..., register_date: _Optional[int] = ..., price: _Optional[int] = ..., ratio: _Optional[int] = ...) -> None: ...
 
 class InstFrame(_message.Message):
     __slots__ = ("asset",)
@@ -88,20 +84,20 @@ class TickFrame(_message.Message):
     def __init__(self, sid: _Optional[str] = ..., line: _Optional[_Iterable[_Union[Line, _Mapping]]] = ...) -> None: ...
 
 class AdjFrame(_message.Message):
-    __slots__ = ("date", "adj")
-    DATE_FIELD_NUMBER: _ClassVar[int]
+    __slots__ = ("ex_date", "adj")
+    EX_DATE_FIELD_NUMBER: _ClassVar[int]
     ADJ_FIELD_NUMBER: _ClassVar[int]
-    date: int
+    ex_date: int
     adj: _containers.RepeatedCompositeFieldContainer[Adjustment]
-    def __init__(self, date: _Optional[int] = ..., adj: _Optional[_Iterable[_Union[Adjustment, _Mapping]]] = ...) -> None: ...
+    def __init__(self, ex_date: _Optional[int] = ..., adj: _Optional[_Iterable[_Union[Adjustment, _Mapping]]] = ...) -> None: ...
 
 class RightmentFrame(_message.Message):
-    __slots__ = ("date", "rgt")
-    DATE_FIELD_NUMBER: _ClassVar[int]
+    __slots__ = ("ex_date", "rgt")
+    EX_DATE_FIELD_NUMBER: _ClassVar[int]
     RGT_FIELD_NUMBER: _ClassVar[int]
-    date: int
+    ex_date: int
     rgt: _containers.RepeatedCompositeFieldContainer[Rightment]
-    def __init__(self, date: _Optional[int] = ..., rgt: _Optional[_Iterable[_Union[Rightment, _Mapping]]] = ...) -> None: ...
+    def __init__(self, ex_date: _Optional[int] = ..., rgt: _Optional[_Iterable[_Union[Rightment, _Mapping]]] = ...) -> None: ...
 
 class QuoteRequest(_message.Message):
     __slots__ = ("start_date", "end_date", "sid")

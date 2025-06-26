@@ -103,9 +103,9 @@ class Adjustment(Base):
     report_date: Mapped[int] = mapped_column(Integer, nullable=False, use_existing_column=True)
     register_date: Mapped[int] = mapped_column(Integer, nullable=False, use_existing_column=True)
     ex_date: Mapped[int] = mapped_column(Integer, nullable=False, use_existing_column=True)
-    bonus_share: Mapped[float] = mapped_column(Float, nullable=True, use_existing_column=True)
-    transfer: Mapped[float] = mapped_column(Float, nullable=True, use_existing_column=True)
-    bonus: Mapped[float] = mapped_column(Float, nullable=True, use_existing_column=True)
+    bonus_share: Mapped[float] = mapped_column(Float, nullable=True, use_existing_column=True) # 送股
+    transfer: Mapped[float] = mapped_column(Float, nullable=True, use_existing_column=True) # 转股
+    bonus: Mapped[float] = mapped_column(Float, nullable=True, use_existing_column=True) # 股息
 
     asset: Mapped["Asset"] = relationship("Asset", back_populates="adjustment")
 

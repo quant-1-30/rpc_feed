@@ -55,3 +55,4 @@ duckdb 使用注意点
 4\ parquet定时更新, 通过delete_matching参数更新
 5\ split view_schema according to req and concencate sql into one 
 
+WAL (Write-Ahead Logging) 文件是一种数据库日志文件
