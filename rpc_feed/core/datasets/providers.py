@@ -153,15 +153,11 @@ class Adjust(Provider):
         ----------
         """
         async with async_ops as ctx:
-            stmt = select(Adjustment).where(
-                and_(
-                    Adjustment.ex_date.between(req.start_date, req.end_date),
-                        # or_()
-                    )   
+            stmt = select(Adjustment).where( # and_ / or_
+                Adjustment.ex_date.between(req.start_date, req.end_date)
                 ).order_by(Adjustment.ex_date)
             if req.sid:
                 stmt = stmt.where(Adjustment.sid.in_(req.sid))
-            
             async for item in ctx.on_query(stmt):
                 row = item[0].serialize()
                 row = toolz.valmap(lambda x: 0 if x is None else x, row)
@@ -187,10 +183,7 @@ class Right(Provider):
         """
         async with async_ops as ctx:
             stmt = select(Rightment).where(
-                and_(
-                    Rightment.ex_date.between(req.start_date, req.end_date),
-                    # or_()
-                )   
+                     Rightment.ex_date.between(req.start_date, req.end_date)
             ).order_by(Rightment.ex_date)
             if req.sid:
                 stmt = stmt.where(Rightment.sid.in_(req.sid))

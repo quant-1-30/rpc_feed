@@ -17,7 +17,7 @@ from rpc_feed.core.filter import _filters
 __all__ = ["duck_mgr"]
 
 
-class DuckDBManager:
+class DuckDBManager: # 非线程安全
 
     def __init__(self):
         """
@@ -99,8 +99,11 @@ class DuckDBManager:
             return view_name
 
         path = self._glob_path(sid, year, quarter, y_month)
-        macro_sql = create_parquet_macro(path, view_name)
+        if not Path(path).exists():
+            print(f"⚠️ Skipping: dataset path not found: {path}")
+            return None # 避免注册失败
 
+        macro_sql = create_parquet_macro(path, view_name)
         try:
             conn.execute(macro_sql)
             print(f"⚙️ Registered macro: {view_name} → {path}")
@@ -108,37 +111,41 @@ class DuckDBManager:
             self._save_cache()
         except Exception as e:
             print(f"⚠️ Failed to register macro: {e}")
-            conn.close()
-        # finally:
-        #     conn.close()
+            # conn.close() # will cause error next request
         return view_name
 
-    def register_views(self, conn,req: dict):
+    def register_views(self, conn, req: dict):
         req_views = []
         ranges = schema_range(req)
         for sid in req["sid"]:
             for r in ranges:
                 view_name = self._register_macro_if_needed(conn, sid, *r)
-                req_views.append(view_name)
+                if view_name:
+                    req_views.append(view_name)
         return req_views
     
     def _query(self, req: dict):
         conn = self._get_conn()
         req_views = self.register_views(conn, req)
+        if not req_views:
+            return duckdb.from_df([])
+
         req_sql = request_to_sql(req_views, req)
         print("req_sql", req_sql)
         cursor = conn.execute(req_sql)
         return cursor.fetchdf()
 
-    def _query_stream(self, req: dict, batch_size: int = 1000):
+    def _query_stream(self, req: dict, batch_size: int = 1000): # register and query in separate connection or conflict
         conn = self._get_conn()
         req_views = self.register_views(conn, req)
+        if not req_views:
+            return duckdb.from_df([])
         req_sql = request_to_sql(req_views, req)
         print("Executing SQL:", req_sql)
 
-        conn = duckdb.connect(self.db_path) # 每次查询都用新的连接，避免多线程竞争
+        query_conn = duckdb.connect(self.db_path) # 每次查询都用新的连接，避免多线程竞争
         try:
-            cursor = conn.execute(req_sql)
+            cursor = query_conn.execute(req_sql)
             while True:
                 rows = cursor.fetchmany(batch_size)
                 if not rows:
@@ -146,7 +153,7 @@ class DuckDBManager:
                 for row in rows:
                     yield row
         finally:
-            conn.close()
+            query_conn.close()
 
     async def query(self, req: dict, batch_size: int = 1000):
         loop = asyncio.get_running_loop()

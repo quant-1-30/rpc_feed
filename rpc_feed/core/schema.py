@@ -85,10 +85,10 @@ class Asset(Base):
 
 class Adjustment(Base):
 
-    # register_date:登记日 ; ex_date:除权除息日 ; pay_date:除权除息日 ; effective_date:上市日期
+    # register_date:登记日 ; ex_date:除权除息日
     # 股权登记日后的下一个交易日就是除权日或除息日，这一天购入该公司股票的股东不再享有公司此次分红配股
     # 上交所证券的红股上市日为股权除权日的下一个交易日; 深交所证券的红股上市日为股权登记日后的第3个交易日
-    # share --- 送股 / transfer --- 转股 / interest --- 股息
+    # bonus_share --- 送股 / transfer --- 转股 / bonus --- 股息
 
     __tablename__ = "adjustment"
     __table_args__ = (
