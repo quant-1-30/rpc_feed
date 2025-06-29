@@ -35,10 +35,8 @@ def tuple_to_model(tuple_data: tuple, model_class: Type[T]) -> T:
     """
     # 获取模型字段名
     field_names = list(model_class.__annotations__.keys())
-    
     # 创建字段名到值的映射
     data_dict = dict(zip(field_names, tuple_data))
-    
     # 创建并返回模型实例
     return model_class(**data_dict)
 

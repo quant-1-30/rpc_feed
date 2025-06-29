@@ -130,7 +130,6 @@ class Tick(Provider):
         """
         async with duck_mgr as ctx:
             async for row in ctx.query(req.model_dump()):
-                print("tick row", row)
                 line = tuple_to_model(row, LineModel)
                 yield line.model_dump()
 
