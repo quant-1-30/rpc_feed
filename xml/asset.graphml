@@ -23,7 +23,7 @@
             <data key="enabled">true</data>
             
             <!-- 业务属性 -->
-            <data key="params">{"table": "asset", "mode": "update"}</data>
+            <data key="params">{"table": "asset"}</data>
             <data key="version">2.1.0</data>
         </node>
 

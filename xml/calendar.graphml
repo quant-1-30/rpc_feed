@@ -22,7 +22,7 @@
             <data key="enabled">true</data>
 
             <!-- 业务属性 -->
-            <data key="params">{"table": "calendar"}</data>
+            <data key="params">{"alias": "calendar"}</data>
             <data key="version">1.0.0</data>
         </node>
 
@@ -31,10 +31,6 @@
             <data key="description">Writes data to PostgreSQL</data>
             <data key="priority">2</data>
             <data key="enabled">true</data>
-            
-            <!-- 配置属性 -->
-            <!-- <data key="config">{"table": "raw_data", "schema": "public"}</data>
-            <data key="batch_size">500</data> -->
             
             <!-- 业务属性 -->
             <data key="params">{"table": "calendar"}</data>

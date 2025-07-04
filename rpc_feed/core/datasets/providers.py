@@ -13,6 +13,8 @@ from .model import *
 from rpc_feed.core.schema import *
 from rpc_feed.core.middleware.operator import async_ops, duck_mgr
 
+__all__ = ["_providers"]
+
 
 class TradingCalendar(Provider):
     """Calendar provider base class
@@ -82,7 +84,6 @@ class Instrument(Provider):
 # class Tick(Provider):
 #     """Dataset provider class via duckdb
 #     """
-
 #     async def __call__(self, req: Request):
 #         """Get dataset data.
 
@@ -192,14 +193,31 @@ class Right(Provider):
                 yield RightmentModel(**row).model_dump()
 
 
+class Update(Provider):
+    """
+        Update asset data.
+    """
+    async def __call__(self, meta: dict):
+        """Update asset data."""
+        async with async_ops as ctx:
+            for item in meta:
+                stmt = select(Asset).where(Asset.sid == item["sid"])
+                asset = await ctx.on_query_obj(stmt)
+                if asset:
+                    asset[0].delist = item["delist"] # 如果记录存在，更新 delist 列
+                else:
+                    asset = Asset(**item) # 如果记录不存在，插入新记录
+                await ctx.on_insert_obj(asset)
+
+
 _providers = dict(
     (("calendar", TradingCalendar()),
     ("asset", Instrument()),
     ("line", Tick()),
     ("adjust", Adjust()),
     ("right", Right()),
+    ("update", Update()),
     ))
 
 
-__all__ = ["_providers"]
 

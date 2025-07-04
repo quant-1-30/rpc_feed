@@ -129,7 +129,7 @@ class AsyncOps(with_metaclass(MetaSingleton, object)):
                 async for row in stream:
                     yield row
 
-    async def on_insert(self, table_name: str, data: Union[List[dict], dict]):
+    async def on_insert(self, table_name: str, data):
         print(f"insert {len(data)} into {table_name}")
         # await self._ensure_initialized()
         async with self.get_db() as session:
@@ -157,8 +157,8 @@ class AsyncOps(with_metaclass(MetaSingleton, object)):
         async with self.get_db() as session:
             result = await session.execute(query, params=params)
             # result.all() returns a list of Row objects, each representing a row in the result set.
-            # scalars().all() single field / all() multiple fields tuple
-            return result.all()
+            # scalars().all() single field [item] / all() multiple fields tuple[(item,)]
+            return result.scalars().all()
     
     async def on_insert_obj(self, objs: Union[List[Base], Base], return_obj=False):
         # await self._ensure_initialized()

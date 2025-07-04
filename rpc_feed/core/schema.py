@@ -85,7 +85,7 @@ class Asset(Base):
 
 class Adjustment(Base):
 
-    # register_date:登记日 ; ex_date:除权除息日
+    # register_date:登记日 ; ex_date:除权除息日 
     # 股权登记日后的下一个交易日就是除权日或除息日，这一天购入该公司股票的股东不再享有公司此次分红配股
     # 上交所证券的红股上市日为股权除权日的下一个交易日; 深交所证券的红股上市日为股权登记日后的第3个交易日
     # bonus_share --- 送股 / transfer --- 转股 / bonus --- 股息
