@@ -94,7 +94,6 @@ class AssetModel(BaseModel):
 
 class LineModel(BaseModel):
 
-    # gt / ge / lt / le / eq / ne
     sid: str = Field(default="")
     tick: int = Field(ge=0)
     open: int = Field(ge=0)
@@ -103,6 +102,8 @@ class LineModel(BaseModel):
     close: int = Field(ge=0)
     volume: int = Field(ge=0)
     amount: int = Field(ge=0)
+    # qfq: float = Field(ge=0) # 前复权
+    # hfq: float = Field(ge=0) # 后复权
 
     # 验证器在模型初始化时执行
     @field_validator('sid', mode='before')

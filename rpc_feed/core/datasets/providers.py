@@ -10,7 +10,7 @@ from sqlalchemy import select, and_, or_ # SQLAlchemy 2.0.39 正确的导入方�
 
 from .base import Provider
 from .model import *
-from rpc_feed.core.schema import *
+from rpc_feed.core.middleware.schema import *
 from rpc_feed.core.middleware.operator import async_ops, duck_mgr
 
 __all__ = ["_providers"]
@@ -129,9 +129,11 @@ class Tick(Provider):
         # 读取并查询（可用 glob 模式、支持 partition pushdown)
         # hive_partitioning  --- automate path to key=value in partition cols 
         """
+        # calculate qfq / hfq
+
         async with duck_mgr as ctx:
             async for row in ctx.query(req.model_dump()):
-                line = tuple_to_model(row, LineModel)
+                line = tuple_to_model(row, LineModel) # 增加coef 
                 yield line.model_dump()
 
 

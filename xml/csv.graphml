@@ -42,8 +42,7 @@
             <data key="enabled">true</data>
             
             <!-- 业务属性 -->
-            <!-- <data key="params">{"multiply": {"open": 100000, "high": 100000, "low": 100000, "close": 100000, "volume": 1000, "amount": 1000}}</data>  --> <!-- 股票 volume 是手-->
-            <data key="params">{"multiply": {"open": 100000, "high": 100000, "low": 100000, "close": 100000, "volume": 10, "amount": 1000}}</data> <!-- etf volume 不是手-->
+            <data key="params">{"multiply": {"open": 100000, "high": 100000, "low": 100000, "close": 100000, "volume": 1000, "amount": 1000}}</data>  
             <data key="version">2.1.0</data>
         </node>
         <node id="Dtypes">
@@ -63,8 +62,7 @@
             <data key="enabled">true</data>
             
             <!-- 业务属性 -->
-            <!-- <data key="params">{"root_path": "~/Downloads/quant/parquet/stock"}</data> -->
-            <data key="params">{"root_path": "~/Downloads/quant/parquet/fund"}</data>
+            <data key="params">{"root_path": "~/Downloads/quant/parquet/stock"}</data>
             <data key="version">2.1.0</data>
         </node>
         <edge source="TextLoader" target="UniverseDateParser"/>

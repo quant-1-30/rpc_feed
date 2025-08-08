@@ -15,24 +15,24 @@
     <key id="version" for="node" attr.name="version" attr.type="string"/>
 
     <graph id="G" edgedefault="directed">
-        <node id="StructUnpacker">
-            <data key="type">unpacker</data>
+        <node id="TextLoader">
+            <data key="type">text</data>
             <data key="description">Unpacks data from binary format</data>
             <data key="priority">1</data>
             <data key="enabled">true</data>
             
             <!-- 业务属性 -->
-            <data key="params">{}</data>
+            <data key="params">{"rename": {"日期": "datetime", "代码": "sid" ,"开盘价": "open", "最高价": "high", "最低价": "low", "收盘价": "close", "成交量（手）": "volume", "成交额（元）": "amount"}}</data>
             <data key="version">2.1.0</data>
         </node>
-        <node id="StructDateParser">
-            <data key="type">decoder</data>
-            <data key="description">Decodes data from binary format</data>
+        <node id="UniverseDateParser">
+            <data key="type">date</data>
+            <data key="description">Parses date</data>
             <data key="priority">1</data>
             <data key="enabled">true</data>
             
             <!-- 业务属性 -->
-            <data key="params">{}</data>
+            <data key="params">{"parser_col": "datetime", "format": "%Y-%m-%d %H:%M:%S"}</data>
             <data key="version">2.1.0</data>
         </node>
         <node id="Multiply">
@@ -42,7 +42,7 @@
             <data key="enabled">true</data>
             
             <!-- 业务属性 -->
-            <data key="params">{"multiply": 1000}</data>
+            <data key="params">{"multiply": {"open": 100000, "high": 100000, "low": 100000, "close": 100000, "volume": 10, "amount": 1000}}</data> 
             <data key="version">2.1.0</data>
         </node>
         <node id="Dtypes">
@@ -57,7 +57,7 @@
         </node>
         <node id="ParquetWriter">
             <data key="type">writer</data>
-            <data key="description">Writes data to Parquet</data>
+            <data key="description">Writes data to PostgreSQL</data>
             <data key="priority">2</data>
             <data key="enabled">true</data>
             
@@ -65,8 +65,8 @@
             <data key="params">{"root_path": "~/Downloads/quant/parquet/fund"}</data>
             <data key="version">2.1.0</data>
         </node>
-        <edge source="StructUnpacker" target="StructDateParser"/>
-        <edge source="StructDateParser" target="Multiply"/>
+        <edge source="TextLoader" target="UniverseDateParser"/>
+        <edge source="UniverseDateParser" target="Multiply"/>
         <edge source="Multiply" target="Dtypes"/>
         <edge source="Dtypes" target="ParquetWriter"/>
     </graph>

@@ -142,7 +142,6 @@ class DuckDBManager: # 非线程安全
             return duckdb.from_df([])
         req_sql = request_to_sql(req_views, req)
         print("Executing SQL:", req_sql)
-
         query_conn = duckdb.connect(self.db_path) # 每次查询都用新的连接，避免多线程竞争
         try:
             cursor = query_conn.execute(req_sql)

@@ -13,7 +13,7 @@ def preprocess(path: str):
 
 if __name__ == "__main__":
     # update sid
-    path = os.path.join(os.path.expanduser("~"), "Downloads/minutes/assets/delist.csv")
+    path = os.path.join(os.path.expanduser("~"), "Downloads/quant/data/asset/delist.csv")
     meta = preprocess(path)
     asyncio.run(_providers["update"](meta))
 

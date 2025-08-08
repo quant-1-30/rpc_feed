@@ -250,7 +250,8 @@ class ParquetWriter(Node):
             base_dir=str(root_path),
             format="parquet",
             partitioning=ds.partitioning(partition_schema, flavor="hive"),
-            # 目录是指分区路径, overwrite_or_ignore / append_or_ignore 如果目标目录已存在，则覆盖或忽略
+            # 目录是指分区路径, overwrite_or_ignore  分区目录存在忽略本次写入 / 否则正常写入
+            # append_or_ignore 分区路径不存在创建目录并写入 / 如果目录已存在将数据“追加”写入
             # delete_matching  --- 删除匹配分区目录
             # error: 如果目标目录已存在，则报错 / append 
             existing_data_behavior="delete_matching",  # 删除匹配分区目录，支持同一分区下的增量更新

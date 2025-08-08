@@ -13,7 +13,7 @@ from contextlib import asynccontextmanager
 from functools import lru_cache
 
 from rpc_feed.meta import with_metaclass, MetaSingleton
-from rpc_feed.core.schema import Base
+from rpc_feed.core.middleware.schema import Base
 
 __all__ = ["async_ops"]
 
