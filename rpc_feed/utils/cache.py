@@ -4,12 +4,14 @@ Created on Tue Mar 12 15:37:47 2019
 
 @author: python
 """
-from collections import MutableMapping
+import os
+import pickle
+import errno
+import pandas as pd
 from functools import partial
 from distutils import dir_util
 from shutil import rmtree, move
 from tempfile import mkdtemp, NamedTemporaryFile
-import os, pickle, errno, pandas as pd
 
 from .paths import ensure_directory
 
@@ -142,7 +144,7 @@ class DummyMapping(object):
         return self._value
 
 
-class dataframe_cache(MutableMapping):
+class dataframe_cache():
     """A disk-backed cache for dataframes.
 
     ``dataframe_cache`` is a mutable mapping from string names to pandas

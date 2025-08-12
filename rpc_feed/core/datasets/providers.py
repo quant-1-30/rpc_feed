@@ -10,8 +10,9 @@ from sqlalchemy import select, and_, or_ # SQLAlchemy 2.0.39 正确的导入方�
 
 from .base import Provider
 from .model import *
-from rpc_feed.core.middleware.schema import *
-from rpc_feed.core.middleware.operator import async_ops, duck_mgr
+from rpc_feed.core.com.operator import async_ops, duck_mgr
+from rpc_feed.core.com.operator.pg.schema import *
+from rpc_feed.core.com.operator.duckdb.duck_utils import tuple_to_model
 
 __all__ = ["_providers"]
 
@@ -81,34 +82,6 @@ class Instrument(Provider):
                 yield AssetModel(**row).model_dump()
 
 
-# class Tick(Provider):
-#     """Dataset provider class via duckdb
-#     """
-#     async def __call__(self, req: Request):
-#         """Get dataset data.
-
-#         Parameters
-#         ----------
-#         request:  DataRequest
-
-#         Returns
-#         ----------
-#         """
-#         async with async_ops as ctx:
-#             stmt = select(Line).where(
-#                 and_(
-#                     Line.tick >= req.start_date,
-#                     Line.tick <= req.end_date
-#                 )
-#             ).order_by(Line.tick)
-#             if req.sid:
-#                 stmt = stmt.where(Line.sid.in_(req.sid))
-
-#             async for item in ctx.on_query(stmt):
-#                 row = item[0].serialize()
-#                 yield LineModel(**row).model_dump()
-
-
 class Tick(Provider):
     """Dataset provider class via duckdb
     """
@@ -129,12 +102,39 @@ class Tick(Provider):
         # 读取并查询（可用 glob 模式、支持 partition pushdown)
         # hive_partitioning  --- automate path to key=value in partition cols 
         """
-        # calculate qfq / hfq
-
+        from .template import  tick_template
         async with duck_mgr as ctx:
-            async for row in ctx.query(req.model_dump()):
+            async for row in ctx.query(req.model_dump(), template=tick_template):
                 line = tuple_to_model(row, LineModel) # 增加coef 
                 yield line.model_dump()
+
+
+class Close(Provider):
+    """Dataset provider class via duckdb
+    """
+    async def __call__(self, req: Request):
+        """Get dataset data.
+
+        Parameters
+        ----------
+        request:  DataRequest
+
+        Returns
+        ----------
+        # SELECT * FROM stock
+        # WHERE datetime >= TIMESTAMP '2024-06-01 09:30:00'
+        # DuckDB 会自动把 '2024-06-01 09:30:00' 解析为内部 TIMESTAMP 类型，与 Parquet 里的 datetime 字段对齐
+        
+        # 读取并查询（可用 glob 模式、支持 partition pushdown)
+        # hive_partitioning  --- automate path to key=value in partition cols 
+        """
+        from .template import close_template
+        # import pdb; pdb.set_trace()
+        async with duck_mgr as ctx:
+            async for row in ctx.query(req.model_dump(), template=close_template):
+                # import pdb; pdb.set_trace()
+                close = CloseModel(sid=str(row[0]), date=row[1].strftime("%Y%m%d"), close=row[-1])
+                yield close.model_dump()
 
 
 class Adjust(Provider):
@@ -193,33 +193,43 @@ class Right(Provider):
             async for item in ctx.on_query(stmt):
                 row = item[0].serialize()
                 yield RightmentModel(**row).model_dump()
+                
 
+# class Factor(Provider):
+#     """
+#         Provide factor data.
+#     """
 
-class Update(Provider):
-    """
-        Update asset data.
-    """
-    async def __call__(self, meta: dict):
-        """Update asset data."""
-        async with async_ops as ctx:
-            for item in meta:
-                stmt = select(Asset).where(Asset.sid == item["sid"])
-                asset = await ctx.on_query_obj(stmt)
-                if asset:
-                    asset[0].delist = item["delist"] # 如果记录存在，更新 delist 列
-                else:
-                    asset = Asset(**item) # 如果记录不存在，插入新记录
-                await ctx.on_insert_obj(asset)
+#     async def __call__(self, req: Request):
+#         """Get factors of certain asset in given time range.
+
+#         Parameters
+#         ----------
+#         request : Request
+#             start of the time range.
+
+#         Returns
+#         ----------
+#         """
+#         async with async_ops as ctx:
+#             stmt = select(Factor).where(
+#                      Factor.date.between(req.start_date, req.end_date)
+#             ).order_by(Factor.date)
+#             if req.sid:
+#                 stmt = stmt.where(Factor.sid.in_(req.sid))
+            
+#             async for item in ctx.on_query(stmt):
+#                 row = item[0].serialize()
+#                 yield FactorModel(**row).model_dump()
 
 
 _providers = dict(
-    (("calendar", TradingCalendar()),
+    (
+    ("calendar", TradingCalendar()),
     ("asset", Instrument()),
     ("line", Tick()),
+    ("close", Close()),
     ("adjust", Adjust()),
     ("right", Right()),
-    ("update", Update()),
     ))
-
-
 

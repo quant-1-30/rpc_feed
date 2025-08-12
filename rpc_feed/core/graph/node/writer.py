@@ -19,7 +19,7 @@ from avro.datafile import DataFileWriter
 
 from rpc_feed.core.graph.base import Node
 from rpc_feed.utils.registry import registry
-from rpc_feed.core.middleware.operator import async_ops
+from rpc_feed.core.com.operator import async_ops
 from rpc_feed.utils.io import expand_path
 
 

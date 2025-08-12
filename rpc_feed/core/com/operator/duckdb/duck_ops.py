@@ -9,9 +9,7 @@ import asyncio
 import threading
 from pathlib import Path
 from dotenv import load_dotenv
-from threading import Lock
-from rpc_feed.utils.duck_utils import schema_range, request_to_sql, create_parquet_macro
-from rpc_feed.core.filter import _filters
+from .duck_utils import schema_range, request_to_sql, create_parquet_macro
 
 
 __all__ = ["duck_mgr"]
@@ -38,13 +36,14 @@ class DuckDBManager: # 非线程安全
             duckdb.register('people_view', df) and sql ( table is people_view)
         """
         load_dotenv()
-        self.dataset_root = os.path.expanduser(os.getenv("DUCKDATASET"))
-        self.db_path = os.getenv("DUCKDBPATH", "duckdb_macro.db")  # DuckDB 的 宏（macro） 是注册在当前连接（connection）上的，且存在于数据库的 catalog 
 
-        self.max_queue_size = int(os.getenv("DUCKQSIZE", 1000))
-        self.cache_file = os.getenv("DUCKCACHE", "registered_views.json")
+        # DuckDB macro register on connection database catalog 
+        self.db_path = os.path.expanduser(os.getenv("DUCKDBPATH"))  
+        self.cache_file = os.path.expanduser(os.getenv("DUCKCACHE", "registered_views.json"))
+        self.dataset_root = os.path.expanduser(os.getenv("DUCKDATASET"))
+        self.max_queue_size = int(os.getenv("DUCKQSIZE"))
+
         self.regex = r"^(6|0|3)\d{5}"  # 匹配 stock/fund 代码
-        # self._view_lock = Lock()  # 宏注册锁
         self._thread_local = threading.local()
         self._tasks = set()
         self._registered_views = set()
@@ -89,8 +88,8 @@ class DuckDBManager: # 非线程安全
         return f"year{year}_quarter{quarter}_sid{sid}_date{y_month}"
 
     def _glob_path(self, sid: str, year: int, quarter: str, y_month: str) -> str:
-        category = "stock" if re.match(self.regex, sid) else "fund"
-        return os.path.join(self.dataset_root, category, f"year={year}", f"quarter={quarter}", f"sid={sid}", f"date={y_month}")
+        sub_dir = "stock" if re.match(self.regex, sid) else "fund"
+        return os.path.join(self.dataset_root, sub_dir, f"year={year}", f"quarter={quarter}", f"sid={sid}", f"date={y_month}")
 
     def _register_macro_if_needed(self, conn, sid: str, year: int, quarter: str, y_month: str):
         view_name = self._view_name(sid, year, quarter, y_month)
@@ -135,32 +134,48 @@ class DuckDBManager: # 非线程安全
         cursor = conn.execute(req_sql)
         return cursor.fetchdf()
 
-    def _query_stream(self, req: dict, batch_size: int = 1000): # register and query in separate connection or conflict
+    def _query_stream(self, req_meta: dict, batch_size, raw_template): # register and query in separate connection or conflict
+        # register_views
         conn = self._get_conn()
-        req_views = self.register_views(conn, req)
+        req_views = self.register_views(conn, req_meta)
+        print("Registered views:", req_views)
         if not req_views:
             return duckdb.from_df([])
-        req_sql = request_to_sql(req_views, req)
+
+        # request_to_sql 
+        req_sql = request_to_sql(req_views, req_meta, raw_template)
         print("Executing SQL:", req_sql)
         query_conn = duckdb.connect(self.db_path) # 每次查询都用新的连接，避免多线程竞争
-        try:
-            cursor = query_conn.execute(req_sql)
-            while True:
-                rows = cursor.fetchmany(batch_size)
-                if not rows:
-                    break
-                for row in rows:
-                    yield row
-        finally:
-            query_conn.close()
+        cursor = query_conn.execute(req_sql)
+        
+        while True:
+            rows = cursor.fetchmany(batch_size)
+            print("fetched rows:", len(rows))
+            if not rows:
+                break
+            for row in rows:
+                yield row
+        print("Query completed, closing connection.")
 
-    async def query(self, req: dict, batch_size: int = 1000):
+        # try:
+        #     cursor = query_conn.execute(req_sql)
+        #     while True:
+        #         rows = cursor.fetchmany(batch_size)
+        #         print("fetched rows:", len(rows))
+        #         if not rows:
+        #             break
+        #         for row in rows:
+        #             yield row
+        # finally:
+        #     query_conn.close()
+
+    async def query(self, req_meta: dict, batch_size: int = 1000, template: str = None):
         loop = asyncio.get_running_loop()
         queue = asyncio.Queue(maxsize=self.max_queue_size)
 
         def producer():
             try:
-                for row in self._query_stream(req, batch_size):
+                for row in self._query_stream(req_meta, batch_size, template):
                     fut = asyncio.run_coroutine_threadsafe(queue.put(row), loop)
                     fut.add_done_callback(lambda f: f.exception())
             finally:

@@ -119,6 +119,31 @@ class RpcServer(service_pb2_grpc.btDataFeedServicer):
             print("DatasetStreamCall ticker repsonse size ", response.ByteSize())
             yield response
 
+    async def CloseStreamCall(
+        self,
+        request: service_pb2.QuoteRequest,
+        context: grpc.ServicerContext,
+    ) -> service_pb2.CloseFrame: # type: ignore
+        
+        await self._set_context(context)
+
+        logging.info("Received LineStreamCall")
+
+        obj_map = MessageToDict(
+            request, 
+            preserving_proto_field_name=True, 
+            always_print_fields_with_no_presence=True,
+        )
+        response_iterator = bt_feed("close", Request(**obj_map))
+        async for resp in response_iterator:
+            response = service_pb2.CloseFrame()  
+            response.sid = resp.pop("sid")
+            # import pdb; pdb.set_trace()
+            close = service_pb2.Close(**resp)
+            response.close.extend([close])
+            print("DatasetStreamCall close repsonse size ", response.ByteSize())
+            yield response
+
     async def AdjustmentStreamCall(
         self,
         request: service_pb2.QuoteRequest,

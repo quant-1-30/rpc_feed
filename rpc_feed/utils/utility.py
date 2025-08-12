@@ -17,6 +17,7 @@ from copy import deepcopy
 from .wrapper import  ignore_pandas_nan_categorical_warning
 
 
+
 def no_hup():
     pass
 
@@ -648,3 +649,4 @@ def as_column(a):
             "but got an array of shape %s" % a.shape
         )
     return a[:, None]
+

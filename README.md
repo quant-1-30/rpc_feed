@@ -56,3 +56,7 @@ duckdb 使用注意点
 5\ split view_schema according to req and concencate sql into one 
 
 WAL (Write-Ahead Logging) 文件是一种数据库日志文件
+
+
+# poetry env use python3 
+# poetry install 

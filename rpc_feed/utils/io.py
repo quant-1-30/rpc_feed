@@ -17,6 +17,7 @@ from contextlib import contextmanager
 from typing import Callable, Generator
 from .registry import registry
 
+
 @contextmanager
 def get_temp_dir():
     dirpath = mkdtemp()

@@ -3,6 +3,7 @@
 import grpc
 import warnings
 
+from google.protobuf import empty_pb2 as google_dot_protobuf_dot_empty__pb2
 from . import service_pb2 as service__pb2
 
 GRPC_GENERATED_VERSION = '1.71.0'
@@ -27,7 +28,6 @@ if _version_not_supported:
 
 class btDataFeedStub(object):
     """api
-
     """
 
     def __init__(self, channel):
@@ -51,6 +51,11 @@ class btDataFeedStub(object):
                 request_serializer=service__pb2.QuoteRequest.SerializeToString,
                 response_deserializer=service__pb2.TickFrame.FromString,
                 _registered_method=True)
+        self.CloseStreamCall = channel.unary_stream(
+                '/btDataFeed/CloseStreamCall',
+                request_serializer=service__pb2.QuoteRequest.SerializeToString,
+                response_deserializer=service__pb2.CloseFrame.FromString,
+                _registered_method=True)
         self.AdjustmentStreamCall = channel.unary_stream(
                 '/btDataFeed/AdjustmentStreamCall',
                 request_serializer=service__pb2.QuoteRequest.SerializeToString,
@@ -61,11 +66,20 @@ class btDataFeedStub(object):
                 request_serializer=service__pb2.QuoteRequest.SerializeToString,
                 response_deserializer=service__pb2.RightmentFrame.FromString,
                 _registered_method=True)
+        self.FactorStreamCall = channel.unary_stream(
+                '/btDataFeed/FactorStreamCall',
+                request_serializer=service__pb2.QuoteRequest.SerializeToString,
+                response_deserializer=service__pb2.FactorFrame.FromString,
+                _registered_method=True)
+        self.HeartBeat = channel.unary_unary(
+                '/btDataFeed/HeartBeat',
+                request_serializer=google_dot_protobuf_dot_empty__pb2.Empty.SerializeToString,
+                response_deserializer=google_dot_protobuf_dot_empty__pb2.Empty.FromString,
+                _registered_method=True)
 
 
 class btDataFeedServicer(object):
     """api
-
     """
 
     def CalendarCall(self, request, context):
@@ -87,6 +101,12 @@ class btDataFeedServicer(object):
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
+    def CloseStreamCall(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
     def AdjustmentStreamCall(self, request, context):
         """Missing associated documentation comment in .proto file."""
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
@@ -95,6 +115,19 @@ class btDataFeedServicer(object):
 
     def RightStreamCall(self, request, context):
         """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def FactorStreamCall(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def HeartBeat(self, request, context):
+        """to keepalive
+        """
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
@@ -117,6 +150,11 @@ def add_btDataFeedServicer_to_server(servicer, server):
                     request_deserializer=service__pb2.QuoteRequest.FromString,
                     response_serializer=service__pb2.TickFrame.SerializeToString,
             ),
+            'CloseStreamCall': grpc.unary_stream_rpc_method_handler(
+                    servicer.CloseStreamCall,
+                    request_deserializer=service__pb2.QuoteRequest.FromString,
+                    response_serializer=service__pb2.CloseFrame.SerializeToString,
+            ),
             'AdjustmentStreamCall': grpc.unary_stream_rpc_method_handler(
                     servicer.AdjustmentStreamCall,
                     request_deserializer=service__pb2.QuoteRequest.FromString,
@@ -126,6 +164,16 @@ def add_btDataFeedServicer_to_server(servicer, server):
                     servicer.RightStreamCall,
                     request_deserializer=service__pb2.QuoteRequest.FromString,
                     response_serializer=service__pb2.RightmentFrame.SerializeToString,
+            ),
+            'FactorStreamCall': grpc.unary_stream_rpc_method_handler(
+                    servicer.FactorStreamCall,
+                    request_deserializer=service__pb2.QuoteRequest.FromString,
+                    response_serializer=service__pb2.FactorFrame.SerializeToString,
+            ),
+            'HeartBeat': grpc.unary_unary_rpc_method_handler(
+                    servicer.HeartBeat,
+                    request_deserializer=google_dot_protobuf_dot_empty__pb2.Empty.FromString,
+                    response_serializer=google_dot_protobuf_dot_empty__pb2.Empty.SerializeToString,
             ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
@@ -137,7 +185,6 @@ def add_btDataFeedServicer_to_server(servicer, server):
  # This class is part of an EXPERIMENTAL API.
 class btDataFeed(object):
     """api
-
     """
 
     @staticmethod
@@ -222,6 +269,33 @@ class btDataFeed(object):
             _registered_method=True)
 
     @staticmethod
+    def CloseStreamCall(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_stream(
+            request,
+            target,
+            '/btDataFeed/CloseStreamCall',
+            service__pb2.QuoteRequest.SerializeToString,
+            service__pb2.CloseFrame.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
     def AdjustmentStreamCall(request,
             target,
             options=(),
@@ -265,6 +339,60 @@ class btDataFeed(object):
             '/btDataFeed/RightStreamCall',
             service__pb2.QuoteRequest.SerializeToString,
             service__pb2.RightmentFrame.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def FactorStreamCall(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_stream(
+            request,
+            target,
+            '/btDataFeed/FactorStreamCall',
+            service__pb2.QuoteRequest.SerializeToString,
+            service__pb2.FactorFrame.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def HeartBeat(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/btDataFeed/HeartBeat',
+            google_dot_protobuf_dot_empty__pb2.Empty.SerializeToString,
+            google_dot_protobuf_dot_empty__pb2.Empty.FromString,
             options,
             channel_credentials,
             insecure,

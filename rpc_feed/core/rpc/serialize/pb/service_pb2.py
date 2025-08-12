@@ -22,37 +22,46 @@ _runtime_version.ValidateProtobufRuntimeVersion(
 _sym_db = _symbol_database.Default()
 
 
+from google.protobuf import empty_pb2 as google_dot_protobuf_dot_empty__pb2
 
 
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\rservice.proto\")\n\x08\x43\x61lendar\x12\x0f\n\x07tz_info\x18\x01 \x01(\t\x12\x0c\n\x04\x64\x61te\x18\x02 \x03(\x05\"N\n\nInstrument\x12\x0b\n\x03sid\x18\x01 \x01(\t\x12\x0c\n\x04name\x18\x02 \x01(\t\x12\x15\n\rfirst_trading\x18\x03 \x01(\x05\x12\x0e\n\x06\x64\x65list\x18\x04 \x01(\x05\"l\n\x04Line\x12\x0c\n\x04tick\x18\x01 \x01(\x05\x12\x0c\n\x04open\x18\x02 \x01(\x05\x12\x0c\n\x04high\x18\x03 \x01(\x05\x12\x0b\n\x03low\x18\x04 \x01(\x05\x12\r\n\x05\x63lose\x18\x05 \x01(\x05\x12\x0e\n\x06volume\x18\x06 \x01(\x03\x12\x0e\n\x06\x61mount\x18\x07 \x01(\x03\"f\n\nAdjustment\x12\x0b\n\x03sid\x18\x01 \x01(\t\x12\x15\n\rregister_date\x18\x02 \x01(\x05\x12\x13\n\x0b\x62onus_share\x18\x03 \x01(\x05\x12\x10\n\x08transfer\x18\x04 \x01(\x05\x12\r\n\x05\x62onus\x18\x05 \x01(\x05\"M\n\tRightment\x12\x0b\n\x03sid\x18\x01 \x01(\t\x12\x15\n\rregister_date\x18\x02 \x01(\x05\x12\r\n\x05price\x18\x03 \x01(\x05\x12\r\n\x05ratio\x18\x04 \x01(\x05\"\'\n\tInstFrame\x12\x1a\n\x05\x61sset\x18\x01 \x03(\x0b\x32\x0b.Instrument\"-\n\tTickFrame\x12\x0b\n\x03sid\x18\x01 \x01(\t\x12\x13\n\x04line\x18\x02 \x03(\x0b\x32\x05.Line\"5\n\x08\x41\x64jFrame\x12\x0f\n\x07\x65x_date\x18\x01 \x01(\x05\x12\x18\n\x03\x61\x64j\x18\x02 \x03(\x0b\x32\x0b.Adjustment\":\n\x0eRightmentFrame\x12\x0f\n\x07\x65x_date\x18\x01 \x01(\x05\x12\x17\n\x03rgt\x18\x02 \x03(\x0b\x32\n.Rightment\"A\n\x0cQuoteRequest\x12\x12\n\nstart_date\x18\x01 \x01(\x05\x12\x10\n\x08\x65nd_date\x18\x02 \x01(\x05\x12\x0b\n\x03sid\x18\x03 \x03(\t\"\'\n\x06Status\x12\x0e\n\x06status\x18\x01 \x01(\x05\x12\r\n\x05\x65rror\x18\x02 \x01(\t2\xff\x01\n\nbtDataFeed\x12*\n\x0c\x43\x61lendarCall\x12\r.QuoteRequest\x1a\t.Calendar0\x01\x12-\n\x0eInstrumentCall\x12\r.QuoteRequest\x1a\n.InstFrame0\x01\x12-\n\x0eLineStreamCall\x12\r.QuoteRequest\x1a\n.TickFrame0\x01\x12\x32\n\x14\x41\x64justmentStreamCall\x12\r.QuoteRequest\x1a\t.AdjFrame0\x01\x12\x33\n\x0fRightStreamCall\x12\r.QuoteRequest\x1a\x0f.RightmentFrame0\x01\x62\x06proto3')
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\rservice.proto\x1a\x1bgoogle/protobuf/empty.proto\")\n\x08\x43\x61lendar\x12\x0f\n\x07tz_info\x18\x01 \x01(\t\x12\x0c\n\x04\x64\x61te\x18\x02 \x03(\x05\"N\n\nInstrument\x12\x0b\n\x03sid\x18\x01 \x01(\t\x12\x0c\n\x04name\x18\x02 \x01(\t\x12\x15\n\rfirst_trading\x18\x03 \x01(\x05\x12\x0e\n\x06\x64\x65list\x18\x04 \x01(\x05\"l\n\x04Line\x12\x0c\n\x04tick\x18\x01 \x01(\x05\x12\x0c\n\x04open\x18\x02 \x01(\x05\x12\x0c\n\x04high\x18\x03 \x01(\x05\x12\x0b\n\x03low\x18\x04 \x01(\x05\x12\r\n\x05\x63lose\x18\x05 \x01(\x05\x12\x0e\n\x06volume\x18\x06 \x01(\x03\x12\x0e\n\x06\x61mount\x18\x07 \x01(\x03\"$\n\x05\x43lose\x12\x0c\n\x04\x64\x61te\x18\x01 \x01(\x05\x12\r\n\x05\x63lose\x18\x02 \x01(\x05\"f\n\nAdjustment\x12\x0b\n\x03sid\x18\x01 \x01(\t\x12\x15\n\rregister_date\x18\x02 \x01(\x05\x12\x13\n\x0b\x62onus_share\x18\x03 \x01(\x05\x12\x10\n\x08transfer\x18\x04 \x01(\x05\x12\r\n\x05\x62onus\x18\x05 \x01(\x05\"M\n\tRightment\x12\x0b\n\x03sid\x18\x01 \x01(\t\x12\x15\n\rregister_date\x18\x02 \x01(\x05\x12\r\n\x05price\x18\x03 \x01(\x05\x12\r\n\x05ratio\x18\x04 \x01(\x05\"&\n\x06\x46\x61\x63tor\x12\x0c\n\x04\x64\x61te\x18\x01 \x01(\x05\x12\x0e\n\x06\x66\x61\x63tor\x18\x02 \x01(\x05\"\'\n\tInstFrame\x12\x1a\n\x05\x61sset\x18\x01 \x03(\x0b\x32\x0b.Instrument\"-\n\tTickFrame\x12\x0b\n\x03sid\x18\x01 \x01(\t\x12\x13\n\x04line\x18\x02 \x03(\x0b\x32\x05.Line\"0\n\nCloseFrame\x12\x0b\n\x03sid\x18\x01 \x01(\t\x12\x15\n\x05\x63lose\x18\x02 \x03(\x0b\x32\x06.Close\"5\n\x08\x41\x64jFrame\x12\x0f\n\x07\x65x_date\x18\x01 \x01(\x05\x12\x18\n\x03\x61\x64j\x18\x02 \x03(\x0b\x32\x0b.Adjustment\":\n\x0eRightmentFrame\x12\x0f\n\x07\x65x_date\x18\x01 \x01(\x05\x12\x17\n\x03rgt\x18\x02 \x03(\x0b\x32\n.Rightment\"3\n\x0b\x46\x61\x63torFrame\x12\x0b\n\x03sid\x18\x01 \x01(\t\x12\x17\n\x06\x66\x61\x63tor\x18\x02 \x03(\x0b\x32\x07.Factor\"A\n\x0cQuoteRequest\x12\x12\n\nstart_date\x18\x01 \x01(\x05\x12\x10\n\x08\x65nd_date\x18\x02 \x01(\x05\x12\x0b\n\x03sid\x18\x03 \x03(\t\"\'\n\x06Status\x12\x0e\n\x06status\x18\x01 \x01(\x05\x12\r\n\x05\x65rror\x18\x02 \x01(\t2\xa0\x03\n\nbtDataFeed\x12*\n\x0c\x43\x61lendarCall\x12\r.QuoteRequest\x1a\t.Calendar0\x01\x12-\n\x0eInstrumentCall\x12\r.QuoteRequest\x1a\n.InstFrame0\x01\x12-\n\x0eLineStreamCall\x12\r.QuoteRequest\x1a\n.TickFrame0\x01\x12/\n\x0f\x43loseStreamCall\x12\r.QuoteRequest\x1a\x0b.CloseFrame0\x01\x12\x32\n\x14\x41\x64justmentStreamCall\x12\r.QuoteRequest\x1a\t.AdjFrame0\x01\x12\x33\n\x0fRightStreamCall\x12\r.QuoteRequest\x1a\x0f.RightmentFrame0\x01\x12\x31\n\x10\x46\x61\x63torStreamCall\x12\r.QuoteRequest\x1a\x0c.FactorFrame0\x01\x12;\n\tHeartBeat\x12\x16.google.protobuf.Empty\x1a\x16.google.protobuf.Emptyb\x06proto3')
 
 _globals = globals()
 _builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, _globals)
 _builder.BuildTopDescriptorsAndMessages(DESCRIPTOR, 'service_pb2', _globals)
 if not _descriptor._USE_C_DESCRIPTORS:
   DESCRIPTOR._loaded_options = None
-  _globals['_CALENDAR']._serialized_start=17
-  _globals['_CALENDAR']._serialized_end=58
-  _globals['_INSTRUMENT']._serialized_start=60
-  _globals['_INSTRUMENT']._serialized_end=138
-  _globals['_LINE']._serialized_start=140
-  _globals['_LINE']._serialized_end=248
-  _globals['_ADJUSTMENT']._serialized_start=250
-  _globals['_ADJUSTMENT']._serialized_end=352
-  _globals['_RIGHTMENT']._serialized_start=354
-  _globals['_RIGHTMENT']._serialized_end=431
-  _globals['_INSTFRAME']._serialized_start=433
-  _globals['_INSTFRAME']._serialized_end=472
-  _globals['_TICKFRAME']._serialized_start=474
-  _globals['_TICKFRAME']._serialized_end=519
-  _globals['_ADJFRAME']._serialized_start=521
-  _globals['_ADJFRAME']._serialized_end=574
-  _globals['_RIGHTMENTFRAME']._serialized_start=576
-  _globals['_RIGHTMENTFRAME']._serialized_end=634
-  _globals['_QUOTEREQUEST']._serialized_start=636
-  _globals['_QUOTEREQUEST']._serialized_end=701
-  _globals['_STATUS']._serialized_start=703
-  _globals['_STATUS']._serialized_end=742
-  _globals['_BTDATAFEED']._serialized_start=745
-  _globals['_BTDATAFEED']._serialized_end=1000
+  _globals['_CALENDAR']._serialized_start=46
+  _globals['_CALENDAR']._serialized_end=87
+  _globals['_INSTRUMENT']._serialized_start=89
+  _globals['_INSTRUMENT']._serialized_end=167
+  _globals['_LINE']._serialized_start=169
+  _globals['_LINE']._serialized_end=277
+  _globals['_CLOSE']._serialized_start=279
+  _globals['_CLOSE']._serialized_end=315
+  _globals['_ADJUSTMENT']._serialized_start=317
+  _globals['_ADJUSTMENT']._serialized_end=419
+  _globals['_RIGHTMENT']._serialized_start=421
+  _globals['_RIGHTMENT']._serialized_end=498
+  _globals['_FACTOR']._serialized_start=500
+  _globals['_FACTOR']._serialized_end=538
+  _globals['_INSTFRAME']._serialized_start=540
+  _globals['_INSTFRAME']._serialized_end=579
+  _globals['_TICKFRAME']._serialized_start=581
+  _globals['_TICKFRAME']._serialized_end=626
+  _globals['_CLOSEFRAME']._serialized_start=628
+  _globals['_CLOSEFRAME']._serialized_end=676
+  _globals['_ADJFRAME']._serialized_start=678
+  _globals['_ADJFRAME']._serialized_end=731
+  _globals['_RIGHTMENTFRAME']._serialized_start=733
+  _globals['_RIGHTMENTFRAME']._serialized_end=791
+  _globals['_FACTORFRAME']._serialized_start=793
+  _globals['_FACTORFRAME']._serialized_end=844
+  _globals['_QUOTEREQUEST']._serialized_start=846
+  _globals['_QUOTEREQUEST']._serialized_end=911
+  _globals['_STATUS']._serialized_start=913
+  _globals['_STATUS']._serialized_end=952
+  _globals['_BTDATAFEED']._serialized_start=955
+  _globals['_BTDATAFEED']._serialized_end=1371
 # @@protoc_insertion_point(module_scope)

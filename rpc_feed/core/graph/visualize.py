@@ -9,7 +9,7 @@ from io import BytesIO
 from subprocess import Popen, PIPE
 
 from networkx import topological_sort
-from six import iteritems
+
 
 class NoIPython(Exception):
     pass
@@ -66,7 +66,7 @@ def cluster(f, name, **attrs):
 
 def roots(g):
     "Get nodes from graph G with indegree 0"
-    return set(n for n, d in iteritems(g.in_degree()) if d == 0)
+    return set(n for n, d in g.in_degree().items() if d == 0)
 
 
 def filter_nodes(nodes):
@@ -203,5 +203,5 @@ def format_attrs(attrs):
     """
     if not attrs:
         return ''
-    entries = ['='.join((key, value)) for key, value in iteritems(attrs)]
+    entries = ['='.join((key, value)) for key, value in attrs.items()]
     return '[' + ', '.join(entries) + ']'

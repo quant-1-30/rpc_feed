@@ -1,3 +1,4 @@
+from google.protobuf import empty_pb2 as _empty_pb2
 from google.protobuf.internal import containers as _containers
 from google.protobuf import descriptor as _descriptor
 from google.protobuf import message as _message
@@ -43,6 +44,14 @@ class Line(_message.Message):
     amount: int
     def __init__(self, tick: _Optional[int] = ..., open: _Optional[int] = ..., high: _Optional[int] = ..., low: _Optional[int] = ..., close: _Optional[int] = ..., volume: _Optional[int] = ..., amount: _Optional[int] = ...) -> None: ...
 
+class Close(_message.Message):
+    __slots__ = ("date", "close")
+    DATE_FIELD_NUMBER: _ClassVar[int]
+    CLOSE_FIELD_NUMBER: _ClassVar[int]
+    date: int
+    close: int
+    def __init__(self, date: _Optional[int] = ..., close: _Optional[int] = ...) -> None: ...
+
 class Adjustment(_message.Message):
     __slots__ = ("sid", "register_date", "bonus_share", "transfer", "bonus")
     SID_FIELD_NUMBER: _ClassVar[int]
@@ -69,6 +78,14 @@ class Rightment(_message.Message):
     ratio: int
     def __init__(self, sid: _Optional[str] = ..., register_date: _Optional[int] = ..., price: _Optional[int] = ..., ratio: _Optional[int] = ...) -> None: ...
 
+class Factor(_message.Message):
+    __slots__ = ("date", "factor")
+    DATE_FIELD_NUMBER: _ClassVar[int]
+    FACTOR_FIELD_NUMBER: _ClassVar[int]
+    date: int
+    factor: int
+    def __init__(self, date: _Optional[int] = ..., factor: _Optional[int] = ...) -> None: ...
+
 class InstFrame(_message.Message):
     __slots__ = ("asset",)
     ASSET_FIELD_NUMBER: _ClassVar[int]
@@ -82,6 +99,14 @@ class TickFrame(_message.Message):
     sid: str
     line: _containers.RepeatedCompositeFieldContainer[Line]
     def __init__(self, sid: _Optional[str] = ..., line: _Optional[_Iterable[_Union[Line, _Mapping]]] = ...) -> None: ...
+
+class CloseFrame(_message.Message):
+    __slots__ = ("sid", "close")
+    SID_FIELD_NUMBER: _ClassVar[int]
+    CLOSE_FIELD_NUMBER: _ClassVar[int]
+    sid: str
+    close: _containers.RepeatedCompositeFieldContainer[Close]
+    def __init__(self, sid: _Optional[str] = ..., close: _Optional[_Iterable[_Union[Close, _Mapping]]] = ...) -> None: ...
 
 class AdjFrame(_message.Message):
     __slots__ = ("ex_date", "adj")
@@ -98,6 +123,14 @@ class RightmentFrame(_message.Message):
     ex_date: int
     rgt: _containers.RepeatedCompositeFieldContainer[Rightment]
     def __init__(self, ex_date: _Optional[int] = ..., rgt: _Optional[_Iterable[_Union[Rightment, _Mapping]]] = ...) -> None: ...
+
+class FactorFrame(_message.Message):
+    __slots__ = ("sid", "factor")
+    SID_FIELD_NUMBER: _ClassVar[int]
+    FACTOR_FIELD_NUMBER: _ClassVar[int]
+    sid: str
+    factor: _containers.RepeatedCompositeFieldContainer[Factor]
+    def __init__(self, sid: _Optional[str] = ..., factor: _Optional[_Iterable[_Union[Factor, _Mapping]]] = ...) -> None: ...
 
 class QuoteRequest(_message.Message):
     __slots__ = ("start_date", "end_date", "sid")

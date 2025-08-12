@@ -6,39 +6,7 @@ from functools import total_ordering
 from pydantic import BaseModel, Field, field_validator, model_validator, field_serializer
 from typing import List, Union, Optional, TypeVar, Type, Any
 
-
-__all__ = ["tuple_to_model", "Request", "CalendarModel", "AssetModel", "LineModel", "AdjustmentModel", "RightmentModel"]
-
-
-T = TypeVar('T', bound=BaseModel)
-
-def tuple_to_model(tuple_data: tuple, model_class: Type[T]) -> T:
-    """
-    将 SQL 查询返回的 tuple 转换为 Pydantic 对象
-    
-    Parameters
-    ----------
-    tuple_data : tuple
-        SQL 查询返回的元组数据
-    model_class : Type[T]
-        Pydantic 模型类
-        
-    Returns
-    -------
-    T
-        Pydantic 模型实例
-        
-    Examples
-    --------
-    >>> row = (1, "AAPL", 100)
-    >>> model = tuple_to_model(row, StockModel)
-    """
-    # 获取模型字段名
-    field_names = list(model_class.__annotations__.keys())
-    # 创建字段名到值的映射
-    data_dict = dict(zip(field_names, tuple_data))
-    # 创建并返回模型实例
-    return model_class(**data_dict)
+__all__ = ["Request", "CalendarModel", "AssetModel", "LineModel", "CloseModel", "AdjustmentModel", "RightmentModel", "FactorModel"]
 
 
 class Request(BaseModel):
@@ -102,8 +70,6 @@ class LineModel(BaseModel):
     close: int = Field(ge=0)
     volume: int = Field(ge=0)
     amount: int = Field(ge=0)
-    # qfq: float = Field(ge=0) # 前复权
-    # hfq: float = Field(ge=0) # 后复权
 
     # 验证器在模型初始化时执行
     @field_validator('sid', mode='before')
@@ -159,6 +125,12 @@ class LineModel(BaseModel):
         # 使用内置的排序方法
         return sorted(series, key=lambda x: getattr(x, by), reverse=not ascending)
 
+class CloseModel(BaseModel):
+
+    sid: str = Field(default="")
+    date: int = Field(ge=0)
+    close: int = Field(ge=0)
+
 
 class AdjustmentModel(BaseModel):
 
@@ -204,5 +176,16 @@ class RightmentModel(BaseModel):
         return self.register_date < _value.register_date
     
     @field_serializer("price", "ratio")
+    def serialize_integer(self, v:float, info):
+        return int(v*1000)
+
+
+class FactorModel(BaseModel):
+
+    sid: str = Field(default="")
+    date: int = Field(ge=0)
+    factor: int = Field(ge=0)
+    
+    @field_serializer("factor")
     def serialize_integer(self, v:float, info):
         return int(v*1000)
