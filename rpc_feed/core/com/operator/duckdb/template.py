@@ -1,5 +1,5 @@
 tick_template = """
-    SELECT sid, datetime, open, high, low, close, volume, amount
+    SELECT sid, tick, open, high, low, close, volume, amount
     FROM (
         {union_sql}
     ) AS merged_view
@@ -22,6 +22,7 @@ close_template = """
                 AND
                 TIMESTAMP '{end_str}' 
               AND sid in {sid_str}
+              AND volume >= 0
             GROUP BY sid, day
         )
 

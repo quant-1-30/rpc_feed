@@ -114,6 +114,7 @@ class RpcServer(service_pb2_grpc.btDataFeedServicer):
         async for resp in response_iterator:
             response = service_pb2.TickFrame()  
             response.sid = resp.pop("sid")
+            print("resp " , resp)
             line = service_pb2.Line(**resp)
             response.line.extend([line])
             print("DatasetStreamCall ticker repsonse size ", response.ByteSize())
@@ -138,7 +139,6 @@ class RpcServer(service_pb2_grpc.btDataFeedServicer):
         async for resp in response_iterator:
             response = service_pb2.CloseFrame()  
             response.sid = resp.pop("sid")
-            # import pdb; pdb.set_trace()
             close = service_pb2.Close(**resp)
             response.close.extend([close])
             print("DatasetStreamCall close repsonse size ", response.ByteSize())

@@ -39,7 +39,7 @@ class DuckDBManager: # 非线程安全
 
         # DuckDB macro register on connection database catalog 
         self.db_path = os.path.expanduser(os.getenv("DUCKDBPATH"))  
-        self.cache_file = os.path.expanduser(os.getenv("DUCKCACHE", "registered_views.json"))
+        self.cache_file = os.path.expanduser(os.getenv("DUCKCACHE"))
         self.dataset_root = os.path.expanduser(os.getenv("DUCKDATASET"))
         self.max_queue_size = int(os.getenv("DUCKQSIZE"))
 

@@ -102,11 +102,16 @@ class Tick(Provider):
         # 读取并查询（可用 glob 模式、支持 partition pushdown)
         # hive_partitioning  --- automate path to key=value in partition cols 
         """
-        from .template import  tick_template
+        from rpc_feed.core.com.operator.duckdb.template import  tick_template
         async with duck_mgr as ctx:
             async for row in ctx.query(req.model_dump(), template=tick_template):
-                line = tuple_to_model(row, LineModel) # 增加coef 
-                yield line.model_dump()
+                print("tick row ", row)
+                try:
+                    line = tuple_to_model(row, LineModel) 
+                    yield line.model_dump()
+                except Exception as e:
+                    print(f"⚠️ Failed to convert row to LineModel: {e}")
+                    continue
 
 
 class Close(Provider):
@@ -128,7 +133,7 @@ class Close(Provider):
         # 读取并查询（可用 glob 模式、支持 partition pushdown)
         # hive_partitioning  --- automate path to key=value in partition cols 
         """
-        from .template import close_template
+        from rpc_feed.core.com.operator.duckdb.template import close_template
         # import pdb; pdb.set_trace()
         async with duck_mgr as ctx:
             async for row in ctx.query(req.model_dump(), template=close_template):

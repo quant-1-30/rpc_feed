@@ -31,15 +31,17 @@ class CalendarModel(BaseModel):
 
     trading_date: int = Field(gt=0, default=19900101)
 
-    def __eq__(self, _value: object) -> bool:
-        if not isinstance(_value, self):
-            raise TypeError
-        return self.trading_date == _value.trading_data
+    # def __eq__(self, _value: object) -> bool:
+    #     if not isinstance(_value, self):
+    #         raise TypeError
+    #     return self.trading_date == _value.trading_data
     
-    def __lt__(self, _value: object) -> bool:
-        if not isinstance(_value, self):
-            raise TypeError
-        return self.trading_date < _value.trading_date
+    # def __lt__(self, _value: object) -> bool:
+    #     if not isinstance(_value, self):
+    #         raise TypeError
+    #     return self.trading_date < _value.trading_date
+    
+    # # sorted(series, key=lambda x: getattr(x, by), reverse=not ascending)
     
 
 class AssetModel(BaseModel):
@@ -71,7 +73,6 @@ class LineModel(BaseModel):
     volume: int = Field(ge=0)
     amount: int = Field(ge=0)
 
-    # 验证器在模型初始化时执行
     @field_validator('sid', mode='before')
     @classmethod
     def convert_sid_to_str(cls, v: Any) -> str:
@@ -79,51 +80,7 @@ class LineModel(BaseModel):
         if v is None:
             return ""
         return str(v)
-
-    def __eq__(self, _value: object) -> bool:
-        if not isinstance(_value, self):
-            raise TypeError
-        return self.sid == _value.sid and self.tick == _value.tick
-    
-    def __lt__(self, _value: object) -> bool:
-        if not isinstance(_value, self):
-            raise TypeError
-        return self.sid > _value.sid or (self.sid == _value.sid and self.tick > _value.tick)
-    
-    @classmethod
-    def sort_series(cls, series: List['LineModel'], by: str = 'tick', ascending: bool = True) -> List['LineModel']:
-        """
-        对 LineModel 列表进行排序
-        
-        Parameters
-        ----------
-        series : List[LineModel]
-            要排序的 LineModel 列表
-        by : str
-            排序字段，可选值: 'sid', 'tick', 'open', 'high', 'low', 'close', 'volume', 'amount'
-        ascending : bool
-            是否升序排序
-            
-        Returns
-        -------
-        List[LineModel]
-            排序后的列表
-            
-        Examples
-        --------
-        >>> models = [LineModel(sid="AAPL", tick=100), LineModel(sid="GOOG", tick=200)]
-        >>> sorted_models = LineModel.sort_series(models, by='tick', ascending=True)
-        """
-        if not series:
-            return []
-            
-        # 验证排序字段
-        valid_fields = ['sid', 'tick', 'open', 'high', 'low', 'close', 'volume', 'amount']
-        if by not in valid_fields:
-            raise ValueError(f"Invalid sort field: {by}. Must be one of {valid_fields}")
-            
-        # 使用内置的排序方法
-        return sorted(series, key=lambda x: getattr(x, by), reverse=not ascending)
+ 
 
 class CloseModel(BaseModel):
 
@@ -141,20 +98,9 @@ class AdjustmentModel(BaseModel):
     transfer: float = Field(default=0.0)
     bonus: float = Field(default=0.0)
 
-    def __eq__(self, _value: object) -> bool:
-        if not isinstance(_value, self):
-            raise TypeError
-        return self.sid == _value.sid and self.register_date == _value.register_date
-    
-    def __lt__(self, _value: object) -> bool:
-        if not isinstance(_value, self):
-            raise TypeError
-        return self.register_date < _value.register_date
-    
     @field_serializer("bonus_share", "transfer", "bonus")
     def serialize_integer(self, v: float, info):
         return int(v*1000)
-
 
 class RightmentModel(BaseModel):
 
@@ -165,16 +111,6 @@ class RightmentModel(BaseModel):
     price: float = Field(default=0.0)
     ratio: float = Field(default=0.0)
 
-    def __eq__(self, _value: object) -> bool:
-        if not isinstance(_value, self):
-            raise TypeError
-        return self.sid == _value.sid and self.register_date == _value.register_date
-    
-    def __lt__(self, _value: object) -> bool:
-        if not isinstance(_value, self):
-            raise TypeError
-        return self.register_date < _value.register_date
-    
     @field_serializer("price", "ratio")
     def serialize_integer(self, v:float, info):
         return int(v*1000)
