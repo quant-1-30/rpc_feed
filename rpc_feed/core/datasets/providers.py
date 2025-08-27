@@ -42,14 +42,11 @@ class TradingCalendar(Provider):
         list
             calendar list
         """
-
-        start_time = int(req.start_date.strftime("%Y%m%d")) if isinstance(req.start_date, datetime.datetime) else req.start_date
-        end_time = int(req.end_date.strftime("%Y%m%d")) if isinstance(req.end_date, datetime.datetime) else req.end_date
         
         async with async_ops as ctx:
             stmt = select(Calendar.trading_date).where(
                 and_(
-                    Calendar.trading_date.between(start_time, end_time)
+                    Calendar.trading_date.between(req.start_date, req.end_date)
                 )
             ).order_by(Calendar.trading_date)
 
