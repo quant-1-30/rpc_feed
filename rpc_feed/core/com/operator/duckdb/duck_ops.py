@@ -1,18 +1,95 @@
-# !/usr/bin/env python3
-# -*- coding: utf-8 -*-
-
-import re
 import os
-import json
 import duckdb
-import asyncio
 import threading
+import json
+import asyncio
 from pathlib import Path
 from dotenv import load_dotenv
+from queue import Queue, Empty
 from .duck_utils import schema_range, request_to_sql, create_parquet_macro
 
 
-__all__ = ["duck_mgr"]
+class ConnectionPool:
+    def __init__(self, db_path, max_connections=10):
+        self.db_path = db_path
+        self.max_connections = max_connections
+        self._pool = Queue(max_connections)
+        self._lock = threading.Lock()
+        self._initialize_pool()
+    
+    def _initialize_pool(self):
+        """初始化连接池"""
+        for _ in range(self.max_connections):
+            conn = duckdb.connect(self.db_path)
+            self._init_connection(conn)
+            self._pool.put(conn)
+    
+    def _init_connection(self, conn):
+        """初始化单个连接"""
+        conn.execute("INSTALL httpfs;")
+        conn.execute("LOAD httpfs;")
+        conn.execute("SET enable_object_cache=true;")
+    
+    def get_connection(self, timeout=5):
+        """从池中获取连接"""
+        try:
+            return self._pool.get(timeout=timeout)
+        except Empty:
+            raise Exception("Connection pool exhausted")
+    
+    def return_connection(self, conn):
+        """归还连接到池中"""
+        try:
+            self._pool.put(conn, timeout=1)
+        except:
+            # 如果池已满，关闭连接
+            conn.close()
+    
+    def close_all(self):
+        """关闭所有连接"""
+        while not self._pool.empty():
+            try:
+                conn = self._pool.get_nowait()
+                conn.close()
+            except Empty:
+                break
+
+
+# 在 DuckDBManager 中使用连接池
+class DuckDBManager:
+    def __init__(self):
+        # ... 其他初始化代码 ...
+        self.connection_pool = ConnectionPool(self.db_path, max_connections=20)
+    
+    def _get_conn(self):
+        """获取连接（线程安全）"""
+        return self.connection_pool.get_connection()
+    
+    def _release_conn(self, conn):
+        """释放连接"""
+        self.connection_pool.return_connection(conn)
+    
+    def _query_stream(self, req_meta: dict, batch_size, raw_template):
+        conn = None
+        try:
+            conn = self._get_conn()
+            req_views = self.register_views(conn, req_meta)
+            
+            if not req_views:
+                return
+            
+            req_sql = request_to_sql(req_views, req_meta, raw_template)
+            cursor = conn.execute(req_sql)
+            
+            while True:
+                rows = cursor.fetchmany(batch_size)
+                if not rows:
+                    break
+                for row in rows:
+                    yield row
+        finally:
+            if conn:
+                self._release_conn(conn)
 
 
 class DuckDBManager: # 非线程安全
@@ -39,7 +116,7 @@ class DuckDBManager: # 非线程安全
 
         # DuckDB macro register on connection database catalog 
         self.db_path = os.path.expanduser(os.getenv("DUCKDBPATH"))  
-        self.cache_file = os.path.expanduser(os.getenv("DUCKCACHE"))
+        self.view_cache_file = os.path.expanduser(os.getenv("DUCKCACHE"))
         self.dataset_root = os.path.expanduser(os.getenv("DUCKDATASET"))
         self.max_queue_size = int(os.getenv("DUCKQSIZE"))
 
@@ -48,27 +125,36 @@ class DuckDBManager: # 非线程安全
         self._tasks = set()
         self._registered_views = set()
         self._load_cache()
+        self.connection_pool = ConnectionPool(self.db_path, max_connections=20)
 
     async def __aenter__(self):
         return self
 
-    def _init_duckdb(self, conn):
-        # 持久化数据库连接，主要做模块安装，宏注册后可跨连接访问
-        conn.execute("INSTALL httpfs;")
-        conn.execute("LOAD httpfs;")
-        conn.execute("SET enable_object_cache=true;")
+    # def _init_duckdb(self, conn):
+    #     # 持久化数据库连接，主要做模块安装，宏注册后可跨连接访问
+    #     conn.execute("INSTALL httpfs;")
+    #     conn.execute("LOAD httpfs;")
+    #     conn.execute("SET enable_object_cache=true;")
 
+    # def _get_conn(self):
+    #     if not hasattr(self._thread_local, "conn"):
+    #         conn = duckdb.connect(self.db_path)
+    #         self._init_duckdb(conn)
+    #         self._thread_local.conn = conn
+    #     return self._thread_local.conn
+    
     def _get_conn(self):
-        if not hasattr(self._thread_local, "conn"):
-            conn = duckdb.connect(self.db_path)
-            self._init_duckdb(conn)
-            self._thread_local.conn = conn
-        return self._thread_local.conn
+        """获取连接（线程安全）"""
+        return self.connection_pool.get_connection()
+    
+    def _release_conn(self, conn):
+        """释放连接"""
+        self.connection_pool.return_connection(conn)
 
     def _load_cache(self):
-        if Path(self.cache_file).exists():
+        if Path(self.view_cache_file).exists():
             try:
-                with open(self.cache_file, "r") as f:
+                with open(self.view_cache_file, "r") as f:
                     cached = json.load(f)
                     self._registered_views.update(cached)
                     print(f"💾 Loaded cached registered views: {len(cached)}")
@@ -78,9 +164,9 @@ class DuckDBManager: # 非线程安全
 
     def _save_cache(self):
         try:
-            with open(self.cache_file, "w") as f:
+            with open(self.view_cache_file, "w") as f:
                 json.dump(list(self._registered_views), f, indent=2)
-            print(f"💾 Saved cache file: {self.cache_file}")
+            print(f"💾 Saved cache file: {self.view_cache_file}")
         except Exception as e:
             print(f"⚠️ Failed to save cache file: {e}")
 
@@ -92,10 +178,11 @@ class DuckDBManager: # 非线程安全
         return os.path.join(self.dataset_root, sub_dir, f"year={year}", f"quarter={quarter}", f"sid={sid}", f"date={y_month}")
 
     def _register_macro_if_needed(self, conn, sid: str, year: int, quarter: str, y_month: str):
+        """
+         Registers a DuckDB macro for a specific dataset path if it doesn't already exist in the database.
+         Handles cases where the database file might have been reset or deleted.
+        """
         view_name = self._view_name(sid, year, quarter, y_month)
-
-        if view_name in self._registered_views:
-            return view_name
 
         path = self._glob_path(sid, year, quarter, y_month)
         if not Path(path).exists():
@@ -104,10 +191,21 @@ class DuckDBManager: # 非线程安全
 
         macro_sql = create_parquet_macro(path, view_name)
         try:
-            conn.execute(macro_sql)
+            conn.execute(macro_sql) # write into macro.db
             print(f"⚙️ Registered macro: {view_name} → {path}")
-            self._registered_views.add(view_name)
-            self._save_cache()
+            if view_name not in self._registered_views:
+                self._registered_views.add(view_name)
+                self._save_cache()
+
+        except duckdb.CatalogException as e: # 数据库目录问题
+            # if "Macro with name" in str(e) and "already exists" in str(e):
+            if "already exists" in str(e):
+                # Macro already exists, ensure it's in our local set
+                if view_name not in self._registered_views:
+                    self._registered_views.add(view_name)
+                    self._save_cache()
+            else:
+                raise e
         except Exception as e:
             print(f"⚠️ Failed to register macro: {e}")
             # conn.close() # will cause error next request
@@ -137,25 +235,29 @@ class DuckDBManager: # 非线程安全
     def _query_stream(self, req_meta: dict, batch_size, raw_template): # register and query in separate connection or conflict
         # register_views
         conn = self._get_conn()
-        req_views = self.register_views(conn, req_meta)
-        print("Registered views:", req_views)
-        if not req_views:
-            return duckdb.from_df([])
+        try:
+            req_views = self.register_views(conn, req_meta)
+            print("Registered views:", req_views)
+            if not req_views:
+                return duckdb.from_df([])
 
-        # request_to_sql 
-        req_sql = request_to_sql(req_views, req_meta, raw_template)
-        print("Executing SQL:", req_sql)
-        query_conn = duckdb.connect(self.db_path) # 每次查询都用新的连接，避免多线程竞争
-        cursor = query_conn.execute(req_sql)
-        
-        while True:
-            rows = cursor.fetchmany(batch_size)
-            print("fetched rows:", len(rows))
-            if not rows:
-                break
-            for row in rows:
-                yield row
-        print("Query completed, closing connection.")
+            # request_to_sql 
+            req_sql = request_to_sql(req_views, req_meta, raw_template)
+            print("Executing SQL:", req_sql)
+            # query_conn = duckdb.connect(self.db_path) # 每次查询都用新的连接，避免多线程竞争
+            # cursor = query_conn.execute(req_sql)
+            cursor = conn.execute(req_sql)
+            
+            while True:
+                rows = cursor.fetchmany(batch_size)
+                print("fetched rows:", len(rows))
+                if not rows:
+                    break
+                for row in rows:
+                    yield row
+            print("Query completed, closing connection.")
+        finally:
+            self._release_conn(conn)
 
         # try:
         #     cursor = query_conn.execute(req_sql)
@@ -202,3 +304,4 @@ class DuckDBManager: # 非线程安全
 
 # 全局单例
 duck_mgr = DuckDBManager()
+

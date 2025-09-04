@@ -102,7 +102,7 @@ class Tick(Provider):
         from rpc_feed.core.com.operator.duckdb.template import  tick_template
         async with duck_mgr as ctx:
             async for row in ctx.query(req.model_dump(), template=tick_template):
-                print("tick row ", row)
+                # print("tick row ", row)
                 try:
                     line = tuple_to_model(row, LineModel) 
                     yield line.model_dump()
