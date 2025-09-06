@@ -1,2 +1,2 @@
-from .duckdb.duck_ops_original import duck_mgr
+from .duckdb.duck_ops import get_duckdb_manager
 from .pg.pg_ops import async_ops

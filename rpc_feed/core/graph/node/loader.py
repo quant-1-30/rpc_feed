@@ -14,8 +14,7 @@ from rpc_feed.core.graph.base import Node
 @registry
 class StructUnpacker(Node):
  
-    """bytes ---> int () int.from_bytes() | struct.unpack(), 大端(human)与小端数据
-       ohlcv 默认放大100倍
+    """bytes ---> int () int.from_bytes() | struct.unpack(), 大端(human)与小端数据 / 默认放大100倍
     """
 
     params=(

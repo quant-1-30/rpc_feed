@@ -27,12 +27,13 @@ from rpc_feed.utils.io import expand_path
 class AvroWriter(Node):
 
     params = (
+            ("is_writer", True),
             ("is_async", True),
             ("schema_path", ""),
             ("data_path", ""),
               )
 
-    def next(self, meta: pd.DataFrame) -> Any:
+    async def next(self, meta: pd.DataFrame) -> Any:
         # ticker.avsc
         schema = avro.schema.parse(open(self.p.schema_path, "rb").read())
         # users.avro 
@@ -94,7 +95,8 @@ class CsvWriter(Node):
         ('indent', 2),
         ("headers", ""),
         ("separator", ","),
-        ("is_async", True),
+        ("is_writer", True),
+        ("is_async", True)
     )
 
     def _start_output(self):
@@ -136,7 +138,8 @@ class WriterStringIO(Node):
 
     params = (
         ('fd', io.StringIO),
-        ("is_async", False),
+        ("is_writer", True),
+        ("is_async", True)
         )
     # output.write('First line.\n')
     # contents = output.getvalue()
@@ -168,9 +171,10 @@ class PgWriter(Node):
         Postgresql Writer
     """
     params = (
-        ("is_async", True),
         ("table", ""),
         ("mode", "insert"),
+        ("is_writer", True),
+        ("is_async", True)
     )
     
     async def next(self, meta: Union[pd.DataFrame, List[dict], dict]):
@@ -194,7 +198,6 @@ class PgWriter(Node):
 class ParquetWriter(Node):
 
     params = (
-        ("is_async", True),
         ("root_path", ""),
         # parquet 参数
         ("partition_cols", ["year", "quarter", "sid", "date"]),
@@ -209,6 +212,8 @@ class ParquetWriter(Node):
         ("write_statistics", True),  # 写入统计信息
         ("coerce_timestamps", "ms"),  # 时间戳精度
         ("allow_truncated_timestamps", False),  # 是否允许截断时间戳
+        ("is_writer", True),
+        ("is_async", True)
         )
 
     def _make_schema(self, df: pd.DataFrame) -> pa.Schema:

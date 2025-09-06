@@ -29,7 +29,7 @@ def init_worker(serialized_graph_):
 
 def run_sync_pipeline_global(item):
     global _serialized_graph
-    for serialized_node in _serialized_graph[:-1]:
+    for serialized_node in _serialized_graph:
         inst = build_node_from_serializable(serialized_node)
         item = inst.next(item)
     return item

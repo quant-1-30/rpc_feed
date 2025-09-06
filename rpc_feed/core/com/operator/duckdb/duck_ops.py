@@ -1,3 +1,7 @@
+# !/usr/bin/env python3
+# -*- coding: utf-8 -*-
+
+import re
 import os
 import duckdb
 import threading
@@ -7,6 +11,7 @@ from pathlib import Path
 from dotenv import load_dotenv
 from queue import Queue, Empty
 from .duck_utils import schema_range, request_to_sql, create_parquet_macro
+from rpc_feed.utils.wrapper import singleton
 
 
 class ConnectionPool:
@@ -55,43 +60,7 @@ class ConnectionPool:
                 break
 
 
-# 在 DuckDBManager 中使用连接池
-class DuckDBManager:
-    def __init__(self):
-        # ... 其他初始化代码 ...
-        self.connection_pool = ConnectionPool(self.db_path, max_connections=20)
-    
-    def _get_conn(self):
-        """获取连接（线程安全）"""
-        return self.connection_pool.get_connection()
-    
-    def _release_conn(self, conn):
-        """释放连接"""
-        self.connection_pool.return_connection(conn)
-    
-    def _query_stream(self, req_meta: dict, batch_size, raw_template):
-        conn = None
-        try:
-            conn = self._get_conn()
-            req_views = self.register_views(conn, req_meta)
-            
-            if not req_views:
-                return
-            
-            req_sql = request_to_sql(req_views, req_meta, raw_template)
-            cursor = conn.execute(req_sql)
-            
-            while True:
-                rows = cursor.fetchmany(batch_size)
-                if not rows:
-                    break
-                for row in rows:
-                    yield row
-        finally:
-            if conn:
-                self._release_conn(conn)
-
-
+# @singleton
 class DuckDBManager: # 非线程安全
 
     def __init__(self):
@@ -129,19 +98,6 @@ class DuckDBManager: # 非线程安全
 
     async def __aenter__(self):
         return self
-
-    # def _init_duckdb(self, conn):
-    #     # 持久化数据库连接，主要做模块安装，宏注册后可跨连接访问
-    #     conn.execute("INSTALL httpfs;")
-    #     conn.execute("LOAD httpfs;")
-    #     conn.execute("SET enable_object_cache=true;")
-
-    # def _get_conn(self):
-    #     if not hasattr(self._thread_local, "conn"):
-    #         conn = duckdb.connect(self.db_path)
-    #         self._init_duckdb(conn)
-    #         self._thread_local.conn = conn
-    #     return self._thread_local.conn
     
     def _get_conn(self):
         """获取连接（线程安全）"""
@@ -302,6 +258,14 @@ class DuckDBManager: # 非线程安全
         if self._tasks:
             await asyncio.gather(*self._tasks, return_exceptions=True)
 
-# 全局单例
-duck_mgr = DuckDBManager()
+# 注释掉模块级别的初始化
+# duck_mgr = DuckDBManager()
 
+# 添加懒加载函数
+_duck_mgr_instance = None
+
+def get_duckdb_manager():
+    global _duck_mgr_instance
+    if _duck_mgr_instance is None:
+        _duck_mgr_instance = DuckDBManager()
+    return _duck_mgr_instance

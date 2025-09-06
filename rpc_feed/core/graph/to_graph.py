@@ -35,8 +35,9 @@ class Graph(object):
     cfg_cache = {}
 
     def __init__(self) -> None:
-        # Graph
-        self.graph = []
+        # Graph --- writer end of graph
+        self.graph = [] 
+        self.w_node = []
         self.edges = None
         # async resource
         self.queue = None
@@ -84,7 +85,10 @@ class Graph(object):
             for node in topological_order:
                 node_params = json.loads(G.nodes[node].get("params", "{}"))
                 node_obj = build_from_cfg(node, node_params)
-                self.add_node(NamedNode(node_obj, node_params))
+                if not node_obj.p.is_writer:
+                    self.add_node(NamedNode(node_obj, node_params))
+                else:
+                    self.w_node = NamedNode(node_obj, node_params)
         else:
             raise ValueError("The graph is not a DAG")
         print("fininsh build graph")
@@ -116,8 +120,7 @@ class Graph(object):
 
     async def async_consume(self):
         print("enter into async_consume")
-        instance = self.graph[-1].instance
-        # params = self.graph[-1].params
+        instance = self.w_node.instance
         tasks = [
             asyncio.create_task(self.async_consume_worker(instance))
             for _ in range(self.consumer_workers)
@@ -156,7 +159,7 @@ class Graph(object):
         if parallel:
             # 避免闭包\lambda\局部函数不可 pickled 对象,主进程中只将可序列化的结构（如：模块路径、参数）传给子进程；
             # 子进程中使用这些信息重建 node.instance / 不再在子进程中共享复杂对象或闭包
-            serialized_graph = list(map(convert_node_to_serializable, self.graph))
+            serialized_graph = list(map(convert_node_to_serializable, self.graph)) # last node is writer avoid in mp
             with multiprocessing.get_context("spawn").Pool( # 使用 spawn 模式，避免 fork 模式下子进程无法访问主进程的 asyncio 事件循环
                 processes=self.procs,
                 initializer=init_worker,

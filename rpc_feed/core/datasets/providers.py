@@ -10,9 +10,10 @@ from sqlalchemy import select, and_, or_ # SQLAlchemy 2.0.39 正确的导入方�
 
 from .base import Provider
 from .model import *
-from rpc_feed.core.com.operator import async_ops, duck_mgr
+from rpc_feed.core.com.operator import async_ops, get_duckdb_manager
 from rpc_feed.core.com.operator.pg.schema import *
 from rpc_feed.core.com.operator.duckdb.duck_utils import tuple_to_model
+from rpc_feed.core.com.operator.duckdb.template import tick_template, close_template
 
 __all__ = ["_providers"]
 
@@ -99,7 +100,8 @@ class Tick(Provider):
         # 读取并查询（可用 glob 模式、支持 partition pushdown)
         # hive_partitioning  --- automate path to key=value in partition cols 
         """
-        from rpc_feed.core.com.operator.duckdb.template import  tick_template
+        duck_mgr = get_duckdb_manager()
+
         async with duck_mgr as ctx:
             async for row in ctx.query(req.model_dump(), template=tick_template):
                 # print("tick row ", row)
@@ -130,8 +132,8 @@ class Close(Provider):
         # 读取并查询（可用 glob 模式、支持 partition pushdown)
         # hive_partitioning  --- automate path to key=value in partition cols 
         """
-        from rpc_feed.core.com.operator.duckdb.template import close_template
-        # import pdb; pdb.set_trace()
+        duck_mgr = get_duckdb_manager()
+
         async with duck_mgr as ctx:
             async for row in ctx.query(req.model_dump(), template=close_template):
                 # import pdb; pdb.set_trace()

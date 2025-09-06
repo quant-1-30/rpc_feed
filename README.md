@@ -57,6 +57,8 @@ duckdb 使用注意点
 
 WAL (Write-Ahead Logging) 文件是一种数据库日志文件
 
+# multi_reader and one writer ( avoid writer in multiprocessing) 
+
 
 # poetry env use python3 
 # poetry install 
