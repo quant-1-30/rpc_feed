@@ -7,9 +7,10 @@ import duckdb
 import threading
 import json
 import asyncio
+import queue
 from pathlib import Path
 from dotenv import load_dotenv
-from queue import Queue, Empty
+from concurrent.futures import ThreadPoolExecutor
 from .duck_utils import schema_range, request_to_sql, create_parquet_macro
 from rpc_feed.utils.wrapper import singleton
 
@@ -18,7 +19,7 @@ class ConnectionPool:
     def __init__(self, db_path, max_connections=10):
         self.db_path = db_path
         self.max_connections = max_connections
-        self._pool = Queue(max_connections)
+        self._pool = queue.Queue(max_connections)
         self._lock = threading.Lock()
         self._initialize_pool()
     
@@ -39,7 +40,7 @@ class ConnectionPool:
         """从池中获取连接"""
         try:
             return self._pool.get(timeout=timeout)
-        except Empty:
+        except queue.Empty:
             raise Exception("Connection pool exhausted")
     
     def return_connection(self, conn):
@@ -56,11 +57,11 @@ class ConnectionPool:
             try:
                 conn = self._pool.get_nowait()
                 conn.close()
-            except Empty:
+            except queue.Empty:
                 break
 
 
-# @singleton
+@singleton
 class DuckDBManager: # 非线程安全
 
     def __init__(self):
@@ -88,24 +89,14 @@ class DuckDBManager: # 非线程安全
         self.view_cache_file = os.path.expanduser(os.getenv("DUCKCACHE"))
         self.dataset_root = os.path.expanduser(os.getenv("DUCKDATASET"))
         self.max_queue_size = int(os.getenv("DUCKQSIZE"))
-
         self.regex = r"^(6|0|3)\d{5}"  # 匹配 stock/fund 代码
-        self._thread_local = threading.local()
+        self._cache_modified = False
         self._tasks = set()
         self._registered_views = set()
-        self._load_cache()
-        self.connection_pool = ConnectionPool(self.db_path, max_connections=20)
 
-    async def __aenter__(self):
-        return self
-    
-    def _get_conn(self):
-        """获取连接（线程安全）"""
-        return self.connection_pool.get_connection()
-    
-    def _release_conn(self, conn):
-        """释放连接"""
-        self.connection_pool.return_connection(conn)
+        self._thread_local = threading.local()
+        self.db_query_lock = threading.Lock()
+        self.connection_pool = ConnectionPool(self.db_path, max_connections=20)
 
     def _load_cache(self):
         if Path(self.view_cache_file).exists():
@@ -118,13 +109,17 @@ class DuckDBManager: # 非线程安全
             except Exception as e:
                 print(f"⚠️ Failed to load cache file: {e}")
 
-    def _save_cache(self):
-        try:
-            with open(self.view_cache_file, "w") as f:
-                json.dump(list(self._registered_views), f, indent=2)
-            print(f"💾 Saved cache file: {self.view_cache_file}")
-        except Exception as e:
-            print(f"⚠️ Failed to save cache file: {e}")
+    async def __aenter__(self):
+        self._load_cache()
+        return self
+    
+    def _get_conn(self):
+        """获取连接（线程安全）"""
+        return self.connection_pool.get_connection()
+    
+    def _release_conn(self, conn):
+        """释放连接"""
+        self.connection_pool.return_connection(conn)
 
     def _view_name(self, sid: str, year: int, quarter: str, y_month: str) -> str:
         return f"year{year}_quarter{quarter}_sid{sid}_date{y_month}"
@@ -140,6 +135,10 @@ class DuckDBManager: # 非线程安全
         """
         view_name = self._view_name(sid, year, quarter, y_month)
 
+        if view_name in self._registered_views:
+            # print(f"⚙️ Macro already in cache: {view_name}")
+            return view_name
+
         path = self._glob_path(sid, year, quarter, y_month)
         if not Path(path).exists():
             print(f"⚠️ Skipping: dataset path not found: {path}")
@@ -151,15 +150,14 @@ class DuckDBManager: # 非线程安全
             print(f"⚙️ Registered macro: {view_name} → {path}")
             if view_name not in self._registered_views:
                 self._registered_views.add(view_name)
-                self._save_cache()
-
+                self._cache_modified =True
         except duckdb.CatalogException as e: # 数据库目录问题
             # if "Macro with name" in str(e) and "already exists" in str(e):
             if "already exists" in str(e):
                 # Macro already exists, ensure it's in our local set
                 if view_name not in self._registered_views:
                     self._registered_views.add(view_name)
-                    self._save_cache()
+                    self._cache_modified =True
             else:
                 raise e
         except Exception as e:
@@ -176,19 +174,8 @@ class DuckDBManager: # 非线程安全
                 if view_name:
                     req_views.append(view_name)
         return req_views
-    
-    def _query(self, req: dict):
-        conn = self._get_conn()
-        req_views = self.register_views(conn, req)
-        if not req_views:
-            return duckdb.from_df([])
 
-        req_sql = request_to_sql(req_views, req)
-        print("req_sql", req_sql)
-        cursor = conn.execute(req_sql)
-        return cursor.fetchdf()
-
-    def _query_stream(self, req_meta: dict, batch_size, raw_template): # register and query in separate connection or conflict
+    def _stream_query(self, req_meta: dict, batch_size, raw_template): # register and query in separate connection or conflict
         # register_views
         conn = self._get_conn()
         try:
@@ -200,9 +187,15 @@ class DuckDBManager: # 非线程安全
             # request_to_sql 
             req_sql = request_to_sql(req_views, req_meta, raw_template)
             print("Executing SQL:", req_sql)
-            # query_conn = duckdb.connect(self.db_path) # 每次查询都用新的连接，避免多线程竞争
-            # cursor = query_conn.execute(req_sql)
             cursor = conn.execute(req_sql)
+            # df = conn.execute(req_sql).df()
+            # if "tick" in df.columns:
+            #     df = df.sort_values('tick').reset_index(drop=True)
+            # else:
+            #     df = df.sort_values('day').reset_index(drop=True)
+            # assert df['tick'].is_monotonic_increasing, "tick not is_monotonic_increasing"
+            # for row in df_copy.itertuples(index=False):
+            #       yield tuple(row) # pandas.core.frame.Pandas to tuple
             
             while True:
                 rows = cursor.fetchmany(batch_size)
@@ -215,57 +208,106 @@ class DuckDBManager: # 非线程安全
         finally:
             self._release_conn(conn)
 
-        # try:
-        #     cursor = query_conn.execute(req_sql)
-        #     while True:
-        #         rows = cursor.fetchmany(batch_size)
-        #         print("fetched rows:", len(rows))
-        #         if not rows:
-        #             break
-        #         for row in rows:
-        #             yield row
-        # finally:
-        #     query_conn.close()
+    # async def query(self, req_meta: dict, batch_size: int = 1000, template: str = None):
+    #     loop = asyncio.get_running_loop()
+    #     queue = asyncio.Queue(maxsize=self.max_queue_size)
+
+    #     def producer():
+    #         try:
+    #             for row in self._stream_query(req_meta, batch_size, template):
+    #                 fut = asyncio.run_coroutine_threadsafe(queue.put(row), loop)
+    #                 fut.add_done_callback(lambda f: f.exception())
+    #         finally:
+    #             asyncio.run_coroutine_threadsafe(queue.put(None), loop)
+
+    #     task = asyncio.create_task(asyncio.to_thread(producer))
+    #     self._tasks.add(task)
+    #     task.add_done_callback(lambda _: self._tasks.discard(task))
+
+    #     try:
+    #         while True:
+    #             row = await queue.get()
+    #             if row is None:
+    #                 break
+    #             yield row
+    #     finally:
+    #         task.cancel()
 
     async def query(self, req_meta: dict, batch_size: int = 1000, template: str = None):
-        loop = asyncio.get_running_loop()
-        queue = asyncio.Queue(maxsize=self.max_queue_size)
+        # 使用线程池执行器
+        loop = asyncio.get_event_loop()
+        result_queue = queue.Queue() # asyncio.queue 非线程安全导致数据无序
+        stop_signal = object()
 
         def producer():
             try:
-                for row in self._query_stream(req_meta, batch_size, template):
-                    fut = asyncio.run_coroutine_threadsafe(queue.put(row), loop)
-                    fut.add_done_callback(lambda f: f.exception())
+                for row in self._stream_query(req_meta, batch_size, template):
+                    result_queue.put(row)
+            except Exception as e:
+                result_queue.put(e)
             finally:
-                asyncio.run_coroutine_threadsafe(queue.put(None), loop)
+                result_queue.put(stop_signal)
 
-        task = asyncio.create_task(asyncio.to_thread(producer))
-        self._tasks.add(task)
-        task.add_done_callback(lambda _: self._tasks.discard(task))
+        with ThreadPoolExecutor(max_workers=1) as executor:
+            future = loop.run_in_executor(executor, producer)
 
+            try:
+                while True:
+                    try:
+                        item = await loop.run_in_executor(
+                            None, result_queue.get, True, 0.1
+                        )
+                    except queue.Empty:
+                        if future.done():
+                            try:
+                                future.result()  # 重新抛出可能出现的异常
+                            except:
+                                pass
+                            break
+                        continue
+
+                    if item is stop_signal:
+                        break
+                    elif isinstance(item, Exception):
+                        raise item
+                    else:
+                        yield item
+
+            finally:
+                if not future.done():
+                    future.cancel()
+                # 清空队列
+                while not result_queue.empty():
+                    try:
+                        result_queue.get_nowait()
+                    except queue.Empty:
+                        break
+
+    def _save_cache(self):
         try:
-            while True:
-                row = await queue.get()
-                if row is None:
-                    break
-                yield row
-        finally:
-            task.cancel()
+            with open(self.view_cache_file, "w") as f:
+                json.dump(list(self._registered_views), f, indent=2)
+            print(f"💾 Saved cache file: {self.view_cache_file}")
+        except Exception as e:
+            print(f"⚠️ Failed to save cache file: {e}")
 
     async def __aexit__(self, exc_type, exc_val, exc_tb):
+        print("__aexit__", exc_type, exc_val, exc_tb)
+        self._tasks = set()
+        self._registered_views = set()
         # 等待所有后台任务完成
         self._save_cache()
         if self._tasks:
             await asyncio.gather(*self._tasks, return_exceptions=True)
 
-# 注释掉模块级别的初始化
-# duck_mgr = DuckDBManager()
 
-# 添加懒加载函数
 _duck_mgr_instance = None
+_duck_mgr_lock = threading.Lock()
 
 def get_duckdb_manager():
     global _duck_mgr_instance
     if _duck_mgr_instance is None:
-        _duck_mgr_instance = DuckDBManager()
+        with _duck_mgr_lock:
+            if _duck_mgr_instance is None:
+                _duck_mgr_instance = DuckDBManager()
     return _duck_mgr_instance

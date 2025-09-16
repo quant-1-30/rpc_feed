@@ -61,4 +61,5 @@ WAL (Write-Ahead Logging) 文件是一种数据库日志文件
 
 
 # poetry env use python3 
-# poetry install 
+# poetry install
+# 数据返回无序，数据结构是否为线程不安全 

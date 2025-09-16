@@ -5,7 +5,7 @@ tick_template = """
     ) AS merged_view
     WHERE sid IN {sid_str}
       AND datetime BETWEEN TIMESTAMP '{start_str}' AND TIMESTAMP '{end_str}'
-    ORDER BY datetime
+    ORDER BY datetime ASC 
     """
 
 close_template = """
@@ -40,5 +40,5 @@ close_template = """
             AND
             TIMESTAMP '{end_str}' 
           AND t.sid in {sid_str}
-        ORDER BY t.sid, d.day;
+        ORDER BY t.sid ASC, d.day ASC;
     """

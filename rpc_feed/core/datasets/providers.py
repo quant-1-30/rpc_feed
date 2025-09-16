@@ -102,11 +102,15 @@ class Tick(Provider):
         """
         duck_mgr = get_duckdb_manager()
 
+        previous = 0
         async with duck_mgr as ctx:
             async for row in ctx.query(req.model_dump(), template=tick_template):
                 # print("tick row ", row)
                 try:
                     line = tuple_to_model(row, LineModel) 
+                    if line.tick < previous:
+                        import pdb; pdb.set_trace()
+                    previous = line.tick
                     yield line.model_dump()
                 except Exception as e:
                     print(f"⚠️ Failed to convert row to LineModel: {e}")
