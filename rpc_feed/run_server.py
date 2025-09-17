@@ -214,7 +214,7 @@ async def serve() -> None:
         pings to be sent even if there are no calls in flight.
     For more details, check: https://github.com/grpc/grpc/blob/master/doc/keepalive.md
     """
-    address = os.getenv("RPC_FEED_ADDRESS", "localhost:50051")
+    address = os.getenv("GRPC_SERVER")
     MAX_MESSAGE_LENGTH = int(os.getenv("MAX_MESSAGE_LENGTH", 1024 * 1024 * 1024))
 
     # server_options = [
