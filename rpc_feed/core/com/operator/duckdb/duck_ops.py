@@ -85,11 +85,12 @@ class DuckDBManager: # 非线程安全
         load_dotenv()
 
         # DuckDB macro register on connection database catalog 
-        self.db_path = os.path.expanduser(os.getenv("DUCKDBPATH"))  
-        self.view_cache_file = os.path.expanduser(os.getenv("DUCKCACHE"))
-        self.dataset_root = os.path.expanduser(os.getenv("DUCKDATASET"))
-        self.max_queue_size = int(os.getenv("DUCKQSIZE"))
-        self.regex = r"^(6|0|3)\d{5}"  # 匹配 stock/fund 代码
+        cache_path = Path(__file__).resolve().parent / "cache"
+        self.db_path = cache_path / os.getenv("DUCKDB") # joinpath
+        self.view_cache_file = cache_path / os.getenv("DUCKVIEW")
+        self.dataset_root = Path(os.getenv("DUCKDATASET")).expanduser()
+
+        self.regex = r"^(6|0|3)\d{5}"  # stock/fund 
         self._cache_modified = False
         self._tasks = set()
         self._registered_views = set()
@@ -207,31 +208,6 @@ class DuckDBManager: # 非线程安全
             print("Query completed, closing connection.")
         finally:
             self._release_conn(conn)
-
-    # async def query(self, req_meta: dict, batch_size: int = 1000, template: str = None):
-    #     loop = asyncio.get_running_loop()
-    #     queue = asyncio.Queue(maxsize=self.max_queue_size)
-
-    #     def producer():
-    #         try:
-    #             for row in self._stream_query(req_meta, batch_size, template):
-    #                 fut = asyncio.run_coroutine_threadsafe(queue.put(row), loop)
-    #                 fut.add_done_callback(lambda f: f.exception())
-    #         finally:
-    #             asyncio.run_coroutine_threadsafe(queue.put(None), loop)
-
-    #     task = asyncio.create_task(asyncio.to_thread(producer))
-    #     self._tasks.add(task)
-    #     task.add_done_callback(lambda _: self._tasks.discard(task))
-
-    #     try:
-    #         while True:
-    #             row = await queue.get()
-    #             if row is None:
-    #                 break
-    #             yield row
-    #     finally:
-    #         task.cancel()
 
     async def query(self, req_meta: dict, batch_size: int = 1000, template: str = None):
         # 使用线程池执行器
