@@ -63,3 +63,29 @@ WAL (Write-Ahead Logging) 文件是一种数据库日志文件
 # poetry env use python3 
 # poetry install
 # 数据返回无序，数据结构是否为线程不安全 
+
+# 1. 创建 docker 组（如果不存在）
+sudo groupadd docker
+
+# 2. 将当前用户添加到 docker 组
+sudo usermod -aG docker $USER
+
+# 3. 退出重新登录，或者刷新组权限
+newgrp docker
+
+# 4. 验证是否生效
+groups  # 应该看到 docker 在列表中
+
+# 5. 测试无需 sudo 运行 docker
+docker run hello-world
+
+# deploy
+supervisor reread # to read all *.conf 
+supervisor update # add 
+supervisor status all
+
+supervisor start ***
+supervisor tail ***
+supervisor stop ***
+supervisor reload # 慎用重启守护进程
+sudo tail -f /var/log/supervisor/supervisord.log

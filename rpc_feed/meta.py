@@ -65,6 +65,7 @@ class MetaBase(type):
         return cls, args, kwargs
 
     def donew(cls, *args, **kwargs):
+        # super().__new__（cls， *args, **kwargs) type OK / 如果只是object不能有其他参数 
         _obj = cls.__new__(cls, *args, **kwargs)
         return _obj, args, kwargs
 
