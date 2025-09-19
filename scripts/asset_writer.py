@@ -1,11 +1,12 @@
 #! /usr/bin/env python3
 
-import os
 import asyncio
 import pandas as pd
 from sqlalchemy import select, and_, or_ # SQLAlchemy 2.0.39 正确的导入方式
-from rpc_feed.core.helper.schema import Asset
-from rpc_feed.core.helper.operator import async_ops
+from pathlib import Path
+
+from rpc_feed.core.operator.pg.schema import Asset
+from rpc_feed.core.operator.pg.operator import async_ops
 
 def preprocess(path: str):
     delist_df = pd.read_csv(path, dtype={"sid": str})
@@ -28,7 +29,7 @@ async def task(meta: dict):
 
 if __name__ == "__main__":
     # update sid
-    path = os.path.join(os.path.expanduser("~"), "Downloads/quant/data/asset/delist.csv")
+    path = Path("Downloads/quant/data/asset/delist.csv").expanduser()
     meta = preprocess(path)
     asyncio.run(task(meta))
 

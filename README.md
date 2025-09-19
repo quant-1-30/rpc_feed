@@ -89,3 +89,7 @@ supervisor tail ***
 supervisor stop ***
 supervisor reload # 慎用重启守护进程
 sudo tail -f /var/log/supervisor/supervisord.log
+
+# 关于poerty如果 python版本变更需要重新安装 否则冲突
+
+# rsync -avz --progress --partial --bwlimit=50000 --inplace quant/ backtest@192.168.2.100:~/parquet/ # a -> archive / v -> verbose / z-> zlib  / bwlimit -> mbit  / partial -> resume

@@ -96,7 +96,6 @@ def request_to_sql(view_names: list[str], req_meta: dict, template: str = None) 
     return req_sql
 
 
-
 def tuple_to_model(tuple_data: tuple, model_class: Type[T]) -> T:
     """
     将 SQL 查询返回的 tuple 转换为 Pydantic 对象
