@@ -80,24 +80,24 @@ class AsyncOps(with_metaclass(MetaSingleton, object)):
         self.engine = engine
         self._orm_map = MapBase.classes
 
-    # @asynccontextmanager
-    # async def get_db(self):
-    #     if self.session is None:
-    #         await self._ensure_initialized()                
-    #         AsyncSessionLocal = sessionmaker(
-    #             bind=self.engine,
-    #             class_=AsyncSession,
-    #             expire_on_commit=False
-    #         )
-    #         self.session = AsyncSessionLocal()
-    #     try:
-    #             yield self.session
-    #     finally:
-    #             await self.session.close()
-    
+    #@asynccontextmanager
+    #async def get_db(self):
+    #    if self.session is None:
+    #        await self._ensure_initialized()                
+    #        AsyncSessionLocal = sessionmaker(
+    #            bind=self.engine,
+    #            class_=AsyncSession,
+    #            expire_on_commit=False
+    #        )
+    #        self.session = AsyncSessionLocal()
+    #    try:
+    #            yield self.session
+    #    finally:
+    #            await self.session.close()
+
     @asynccontextmanager
     async def get_db(self):
-        # avoid reuse
+        # 每次调用都创建新会话，避免重用
         await self._ensure_initialized()
         AsyncSessionLocal = sessionmaker(
             bind=self.engine,
@@ -105,15 +105,15 @@ class AsyncOps(with_metaclass(MetaSingleton, object)):
             expire_on_commit=False
         )
         
-        session = AsyncSessionLocal()  
+        session = AsyncSessionLocal()  # 创建新会话
         try:
             yield session
-            # await session.commit() 
+            #await session.commit()  # 成功时提交
         except Exception:
-            await session.rollback() 
+            await session.rollback()  # 异常时回滚
             raise
         finally:
-            await session.close()
+            await session.close()  # 总是关闭会话
 
     @staticmethod
     def filter_valid_keys(base_obj, insert):
