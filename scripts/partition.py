@@ -8,7 +8,7 @@ import psycopg
 from sqlalchemy import text
 from dateutil.relativedelta import relativedelta
 from rpc_feed.utils.dt_utilty import ensure_utc
-from rpc_feed.core.helper.operator import async_ops
+from rpc_feed.core.operator import async_ops
 
 
 async def initialize_database():
