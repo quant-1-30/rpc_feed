@@ -32,7 +32,7 @@ class AsyncOps(with_metaclass(MetaSingleton, object)):
 
     def __init__(self):
         self._initialized = False
-        self.session = None
+        # self.session = None
         self.engine = None
 
     async def __aenter__(self):
@@ -84,21 +84,41 @@ class AsyncOps(with_metaclass(MetaSingleton, object)):
         self.engine = engine
         self._orm_map = MapBase.classes
 
+    # @asynccontextmanager
+    # async def get_db(self):
+    #     if self.session is None:
+    #         await self._ensure_initialized()                
+    #         AsyncSessionLocal = sessionmaker(
+    #             bind=self.engine,
+    #             class_=AsyncSession,
+    #             expire_on_commit=False
+    #         )
+    #         self.session = AsyncSessionLocal()
+    #     try:
+    #             yield self.session
+    #     finally:
+    #             await self.session.close()
+    
     @asynccontextmanager
     async def get_db(self):
-        if self.session is None:
-            await self._ensure_initialized()                
-            AsyncSessionLocal = sessionmaker(
-                bind=self.engine,
-                class_=AsyncSession,
-                expire_on_commit=False
-            )
-            self.session = AsyncSessionLocal()
+        # avoid reuse
+        await self._ensure_initialized()
+        AsyncSessionLocal = sessionmaker(
+            bind=self.engine,
+            class_=AsyncSession,
+            expire_on_commit=False
+        )
+        
+        session = AsyncSessionLocal()  
         try:
-                yield self.session
+            yield session
+            # await session.commit() 
+        except Exception:
+            await session.rollback() 
+            raise
         finally:
-                await self.session.close()
-    
+            await session.close()
+
     @staticmethod
     def filter_valid_keys(base_obj, insert):
         valid_keys = [column.name for column in base_obj.__table__.columns]
