@@ -6,194 +6,19 @@ import asyncio
 import grpc
 import signal
 import logging
-from typing import Iterable
+from dotenv import load_dotenv
 from concurrent.futures import ThreadPoolExecutor
-from google.protobuf.json_format import MessageToDict
-from google.protobuf import empty_pb2
 
-from rpc_feed.core.feed import *
-from core.datasets.model import Request
-from core.rpc.serialize.pb import service_pb2, service_pb2_grpc
-from core.middleware.interceptors import RateLimitInterceptor
+from core.rpc.serialize.pb import service_pb2_grpc
+from core.server import RpcServer
+from core.operator import async_ops
 
 
-class RpcServer(service_pb2_grpc.btDataFeedServicer):
-
-    def __init__(self):
-        self._id_counter = 0
-
-    async def _set_context(self, context: grpc.ServicerContext) -> None:
-
-        # NoCompression / Gzip
-        context.set_compression(grpc.Compression.Deflate)
-        context.set_trailing_metadata(
-            (
-                ("checksum-bin", b"I agree"),
-                ("retry", "false"),
-            )
-        )
-        # context is_active to check if the request is cancelled
-        
-    async def CalendarCall(
-        self,
-        request: service_pb2.QuoteRequest,
-        context: grpc.ServicerContext,
-    ) -> service_pb2.Calendar: # type: ignore
-        
-        await self._set_context(context)
-
-        logging.info("Received calendar")
-
-        for key, value in context.invocation_metadata():
-            print("Received initial metadata: key=%s value=%s" % (key, value))
-
-        obj_map = MessageToDict(
-            request, 
-            preserving_proto_field_name=True, 
-            always_print_fields_with_no_presence=True
-        )
-        response_iterator = bt_feed("calendar", Request(**obj_map))
-        # 
-        response = service_pb2.Calendar()
-        response.tz_info = "Asia/shanghai"
-        trading_days = []
-        async for resp in response_iterator:
-            trading_days.append(resp["trading_date"])
-        response.date.extend(trading_days)
-        print("calendar repsonse ", response.ByteSize())
-        yield response
-
-    async def InstrumentCall(
-        self,
-        request: service_pb2.QuoteRequest,
-        context: grpc.ServicerContext,
-    ) -> service_pb2.Calendar: # type: ignore
-        
-        await self._set_context(context)
-
-        logging.info("Received InstrumentCall %s" % request.SerializeToString())
-
-        obj_map = MessageToDict(
-            request, 
-            preserving_proto_field_name=True, 
-            always_print_fields_with_no_presence=True,
-        )
-        response_iterator = bt_feed("asset", Request(**obj_map))
-        # response = service_pb2.InstFrame()
-        # assets = []
-        # async for resp in response_iterator:
-        #     obj = service_pb2.Instrument(**resp)
-        #     assets.append(obj)
-        # response.asset.extend(assets)
-        # print("instrument repsonse ", response.ByteSize())
-        # yield response
-
-        async for resp in response_iterator:
-            response = service_pb2.InstFrame()
-            obj = service_pb2.Instrument(**resp)
-            response.asset.extend([obj])
-            print("instrument repsonse ", response.ByteSize())
-            yield response
-    
-    async def LineStreamCall(
-        self,
-        request: service_pb2.QuoteRequest,
-        context: grpc.ServicerContext,
-    ) -> service_pb2.TickFrame: # type: ignore
-        
-        await self._set_context(context)
-
-        logging.info("Received LineStreamCall")
-
-        obj_map = MessageToDict(
-            request, 
-            preserving_proto_field_name=True, 
-            always_print_fields_with_no_presence=True,
-        )
-        response_iterator = bt_feed("line", Request(**obj_map))
-        async for resp in response_iterator:
-            response = service_pb2.TickFrame()  
-            response.sid = resp.pop("sid")
-            print("resp " , resp)
-            line = service_pb2.Line(**resp)
-            response.line.extend([line])
-            print("DatasetStreamCall ticker repsonse size ", response.ByteSize())
-            yield response
-
-    async def CloseStreamCall(
-        self,
-        request: service_pb2.QuoteRequest,
-        context: grpc.ServicerContext,
-    ) -> service_pb2.CloseFrame: # type: ignore
-        
-        await self._set_context(context)
-
-        logging.info("Received LineStreamCall")
-
-        obj_map = MessageToDict(
-            request, 
-            preserving_proto_field_name=True, 
-            always_print_fields_with_no_presence=True,
-        )
-        response_iterator = bt_feed("close", Request(**obj_map))
-        async for resp in response_iterator:
-            response = service_pb2.CloseFrame()  
-            response.sid = resp.pop("sid")
-            close = service_pb2.Close(**resp)
-            response.close.extend([close])
-            print("DatasetStreamCall close repsonse size ", response.ByteSize())
-            yield response
-
-    async def AdjustmentStreamCall(
-        self,
-        request: service_pb2.QuoteRequest,
-        context: grpc.ServicerContext,
-    ) -> service_pb2.AdjFrame: # type: ignore
-        
-        await self._set_context(context)
-
-        logging.info("Received adjustment")
-
-        obj_map = MessageToDict(
-            request, 
-            preserving_proto_field_name=True, 
-            always_print_fields_with_no_presence=True,
-        )
-        response_iterator = bt_feed("adjust", Request(**obj_map))
-        async for adjs in response_iterator:
-            response = service_pb2.AdjFrame()
-            response.ex_date = adjs.pop("ex_date")
-            # import pdb; pdb.set_trace()
-            adjustments = service_pb2.Adjustment(**adjs)
-            response.adj.extend([adjustments])
-            print("AdjustmentStreamCall ticker repsonse size ", response.ByteSize())
-            yield response
-
-    async def RightStreamCall(
-        self,
-        request: service_pb2.QuoteRequest,
-        context: grpc.ServicerContext,
-    ) -> service_pb2.RightmentFrame: # type: ignore
-        
-        await self._set_context(context)
-
-        logging.info("Received right")
-
-        obj_map = MessageToDict(
-            request, 
-            preserving_proto_field_name=True, 
-            always_print_fields_with_no_presence=True,
-        )
-        response_iterator = bt_feed("right", Request(**obj_map))
-        async for rgts in response_iterator:
-            response = service_pb2.RightmentFrame()
-            response.ex_date = rgts.pop("ex_date")
-            rights = service_pb2.Rightment(**rgts)
-            response.rgt.extend([rights])
-            print("RightStreamCall ticker repsonse size ", response.ByteSize())
-            yield response
-    
-  
+async def init_db():
+    """初始化数据库连接或资源"""
+    async with async_ops as ctx:
+        pass
+ 
 async def serve() -> None:
     """
     grpc.keepalive_time_ms: The period (in milliseconds) after which a keepalive ping is
@@ -217,29 +42,17 @@ async def serve() -> None:
     address = os.getenv("GRPC_SERVER")
     MAX_MESSAGE_LENGTH = int(os.getenv("MAX_MESSAGE_LENGTH", 1024 * 1024 * 1024))
 
-    # server_options = [
-    #     ("grpc.keepalive_time_ms", 20000),
-    #     ("grpc.keepalive_timeout_ms", 15000),
-    #     ("grpc.http2.min_ping_interval_without_data_ms", 5000), # 防止dos攻击 
-    #     ("grpc.keepalive_permit_without_calls", 1), # 允许客户端空闲时发 ping
-    #     ("grpc.http2.max_pings_without_data", 0), # no limit
-    #     ("grpc.max_connection_idle_ms", 0), # 取消空闲断开
-    #     ("grpc.max_connection_age_ms", 0), # 取消连接最大寿命限制
-    #     # ("grpc.max_connection_age_grace_ms", 5000),
-    #     ('grpc.max_send_message_length', MAX_MESSAGE_LENGTH),
-    #     ('grpc.max_receive_message_length', MAX_MESSAGE_LENGTH),
-    # ]
-
     server_options = [
         ("grpc.keepalive_time_ms", 15000),  # ⏱ 每 15 秒向客户端 ping 一次
         ("grpc.keepalive_timeout_ms", 10000),  # ⏳ ping 超时 10 秒断开
-        ("grpc.keepalive_permit_without_calls", 1),  # ✅ 即使无调用也允许 ping
-        ("grpc.http2.max_pings_without_data", 0),  # ✅ 无限制
+        # ("grpc.http2.min_ping_interval_without_data_ms", 5000), # 防止dos攻击 
+        ("grpc.keepalive_permit_without_calls", 1),  # 允许客户端空闲时发 ping
+        ("grpc.http2.max_pings_without_data", 0),  # 无限制
         ("grpc.http2.min_time_between_pings_ms", 10000),  # 防止 ping 滥用
         
         # 🚫 防止空闲断开
-        ("grpc.max_connection_idle_ms", 86400000),  # 24 小时
-        ("grpc.max_connection_age_ms", 86400000),  # 永不过期
+        ("grpc.max_connection_idle_ms", 86400000),  # 24h / 0
+        ("grpc.max_connection_age_ms", 86400000),  # 24h /  0
         ("grpc.max_connection_age_grace_ms", 86400000),
     
         # 📨 消息大小配置
@@ -275,6 +88,17 @@ async def serve() -> None:
     await server.wait_for_termination()
 
 
+async def async_main():
+
+    # initialize pg
+    await init_db()
+    # initialize grpc
+    await serve()
+
+
 if __name__ == "__main__":
+
+    load_dotenv()
     logging.basicConfig(level=logging.INFO)
-    asyncio.run(serve())
+    # asyncio.run(serve())
+    asyncio.run(async_main())

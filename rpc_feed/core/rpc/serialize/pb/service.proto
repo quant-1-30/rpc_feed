@@ -21,6 +21,16 @@ message Instrument {
   int32 delist = 4 ;
 }
 
+message Daily {
+  int32 date = 1;
+  int32 open = 2;
+  int32 close = 3;
+  int32 high = 4;
+  int32 low = 5;
+  int64 volume = 6;
+  int64 amount = 7;
+}
+
 message  Line {
   int32 tick = 1;
   int32 open = 2;
@@ -51,16 +61,16 @@ message Rightment {
   int32 ratio = 4;
 }
 
- message Factor {
-  int32 date = 1;
-  int32 factor = 2;
- }
-
 
 // struct frame
 
 message InstFrame {
   repeated Instrument asset = 1;
+}
+
+message DailyFrame {
+  string sid = 1;
+  repeated Daily line = 2;
 }
 
 message TickFrame {
@@ -73,6 +83,7 @@ message CloseFrame {
    repeated Close close = 2; 
 }
 
+
 message AdjFrame {
    int32 ex_date = 1;
    repeated Adjustment adj = 2; 
@@ -81,11 +92,6 @@ message AdjFrame {
 message RightmentFrame {
    int32 ex_date = 1;
    repeated Rightment rgt = 2; 
-}
-
-message FactorFrame {
-  string sid = 1;
-  repeated Factor factor = 2;
 }
 
 // request
@@ -109,10 +115,11 @@ service btDataFeed {
     //rpc CalendarCall(google.protobuf.Empty) returns (Calendar);
     rpc CalendarCall(QuoteRequest) returns (stream Calendar);
     rpc InstrumentCall (QuoteRequest) returns (stream InstFrame);
-    rpc LineStreamCall (QuoteRequest) returns (stream TickFrame);
+    rpc IndexStreamCall (QuoteRequest) returns (stream DailyFrame);
+    rpc TickStreamCall (QuoteRequest) returns (stream TickFrame);
     rpc CloseStreamCall (QuoteRequest) returns (stream CloseFrame);
     rpc AdjustmentStreamCall (QuoteRequest) returns (stream AdjFrame);
     rpc RightStreamCall (QuoteRequest) returns (stream RightmentFrame);
-    rpc FactorStreamCall (QuoteRequest) returns (stream FactorFrame);
-    rpc HeartBeat(google.protobuf.Empty) returns (google.protobuf.Empty);  // to keepalive
+    // keepalive
+    rpc HeartBeat(google.protobuf.Empty) returns (google.protobuf.Empty);
 }

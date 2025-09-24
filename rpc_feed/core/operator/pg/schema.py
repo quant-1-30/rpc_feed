@@ -14,7 +14,7 @@ from sqlalchemy.schema import PrimaryKeyConstraint, CreateTable, UniqueConstrain
 from sqlalchemy.ext.compiler import compiles
 from sqlalchemy import Identity
 
-__all__ = ["Calendar", "Asset", "Adjustment", "Rightment"]
+__all__ = ["Asset", "Benchmark", "Adjustment", "Rightment"]
 
 
 # declarative base class
@@ -27,16 +27,16 @@ class Base(DeclarativeBase):
             return {c.key: getattr(self, c.key) for c in inspect(self).mapper.column_attrs if c.key != "id"}
 
 
-class Calendar(Base):
+# class Calendar(Base):
 
-    __tablename__ = "calendar"
-    __table_args__ = (
-        PrimaryKeyConstraint("id", "trading_date", name="pk_id_trading_date"),
-        {"extend_existing": True}
-    )
+#     __tablename__ = "calendar"
+#     __table_args__ = (
+#         PrimaryKeyConstraint("id", "trading_date", name="pk_id_trading_date"),
+#         {"extend_existing": True}
+#     )
 
-    id: Mapped[int] = mapped_column(Integer, autoincrement=True)
-    trading_date: Mapped[int] = mapped_column(Integer, unique=True, nullable=False, use_existing_column=True)
+#     id: Mapped[int] = mapped_column(Integer, autoincrement=True)
+#     trading_date: Mapped[int] = mapped_column(Integer, unique=True, nullable=False, use_existing_column=True)
 
 
 class Asset(Base):
@@ -59,28 +59,27 @@ class Asset(Base):
     # line: Mapped[List["Line"]] = relationship("Line", back_populates="asset", cascade="all, delete-orphan")
 
 
-# class Line(Base):
+class Benchmark(Base):
    
-#     __tablename__ = "tick"
-#     __table_args__ = (
-#         PrimaryKeyConstraint("sid", "tick", name="pk_sid_tick"),
-#         {'postgresql_partition_by': 'RANGE (tick)', "extend_existing": True},
-#     )
-#     # 在 PostgreSQL 中，只有当某个字段是主键或有 SERIAL 或 IDENTITY 声明时，它才会自动自增。
-#     # id: Mapped[int] = mapped_column(Integer, primary=True, autoincrement=True)
-#     id: Mapped[int] = mapped_column(Integer, Identity(), nullable=False)
-#     sid: Mapped[str] = mapped_column(String(20), 
-#                                      ForeignKey("asset.sid", onupdate="CASCADE", ondelete="CASCADE"), 
-#                                      nullable=False, use_existing_column=True)
-#     tick: Mapped[int] = mapped_column(BigInteger, nullable=False, use_existing_column=True, index=True)
-#     open: Mapped[int] = mapped_column(Integer, nullable=False, use_existing_column=True)
-#     high: Mapped[int] = mapped_column(Integer, nullable=False, use_existing_column=True)
-#     low: Mapped[int] = mapped_column(Integer, nullable=False, use_existing_column=True)
-#     close: Mapped[int] = mapped_column(Integer, nullable=False, use_existing_column=True)
-#     volume: Mapped[int] = mapped_column(BigInteger, nullable=False, use_existing_column=True)
-#     amount: Mapped[int] = mapped_column(BigInteger, nullable=False, use_existing_column=True)
+    __tablename__ = "benchmark"
+    __table_args__ = (
+        PrimaryKeyConstraint("sid", "date", name="pk_sid_date_bench"),
+    )
+    # 在 PostgreSQL 中，只有当某个字段是主键 / SERIAL 或 IDENTITY 声明时，它才会自动自增
+    # id: Mapped[int] = mapped_column(Integer, primary=True, autoincrement=True)
+    id: Mapped[int] = mapped_column(Integer, Identity(), nullable=False)
+    sid: Mapped[str] = mapped_column(String(20), 
+                                    #  ForeignKey("asset.sid", onupdate="CASCADE", ondelete="CASCADE"), 
+                                     nullable=False, use_existing_column=True)
+    date: Mapped[int] = mapped_column(Integer, nullable=False, use_existing_column=True, index=True)
+    open: Mapped[int] = mapped_column(Integer, nullable=False, use_existing_column=True)
+    high: Mapped[int] = mapped_column(Integer, nullable=False, use_existing_column=True)
+    low: Mapped[int] = mapped_column(Integer, nullable=False, use_existing_column=True)
+    close: Mapped[int] = mapped_column(Integer, nullable=False, use_existing_column=True)
+    volume: Mapped[int] = mapped_column(BigInteger, nullable=False, use_existing_column=True)
+    amount: Mapped[int] = mapped_column(BigInteger, nullable=False, use_existing_column=True)
 
-#     asset: Mapped["Asset"] = relationship("Asset", back_populates="line")
+    # asset: Mapped["Asset"] = relationship("Asset", back_populates="index")
     
 
 class Adjustment(Base):
@@ -137,14 +136,18 @@ class Rightment(Base):
 
 
 # # --- Partitioning Support ---
-# # compile create table with partition by or raw sql ddl
-@compiles(CreateTable)
-def compile_create_partition_table(element, compiler, **kw):
-    table = element.element
-    if "postgresql_partition_by" in table.dialect_options["postgresql"]:
-        partition = table.dialect_options["postgresql"]["postgresql_partition_by"]
-        ddl = compiler.visit_create_table(element)
-        return ddl.replace("\n)", f"\n) PARTITION BY {partition}")
-    return compiler.visit_create_table(element)
 
+# # __table_args__ = (
+# #    {'postgresql_partition_by': 'RANGE (tick)', "extend_existing": True},
+# # )
+
+# # compile create table with partition by or raw sql ddl
+# @compiles(CreateTable)
+# def compile_create_partition_table(element, compiler, **kw):
+#     table = element.element
+#     if "postgresql_partition_by" in table.dialect_options["postgresql"]:
+#         partition = table.dialect_options["postgresql"]["postgresql_partition_by"]
+#         ddl = compiler.visit_create_table(element)
+#         return ddl.replace("\n)", f"\n) PARTITION BY {partition}")
+#     return compiler.visit_create_table(element)
 

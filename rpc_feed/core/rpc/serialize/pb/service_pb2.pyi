@@ -26,6 +26,24 @@ class Instrument(_message.Message):
     delist: int
     def __init__(self, sid: _Optional[str] = ..., name: _Optional[str] = ..., first_trading: _Optional[int] = ..., delist: _Optional[int] = ...) -> None: ...
 
+class Daily(_message.Message):
+    __slots__ = ("date", "open", "close", "high", "low", "volume", "amount")
+    DATE_FIELD_NUMBER: _ClassVar[int]
+    OPEN_FIELD_NUMBER: _ClassVar[int]
+    CLOSE_FIELD_NUMBER: _ClassVar[int]
+    HIGH_FIELD_NUMBER: _ClassVar[int]
+    LOW_FIELD_NUMBER: _ClassVar[int]
+    VOLUME_FIELD_NUMBER: _ClassVar[int]
+    AMOUNT_FIELD_NUMBER: _ClassVar[int]
+    date: int
+    open: int
+    close: int
+    high: int
+    low: int
+    volume: int
+    amount: int
+    def __init__(self, date: _Optional[int] = ..., open: _Optional[int] = ..., close: _Optional[int] = ..., high: _Optional[int] = ..., low: _Optional[int] = ..., volume: _Optional[int] = ..., amount: _Optional[int] = ...) -> None: ...
+
 class Line(_message.Message):
     __slots__ = ("tick", "open", "high", "low", "close", "volume", "amount")
     TICK_FIELD_NUMBER: _ClassVar[int]
@@ -78,19 +96,19 @@ class Rightment(_message.Message):
     ratio: int
     def __init__(self, sid: _Optional[str] = ..., register_date: _Optional[int] = ..., price: _Optional[int] = ..., ratio: _Optional[int] = ...) -> None: ...
 
-class Factor(_message.Message):
-    __slots__ = ("date", "factor")
-    DATE_FIELD_NUMBER: _ClassVar[int]
-    FACTOR_FIELD_NUMBER: _ClassVar[int]
-    date: int
-    factor: int
-    def __init__(self, date: _Optional[int] = ..., factor: _Optional[int] = ...) -> None: ...
-
 class InstFrame(_message.Message):
     __slots__ = ("asset",)
     ASSET_FIELD_NUMBER: _ClassVar[int]
     asset: _containers.RepeatedCompositeFieldContainer[Instrument]
     def __init__(self, asset: _Optional[_Iterable[_Union[Instrument, _Mapping]]] = ...) -> None: ...
+
+class DailyFrame(_message.Message):
+    __slots__ = ("sid", "line")
+    SID_FIELD_NUMBER: _ClassVar[int]
+    LINE_FIELD_NUMBER: _ClassVar[int]
+    sid: str
+    line: _containers.RepeatedCompositeFieldContainer[Daily]
+    def __init__(self, sid: _Optional[str] = ..., line: _Optional[_Iterable[_Union[Daily, _Mapping]]] = ...) -> None: ...
 
 class TickFrame(_message.Message):
     __slots__ = ("sid", "line")
@@ -123,14 +141,6 @@ class RightmentFrame(_message.Message):
     ex_date: int
     rgt: _containers.RepeatedCompositeFieldContainer[Rightment]
     def __init__(self, ex_date: _Optional[int] = ..., rgt: _Optional[_Iterable[_Union[Rightment, _Mapping]]] = ...) -> None: ...
-
-class FactorFrame(_message.Message):
-    __slots__ = ("sid", "factor")
-    SID_FIELD_NUMBER: _ClassVar[int]
-    FACTOR_FIELD_NUMBER: _ClassVar[int]
-    sid: str
-    factor: _containers.RepeatedCompositeFieldContainer[Factor]
-    def __init__(self, sid: _Optional[str] = ..., factor: _Optional[_Iterable[_Union[Factor, _Mapping]]] = ...) -> None: ...
 
 class QuoteRequest(_message.Message):
     __slots__ = ("start_date", "end_date", "sid")

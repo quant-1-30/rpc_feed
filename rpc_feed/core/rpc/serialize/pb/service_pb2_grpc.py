@@ -46,8 +46,13 @@ class btDataFeedStub(object):
                 request_serializer=service__pb2.QuoteRequest.SerializeToString,
                 response_deserializer=service__pb2.InstFrame.FromString,
                 _registered_method=True)
-        self.LineStreamCall = channel.unary_stream(
-                '/btDataFeed/LineStreamCall',
+        self.IndexStreamCall = channel.unary_stream(
+                '/btDataFeed/IndexStreamCall',
+                request_serializer=service__pb2.QuoteRequest.SerializeToString,
+                response_deserializer=service__pb2.DailyFrame.FromString,
+                _registered_method=True)
+        self.TickStreamCall = channel.unary_stream(
+                '/btDataFeed/TickStreamCall',
                 request_serializer=service__pb2.QuoteRequest.SerializeToString,
                 response_deserializer=service__pb2.TickFrame.FromString,
                 _registered_method=True)
@@ -65,11 +70,6 @@ class btDataFeedStub(object):
                 '/btDataFeed/RightStreamCall',
                 request_serializer=service__pb2.QuoteRequest.SerializeToString,
                 response_deserializer=service__pb2.RightmentFrame.FromString,
-                _registered_method=True)
-        self.FactorStreamCall = channel.unary_stream(
-                '/btDataFeed/FactorStreamCall',
-                request_serializer=service__pb2.QuoteRequest.SerializeToString,
-                response_deserializer=service__pb2.FactorFrame.FromString,
                 _registered_method=True)
         self.HeartBeat = channel.unary_unary(
                 '/btDataFeed/HeartBeat',
@@ -95,7 +95,13 @@ class btDataFeedServicer(object):
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
-    def LineStreamCall(self, request, context):
+    def IndexStreamCall(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def TickStreamCall(self, request, context):
         """Missing associated documentation comment in .proto file."""
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
@@ -119,14 +125,8 @@ class btDataFeedServicer(object):
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
-    def FactorStreamCall(self, request, context):
-        """Missing associated documentation comment in .proto file."""
-        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
-        context.set_details('Method not implemented!')
-        raise NotImplementedError('Method not implemented!')
-
     def HeartBeat(self, request, context):
-        """to keepalive
+        """keepalive
         """
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
@@ -145,8 +145,13 @@ def add_btDataFeedServicer_to_server(servicer, server):
                     request_deserializer=service__pb2.QuoteRequest.FromString,
                     response_serializer=service__pb2.InstFrame.SerializeToString,
             ),
-            'LineStreamCall': grpc.unary_stream_rpc_method_handler(
-                    servicer.LineStreamCall,
+            'IndexStreamCall': grpc.unary_stream_rpc_method_handler(
+                    servicer.IndexStreamCall,
+                    request_deserializer=service__pb2.QuoteRequest.FromString,
+                    response_serializer=service__pb2.DailyFrame.SerializeToString,
+            ),
+            'TickStreamCall': grpc.unary_stream_rpc_method_handler(
+                    servicer.TickStreamCall,
                     request_deserializer=service__pb2.QuoteRequest.FromString,
                     response_serializer=service__pb2.TickFrame.SerializeToString,
             ),
@@ -164,11 +169,6 @@ def add_btDataFeedServicer_to_server(servicer, server):
                     servicer.RightStreamCall,
                     request_deserializer=service__pb2.QuoteRequest.FromString,
                     response_serializer=service__pb2.RightmentFrame.SerializeToString,
-            ),
-            'FactorStreamCall': grpc.unary_stream_rpc_method_handler(
-                    servicer.FactorStreamCall,
-                    request_deserializer=service__pb2.QuoteRequest.FromString,
-                    response_serializer=service__pb2.FactorFrame.SerializeToString,
             ),
             'HeartBeat': grpc.unary_unary_rpc_method_handler(
                     servicer.HeartBeat,
@@ -242,7 +242,7 @@ class btDataFeed(object):
             _registered_method=True)
 
     @staticmethod
-    def LineStreamCall(request,
+    def IndexStreamCall(request,
             target,
             options=(),
             channel_credentials=None,
@@ -255,7 +255,34 @@ class btDataFeed(object):
         return grpc.experimental.unary_stream(
             request,
             target,
-            '/btDataFeed/LineStreamCall',
+            '/btDataFeed/IndexStreamCall',
+            service__pb2.QuoteRequest.SerializeToString,
+            service__pb2.DailyFrame.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def TickStreamCall(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_stream(
+            request,
+            target,
+            '/btDataFeed/TickStreamCall',
             service__pb2.QuoteRequest.SerializeToString,
             service__pb2.TickFrame.FromString,
             options,
@@ -339,33 +366,6 @@ class btDataFeed(object):
             '/btDataFeed/RightStreamCall',
             service__pb2.QuoteRequest.SerializeToString,
             service__pb2.RightmentFrame.FromString,
-            options,
-            channel_credentials,
-            insecure,
-            call_credentials,
-            compression,
-            wait_for_ready,
-            timeout,
-            metadata,
-            _registered_method=True)
-
-    @staticmethod
-    def FactorStreamCall(request,
-            target,
-            options=(),
-            channel_credentials=None,
-            call_credentials=None,
-            insecure=False,
-            compression=None,
-            wait_for_ready=None,
-            timeout=None,
-            metadata=None):
-        return grpc.experimental.unary_stream(
-            request,
-            target,
-            '/btDataFeed/FactorStreamCall',
-            service__pb2.QuoteRequest.SerializeToString,
-            service__pb2.FactorFrame.FromString,
             options,
             channel_credentials,
             insecure,

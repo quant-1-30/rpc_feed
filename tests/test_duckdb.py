@@ -1,7 +1,7 @@
 #! /usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-from rpc_feed.core.com.operator import duck_mgr
+from rpc_feed.core.operator import duck_mgr
 
 
 if __name__ == "__main__":

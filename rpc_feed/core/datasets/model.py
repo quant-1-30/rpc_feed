@@ -6,7 +6,7 @@ from functools import total_ordering
 from pydantic import BaseModel, Field, field_validator, model_validator, field_serializer
 from typing import List, Union, Optional, TypeVar, Type, Any
 
-__all__ = ["Request", "CalendarModel", "AssetModel", "LineModel", "CloseModel", "AdjustmentModel", "RightmentModel", "FactorModel"]
+__all__ = ["Request", "CalendarModel", "AssetModel", "DailyModel", "LineModel", "CloseModel", "AdjustmentModel", "RightmentModel"]
 
 
 class Request(BaseModel):
@@ -62,6 +62,26 @@ class AssetModel(BaseModel):
         return self.first_trading < _value.first_trading
 
 
+class DailyModel(BaseModel):
+
+    sid: str = Field(default="")
+    date: int = Field(ge=0)
+    open: int = Field(ge=0)
+    high: int = Field(ge=0)
+    low: int = Field(ge=0)
+    close: int = Field(ge=0)
+    volume: int = Field(ge=0)
+    amount: int = Field(ge=0)
+
+    @field_validator('sid', mode='before')
+    @classmethod
+    def convert_sid_to_str(cls, v: Any) -> str:
+        """强制将 sid 转换为字符串"""
+        if v is None:
+            return ""
+        return str(v)
+
+
 class LineModel(BaseModel):
 
     sid: str = Field(default="")
@@ -112,16 +132,5 @@ class RightmentModel(BaseModel):
     ratio: float = Field(default=0.0)
 
     @field_serializer("price", "ratio")
-    def serialize_integer(self, v:float, info):
-        return int(v*1000)
-
-
-class FactorModel(BaseModel):
-
-    sid: str = Field(default="")
-    date: int = Field(ge=0)
-    factor: int = Field(ge=0)
-    
-    @field_serializer("factor")
     def serialize_integer(self, v:float, info):
         return int(v*1000)

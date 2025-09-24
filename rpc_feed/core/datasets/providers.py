@@ -17,43 +17,6 @@ from rpc_feed.core.operator import *
 __all__ = ["_providers"]
 
 
-class TradingCalendar(Provider):
-    """Calendar provider base class
-
-    Provide calendar data.
-    """
-
-    async def __call__(self, req: Request):
-        """Get calendar of certain market in given time range.
-
-        Parameters
-        ----------
-        start_time : str
-            start of the time range.
-        end_time : str
-            end of the time range.
-        freq : str
-            time frequency, available: year/quarter/month/week/day.
-        future : bool
-            whether including future trading day.
-
-        Returns
-        ----------
-        list
-            calendar list
-        """
-        
-        async with async_ops as ctx:
-            stmt = select(Calendar.trading_date).where(
-                and_(
-                    Calendar.trading_date.between(req.start_date, req.end_date)
-                )
-            ).order_by(Calendar.trading_date)
-
-            async for trading_dt in ctx.on_query(stmt):
-                yield CalendarModel(trading_date=trading_dt[0]).model_dump()
-
-
 class Instrument(Provider):
     """Instrument provider base class
 
@@ -77,6 +40,70 @@ class Instrument(Provider):
             async for item in ctx.on_query(stmt):
                 row = item[0].serialize()
                 yield AssetModel(**row).model_dump()
+
+
+class TradingCalendar(Provider):
+    """Calendar provider base class
+
+    Provide calendar data.
+    """
+
+    async def __call__(self, req: Request):
+        """Get calendar of certain market in given time range.
+
+        Parameters
+        ----------
+        start_time : str
+            start of the time range.
+        end_time : str
+            end of the time range.
+        freq : str
+            time frequency, available: year/quarter/month/week/day.
+        future : bool
+            whether including future trading day.
+
+        Returns: List[int]
+        """     
+        async with async_ops as ctx:
+            # stmt = select(Calendar.trading_date).where(
+            #     and_(
+            #         Calendar.trading_date.between(req.start_date, req.end_date)
+            #     )
+            # ).order_by(Calendar.trading_date)
+            stmt = select(Benchmark.date).distinct().where(
+                    Benchmark.date.between(req.start_date, req.end_date)
+            ).order_by(Benchmark.date)
+
+            async for trading_dt in ctx.on_query(stmt):
+                yield CalendarModel(trading_date=trading_dt[0]).model_dump()
+
+
+class Index(Provider):
+    """
+        Provide calendar data.
+    """
+    async def __call__(self, req: Request):
+        """Get dvidends of certain asset in given time range.
+
+        Parameters
+        ----------
+        request : Request
+            start of the time range.
+
+        Returns
+        ----------
+        """
+        # and_ / or_
+        async with async_ops as ctx:
+            stmt = select(Benchmark).where(
+                Benchmark.date.between(req.start_date, req.end_date)
+                ).order_by(Benchmark.date)
+            if req.sid:
+                stmt = stmt.where(Benchmark.sid.in_(req.sid))
+            async for item in ctx.on_query(stmt):
+                row = item[0].serialize()
+                row = toolz.valmap(lambda x: 0 if x is None else x, row)
+                yield DailyModel(**row).model_dump()
 
 
 class Tick(Provider):
@@ -146,7 +173,6 @@ class Close(Provider):
 
 class Adjust(Provider):
     """
-        Calendar provider base class
         Provide calendar data.
     """
 
@@ -162,7 +188,7 @@ class Adjust(Provider):
         ----------
         """
         async with async_ops as ctx:
-            stmt = select(Adjustment).where( # and_ / or_
+            stmt = select(Adjustment).where(
                 Adjustment.ex_date.between(req.start_date, req.end_date)
                 ).order_by(Adjustment.ex_date)
             if req.sid:
@@ -202,41 +228,13 @@ class Right(Provider):
                 yield RightmentModel(**row).model_dump()
                 
 
-# class Factor(Provider):
-#     """
-#         Provide factor data.
-#     """
-
-#     async def __call__(self, req: Request):
-#         """Get factors of certain asset in given time range.
-
-#         Parameters
-#         ----------
-#         request : Request
-#             start of the time range.
-
-#         Returns
-#         ----------
-#         """
-#         async with async_ops as ctx:
-#             stmt = select(Factor).where(
-#                      Factor.date.between(req.start_date, req.end_date)
-#             ).order_by(Factor.date)
-#             if req.sid:
-#                 stmt = stmt.where(Factor.sid.in_(req.sid))
-            
-#             async for item in ctx.on_query(stmt):
-#                 row = item[0].serialize()
-#                 yield FactorModel(**row).model_dump()
-
-
 _providers = dict(
     (
     ("calendar", TradingCalendar()),
     ("asset", Instrument()),
-    ("line", Tick()),
+    ("index", Index()),
+    ("tick", Tick()),
     ("close", Close()),
     ("adjust", Adjust()),
     ("right", Right()),
     ))
-
