@@ -61,6 +61,11 @@ class ConnectionPool:
                 break
 
 
+# global vars
+_duck_inst = None
+_duck_lock = threading.Lock()
+
+
 @singleton
 class DuckDBManager: # 非线程安全
 
@@ -183,7 +188,8 @@ class DuckDBManager: # 非线程安全
             req_views = self.register_views(conn, req_meta)
             print("Registered views:", req_views)
             if not req_views:
-                return duckdb.from_df([])
+                # return duckdb.from_df([])
+                return
 
             # request_to_sql 
             req_sql = request_to_sql(req_views, req_meta, raw_template)
@@ -261,29 +267,25 @@ class DuckDBManager: # 非线程安全
 
     def _save_cache(self):
         try:
-            with open(self.view_cache_file, "w") as f:
-                json.dump(list(self._registered_views), f, indent=2)
-            print(f"💾 Saved cache file: {self.view_cache_file}")
+            with _duck_lock:
+                with open(self.view_cache_file, "w") as f:
+                    json.dump(list(self._registered_views), f, indent=2)
+                print(f"💾 Saved cache file: {self.view_cache_file}")
         except Exception as e:
             print(f"⚠️ Failed to save cache file: {e}")
 
     async def __aexit__(self, exc_type, exc_val, exc_tb):
         print("__aexit__", exc_type, exc_val, exc_tb)
-        self._tasks = set()
-        self._registered_views = set()
         # 等待所有后台任务完成
         self._save_cache()
         if self._tasks:
             await asyncio.gather(*self._tasks, return_exceptions=True)
+        self._tasks = set()
 
-
-_duck_mgr_instance = None
-_duck_mgr_lock = threading.Lock()
 
 def get_duckdb_manager():
-    global _duck_mgr_instance
-    if _duck_mgr_instance is None:
-        with _duck_mgr_lock:
-            if _duck_mgr_instance is None:
-                _duck_mgr_instance = DuckDBManager()
-    return _duck_mgr_instance
+    global _duck_inst
+    with _duck_lock:
+        if _duck_inst is None:
+            _duck_inst = DuckDBManager()
+    return _duck_inst

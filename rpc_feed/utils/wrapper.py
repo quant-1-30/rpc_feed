@@ -171,10 +171,11 @@ def singleton(cls):
     instances = {}
     @functools.wraps(cls)
     def get_instance(*args, **kw):
-        if cls not in instances:
-            # 不存在实例instances才进行构造
-            instances[cls] = cls(*args, **kw)
-        return instances[cls]
+        with threading.Lock():
+            if cls not in instances:
+                # 不存在实例instances才进行构造
+                instances[cls] = cls(*args, **kw)
+            return instances[cls]
     return get_instance
 
 
