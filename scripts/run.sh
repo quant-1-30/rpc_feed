@@ -5,6 +5,11 @@
 CURRENT_DIR=$(pwd)
 export PYTHONPATH=$CURRENT_DIR:$PYTHONPATH
 
+# supervisorctl can not automate create log
+touch /var/log/rpc_feed.error.log
+touch /var/log/rpc_feed.out.log
+chmod 666 /var/log/rpc_feed*.log
+
 # 检查 Poetry 是否安装
 if ! command -v poetry &> /dev/null; then
     echo "Poetry is not installed. Installing Poetry..."
@@ -23,10 +28,3 @@ poetry run python script/pg_init.py
 
 echo "Starting server in Poetry environment..."
 poetry run python rpc_feed/run_server.py
-
-
-# launchctl load ~/Library/LaunchAgents/com.example.graph-poetry.plist
-# launchctl start com.example.graph-poetry
-# launchctl unload ~/Library/LaunchAgents/com.example.graph-poetry.plist
-
-# nohup python your_entry_script.py > out.log 2>&1 & # 0 stdin / 1 stdout / 2 stderr

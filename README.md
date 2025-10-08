@@ -85,7 +85,7 @@ supervisor update # add
 supervisor status all
 
 supervisor start ***
-supervisor tail ***
+supervisor tail -f ***
 supervisor stop ***
 supervisor reload # 慎用重启守护进程
 sudo tail -f /var/log/supervisor/supervisord.log
@@ -93,3 +93,17 @@ sudo tail -f /var/log/supervisor/supervisord.log
 # 关于poerty如果 python版本变更需要重新安装 否则冲突
 
 # rsync -avz --progress --partial --bwlimit=50000 --inplace quant/ backtest@192.168.2.100:~/parquet/ # a -> archive / v -> verbose / z-> zlib  / bwlimit -> mbit  / partial -> resume
+
+# pg_dump -U user -h - p -d > *.sql /  | gzip  > *.sql.gz
+
+# psql -f *.sql
+
+# pg_dump 自定义格式 pg_dump -U user -h -p -d -f -c -j 4 -f *.dump
+# pg_restore -U user -h -p -d -j4 *.dump
+
+
+# launchctl load ~/Library/LaunchAgents/com.example.graph-poetry.plist
+# launchctl start com.example.graph-poetry
+# launchctl unload ~/Library/LaunchAgents/com.example.graph-poetry.plist
+
+# supervisor / nohup python your_entry_script.py > out.log 2>&1 & # 0 stdin / 1 stdout / 2 stderr
