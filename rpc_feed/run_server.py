@@ -2,6 +2,9 @@
 # -*- coding: utf-8 -*-
 
 import os
+import sys
+import gc
+import atexit
 import asyncio
 import grpc
 import signal
@@ -14,11 +17,6 @@ from core.server import RpcServer
 from core.operator import async_ops
 
 
-async def init_db():
-    """初始化数据库连接或资源"""
-    async with async_ops as ctx:
-        pass
- 
 async def serve() -> None:
     """
     grpc.keepalive_time_ms: The period (in milliseconds) after which a keepalive ping is
@@ -39,6 +37,10 @@ async def serve() -> None:
         pings to be sent even if there are no calls in flight.
     For more details, check: https://github.com/grpc/grpc/blob/master/doc/keepalive.md
     """
+
+    async with async_ops as ctx: # 初始化数据库连接或资源
+        pass
+
     address = os.getenv("GRPC_SERVER")
     MAX_MESSAGE_LENGTH = int(os.getenv("MAX_MESSAGE_LENGTH", 1024 * 1024 * 1024))
 
@@ -88,17 +90,18 @@ async def serve() -> None:
     await server.wait_for_termination()
 
 
-async def async_main():
+@atexit.register
+def cleanup_before_exit(): # sys.exit(0)# SystemExit ---> atexit
+    
+    sys.stdout.flush()
+    sys.stderr.flush()
 
-    # initialize pg
-    await init_db()
-    # initialize grpc
-    await serve()
+    print("gc atexit") 
+    gc.collect()
 
 
 if __name__ == "__main__":
 
     load_dotenv()
     logging.basicConfig(level=logging.INFO)
-    # asyncio.run(serve())
-    asyncio.run(async_main())
+    asyncio.run(serve())
