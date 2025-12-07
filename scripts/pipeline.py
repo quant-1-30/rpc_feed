@@ -8,29 +8,29 @@ from rpc_feed.core.feed import bt_feed
 if __name__ == "__main__":
     
    # #asset
-   # dataset_path = Path("Downloads/minutes/assets/asset.csv").expanduser()
+   # dataset_path = Path("~/Downloads/minutes/assets/asset.csv").expanduser()
    # xml = "../xml/asset.graphml"
    # bt_feed.load(xml, dataset_path, prefix="csv", parallel=False)
 
    # # calendar
-   # dataset_path = Path("Downloads/quant/data/calendar/calendar.csv").expanduser()
+   # dataset_path = Path("~/Downloads/quant/data/calendar/calendar.csv").expanduser()
    # xml = "../xml/calendar.graphml"
    # bt_feed.load(xml, dataset_path, prefix=".csv", parallel=False) 
 
-   #struct
-   dataset_path = Path("Downloads/quant/data/struct/202508").expanduser() # tick
-   xml = "../xml/tick.graphml"
-   bt_feed.load(xml, dataset_path, prefix=".01", _filter="asset")
+   # # struct
+   # dataset_path = Path("~/Downloads/raw_data/struct/202511").expanduser()
+   # xml = "../xml/tick.graphml"
+   # bt_feed.load(xml, dataset_path, prefix=".01", _filter="asset")
    
-   dataset_path = Path("Downloads/quant/data/struct/202508").expanduser() # fund
+   dataset_path = Path("~/Downloads/raw_data/struct/202511").expanduser() 
    xml = "../xml/fund.graphml"
    bt_feed.load(xml, dataset_path, prefix=".01", _filter="fund")
 
    # # dataset csv
-   # dataset_path = Path("Downloads/quant/data/csv/stock/2022").expanduser() # tick
+   # dataset_path = Path("~/Downloads/raw_data/csv/stock/2022").expanduser()
    # xml = "../xml/csv.graphml"
    # bt_feed.load(xml, dataset_path, prefix=".csv", _filter="asset")
 
-   # dataset_path = Path("Downloads/quant/data/csv/fund/2005").expanduser() # fund
+   # dataset_path = Path("~/Downloads/raw_data/csv/fund/2005").expanduser()
    # xml = "../xml/csv_fund.graphml"
    # bt_feed.load(xml, dataset_path, prefix=".csv", _filter="fund")

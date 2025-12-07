@@ -3,11 +3,11 @@
 
 import os
 import pandas as pd
-from sqlalchemy import Select  
+from sqlalchemy import Select, Update  
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
 from sqlalchemy.ext.automap import automap_base
 from sqlalchemy.orm import sessionmaker
-from typing import Union, Dict, Iterable, Any, List
+from typing import Union, Iterable, Any, List, Mapping, Any
 from contextlib import asynccontextmanager
 from functools import lru_cache
 
@@ -80,31 +80,14 @@ class AsyncOps(with_metaclass(MetaSingleton, object)):
         self.engine = engine
         self._orm_map = MapBase.classes
 
-    #@asynccontextmanager
-    #async def get_db(self):
-    #    if self.session is None:
-    #        await self._ensure_initialized()                
-    #        AsyncSessionLocal = sessionmaker(
-    #            bind=self.engine,
-    #            class_=AsyncSession,
-    #            expire_on_commit=False
-    #        )
-    #        self.session = AsyncSessionLocal()
-    #    try:
-    #            yield self.session
-    #    finally:
-    #            await self.session.close()
-
     @asynccontextmanager
-    async def get_db(self):
-        # 每次调用都创建新会话，避免重用
+    async def get_db(self): # avoid reuse connection
         await self._ensure_initialized()
         AsyncSessionLocal = sessionmaker(
             bind=self.engine,
             class_=AsyncSession,
             expire_on_commit=False
         )
-        
         session = AsyncSessionLocal()  # 创建新会话
         try:
             yield session
@@ -122,7 +105,6 @@ class AsyncOps(with_metaclass(MetaSingleton, object)):
         return {key: value for key, value in insert.items() if key in valid_keys}
     
     async def on_query(self, query):
-        # await self._ensure_initialized()
         async with self.get_db() as session:
                 # in asynchronous mode, the synchronous yield_per isn't directly applicable. 
                 # Instead, you can use the stream() method, which allows streaming query results asynchronously.
@@ -133,7 +115,6 @@ class AsyncOps(with_metaclass(MetaSingleton, object)):
 
     async def on_insert(self, table_name: str, data):
         print(f"insert {len(data)} into {table_name}")
-        # await self._ensure_initialized()
         async with self.get_db() as session:
             async with session.begin():
                 if isinstance(data, pd.DataFrame):
@@ -164,11 +145,11 @@ class AsyncOps(with_metaclass(MetaSingleton, object)):
                 for obj in objs:
                     await session.refresh(obj)
                 return objs
-            
-    async def on_execute(self, query: str):
+
+    async def on_execute(self, query: str, params: dict={}):  
         async with self.get_db() as session:
             async with session.begin():
-                await session.execute(query)
+                await session.execute(query, params)
                 await session.commit()
             
     async def on_delete_obj(self, query: Select):
