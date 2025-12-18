@@ -28,14 +28,14 @@ class Nullfilter(Filter):
 
 class AssetFilter(Filter):
 
-    params = (("regex", "^(sh6|sz0|sz3)\d{5}(?:)"),)       # struct
-    # params = (("regex", "^(SH\.6|SZ\.0|SZ\.3)\d{5}(?:)"),)   # csv
+    # params = (("regex", "^(sh6|sz0|sz3)\d{5}(?:)"),)       # struct
+    params = (("regex", "^(SH\.6|SZ\.0|SZ\.3)\d{5}(?:)"),)   # csv
 
 
 class FundFilter(Filter):
 
-    params = (("regex", "^(sh51|sz15|sz16)\d{4}(?:)"),) # struct sz16 --- lof(场内与场外) 每日更新 / etf 15s update 场内 
-    # params = (("regex", "^(SH\.51|SZ\.15|SZ\.16)\d{4}(?:)"),) # csv 
+    # params = (("regex", "^(sh51|sz15|sz16)\d{4}(?:)"),) # struct sz16 --- lof(场内与场外) 每日更新 / etf 15s update 场内 
+    params = (("regex", "^(SH\.51|SZ\.15|SZ\.16)\d{4}(?:)"),) # csv 
 
 
 _filters = {
