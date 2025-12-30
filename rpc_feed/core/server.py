@@ -5,8 +5,7 @@ import grpc
 import logging
 from google.protobuf.json_format import MessageToDict
 
-from rpc_feed.core.feed import *
-from core.datasets.model import Request
+from core.rpc.feed import bt_feed
 from core.rpc.serialize.pb import service_pb2, service_pb2_grpc
 
 
@@ -18,6 +17,7 @@ class RpcServer(service_pb2_grpc.btDataFeedServicer):
     async def _set_context(self, context: grpc.ServicerContext) -> None:
 
         # NoCompression / Gzip
+        # context is_active to check if the request is cancelled
         context.set_compression(grpc.Compression.Deflate)
         context.set_trailing_metadata(
             (
@@ -25,7 +25,6 @@ class RpcServer(service_pb2_grpc.btDataFeedServicer):
                 ("retry", "false"),
             )
         )
-        # context is_active to check if the request is cancelled
         
     async def CalendarCall(
         self,
@@ -40,21 +39,16 @@ class RpcServer(service_pb2_grpc.btDataFeedServicer):
         for key, value in context.invocation_metadata():
             print("Received initial metadata: key=%s value=%s" % (key, value))
 
-        obj_map = MessageToDict(
-            request, 
-            preserving_proto_field_name=True, 
-            always_print_fields_with_no_presence=True
-        )
-        response_iterator = bt_feed("calendar", Request(**obj_map))
-        # 
-        response = service_pb2.Calendar()
-        response.tz_info = "Asia/shanghai"
-        trading_days = []
-        async for resp in response_iterator:
-            trading_days.append(resp["trading_date"])
-        response.date.extend(trading_days)
-        print("CalendarCall repsonse size ", response.ByteSize())
-        yield response
+        # obj_map = MessageToDict(
+        #     request, 
+        #     preserving_proto_field_name=True, 
+        #     always_print_fields_with_no_presence=True
+        # )
+        # google._upb._message.RepeatedScalarContainer -> list
+        response_iterator = bt_feed.fetch("calendar", request.start_date, request.end_date, list(request.sid))
+        async for response in response_iterator:
+            print("CalendarCall repsonse size ", response.ByteSize())
+            yield response
 
     async def InstrumentCall(
         self,
@@ -66,17 +60,9 @@ class RpcServer(service_pb2_grpc.btDataFeedServicer):
 
         logging.info("Received Instrument %s" % request.SerializeToString())
 
-        obj_map = MessageToDict(
-            request, 
-            preserving_proto_field_name=True, 
-            always_print_fields_with_no_presence=True,
-        )
-        response_iterator = bt_feed("asset", Request(**obj_map))
+        response_iterator = bt_feed.fetch("asset", request.start_date, request.end_date, list(request.sid)) 
 
-        async for resp in response_iterator:
-            response = service_pb2.InstFrame()
-            obj = service_pb2.Instrument(**resp)
-            response.asset.extend([obj])
+        async for response in response_iterator:
             print("InstrumentCall repsonse size ", response.ByteSize())
             yield response
     
@@ -90,18 +76,8 @@ class RpcServer(service_pb2_grpc.btDataFeedServicer):
 
         logging.info("Received Index")
 
-        obj_map = MessageToDict(
-            request, 
-            preserving_proto_field_name=True, 
-            always_print_fields_with_no_presence=True,
-        )
-        response_iterator = bt_feed("index", Request(**obj_map))
-        async for resp in response_iterator:
-            response = service_pb2.DailyFrame()  
-            response.sid = resp.pop("sid")
-            print("resp " , resp)
-            line = service_pb2.Daily(**resp)
-            response.line.extend([line])
+        response_iterator = bt_feed.fetch("index", request.start_date, request.end_date, list(request.sid))
+        async for response in response_iterator:
             print("IndexStreamCall repsonse size ", response.ByteSize())
             yield response
     
@@ -112,21 +88,10 @@ class RpcServer(service_pb2_grpc.btDataFeedServicer):
     ) -> service_pb2.TickFrame: # type: ignore
         
         await self._set_context(context)
-
         logging.info("Received Line")
 
-        obj_map = MessageToDict(
-            request, 
-            preserving_proto_field_name=True, 
-            always_print_fields_with_no_presence=True,
-        )
-        response_iterator = bt_feed("tick", Request(**obj_map))
-        async for resp in response_iterator:
-            response = service_pb2.TickFrame()  
-            response.sid = resp.pop("sid")
-            print("resp " , resp)
-            line = service_pb2.Line(**resp)
-            response.line.extend([line])
+        response_iterator = bt_feed.fetch("tick", request.start_date, request.end_date, list(request.sid))
+        async for response in response_iterator:
             print("LineStreamCall repsonse size ", response.ByteSize())
             yield response
 
@@ -139,18 +104,8 @@ class RpcServer(service_pb2_grpc.btDataFeedServicer):
         await self._set_context(context)
 
         logging.info("Received Close")
-
-        obj_map = MessageToDict(
-            request, 
-            preserving_proto_field_name=True, 
-            always_print_fields_with_no_presence=True,
-        )
-        response_iterator = bt_feed("close", Request(**obj_map))
-        async for resp in response_iterator:
-            response = service_pb2.CloseFrame()  
-            response.sid = resp.pop("sid")
-            close = service_pb2.Close(**resp)
-            response.close.extend([close])
+        response_iterator = bt_feed.fetch("close", request.start_date, request.end_date, list(request.sid))
+        async for response in response_iterator:
             print("CloseStreamCall repsonse size ", response.ByteSize())
             yield response
 
@@ -164,18 +119,8 @@ class RpcServer(service_pb2_grpc.btDataFeedServicer):
 
         logging.info("Received Adjustment")
 
-        obj_map = MessageToDict(
-            request, 
-            preserving_proto_field_name=True, 
-            always_print_fields_with_no_presence=True,
-        )
-        response_iterator = bt_feed("adjust", Request(**obj_map))
-        async for adjs in response_iterator:
-            response = service_pb2.AdjFrame()
-            response.ex_date = adjs.pop("ex_date")
-            # import pdb; pdb.set_trace()
-            adjustments = service_pb2.Adjustment(**adjs)
-            response.adj.extend([adjustments])
+        response_iterator = bt_feed.fetch("adjust", request.start_date, request.end_date, list(request.sid))
+        async for response in response_iterator:
             print("AdjustmentStreamCall repsonse size ", response.ByteSize())
             yield response
 
@@ -189,17 +134,8 @@ class RpcServer(service_pb2_grpc.btDataFeedServicer):
 
         logging.info("Received Right")
 
-        obj_map = MessageToDict(
-            request, 
-            preserving_proto_field_name=True, 
-            always_print_fields_with_no_presence=True,
-        )
-        response_iterator = bt_feed("right", Request(**obj_map))
-        async for rgts in response_iterator:
-            response = service_pb2.RightmentFrame()
-            response.ex_date = rgts.pop("ex_date")
-            rights = service_pb2.Rightment(**rgts)
-            response.rgt.extend([rights])
+        response_iterator = bt_feed.fetch("right", request.start_date, request.end_date, list(request.sid))
+        async for response in response_iterator:
             print("RightStreamCall repsonse size ", response.ByteSize())
             yield response
  

@@ -4,8 +4,8 @@
 import numpy as np
 import pandas as pd
 
-from rpc_feed.core.graph.base import Node
-from rpc_feed.utils.registry import registry
+from .node import Node
+from utils.registry import registry
 
 
 @registry

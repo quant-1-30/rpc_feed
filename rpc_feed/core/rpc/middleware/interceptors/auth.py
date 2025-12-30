@@ -9,7 +9,7 @@ class AuthInterceptor(grpc.ServerInterceptor):
         # Access the metadata
         metadata = dict(handler_call_details.invocation_metadata)
 
-        # Example: Retrieve an authorization token from the metadata
+        # Retrieve an authorization token from the metadata
         token = metadata.get('authorization')
 
         # Perform some logic with the token

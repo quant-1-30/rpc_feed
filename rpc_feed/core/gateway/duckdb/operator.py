@@ -11,7 +11,7 @@ import queue
 from pathlib import Path
 from dotenv import load_dotenv
 from concurrent.futures import ThreadPoolExecutor
-from .duck_utils import schema_range, request_to_sql, create_parquet_macro
+from .utils import schema_range, request_to_sql, create_parquet_macro
 from rpc_feed.utils.wrapper import singleton
 
 
@@ -181,89 +181,62 @@ class DuckDBManager: # 非线程安全
                     req_views.append(view_name)
         return req_views
 
-    def _stream_query(self, req_meta: dict, batch_size, raw_template): # register and query in separate connection or conflict
-        # register_views
+    # def _stream_query(self, req_meta: dict, batch_size, raw_template): # register and query in separate connection or conflict
+    #     # register_views
+    #     conn = self._get_conn()
+    #     try:
+    #         req_views = self.register_views(conn, req_meta)
+    #         print("Registered views:", req_views)
+    #         if not req_views:
+    #             # return duckdb.from_df([])
+    #             return
+
+    #         # request_to_sql 
+    #         req_sql = request_to_sql(req_views, req_meta, raw_template)
+    #         print("Executing SQL:", req_sql)
+    #         cursor = conn.execute(req_sql)
+    #         # df = conn.execute(req_sql).df()
+    #         # if "tick" in df.columns:
+    #         #     df = df.sort_values('tick').reset_index(drop=True)
+    #         # else:
+    #         #     df = df.sort_values('day').reset_index(drop=True)
+    #         # assert df['tick'].is_monotonic_increasing, "tick not is_monotonic_increasing"
+    #         # for row in df_copy.itertuples(index=False):
+    #         #       yield tuple(row) # pandas.core.frame.Pandas to tuple
+            
+    #         while True:
+    #             rows = cursor.fetchmany(batch_size)
+    #             print("fetched rows:", len(rows))
+    #             if not rows:
+    #                 break
+    #             for row in rows:
+    #                 yield row
+    #         print("Query completed, closing connection.")
+    #     finally:
+    #         self._release_conn(conn)
+
+    async def query(self, req_meta: dict, raw_template: str, batch_size=65536):
         conn = self._get_conn()
         try:
             req_views = self.register_views(conn, req_meta)
-            print("Registered views:", req_views)
-            if not req_views:
-                # return duckdb.from_df([])
-                return
+            if not req_views: return
 
-            # request_to_sql 
             req_sql = request_to_sql(req_views, req_meta, raw_template)
-            print("Executing SQL:", req_sql)
-            cursor = conn.execute(req_sql)
-            # df = conn.execute(req_sql).df()
-            # if "tick" in df.columns:
-            #     df = df.sort_values('tick').reset_index(drop=True)
-            # else:
-            #     df = df.sort_values('day').reset_index(drop=True)
-            # assert df['tick'].is_monotonic_increasing, "tick not is_monotonic_increasing"
-            # for row in df_copy.itertuples(index=False):
-            #       yield tuple(row) # pandas.core.frame.Pandas to tuple
             
+            # based on Arrow return RecordBatchReader --- Array not ChunkedArray and memory continual
+            reader = conn.execute(req_sql).fetch_record_batch(batch_size)
+
+            # batch --- multi_columns bytes 
             while True:
-                rows = cursor.fetchmany(batch_size)
-                print("fetched rows:", len(rows))
-                if not rows:
+                try:
+                    batch = reader.read_next_batch()
+                    yield batch
+                    
+                except StopIteration:
                     break
-                for row in rows:
-                    yield row
-            print("Query completed, closing connection.")
+            print("Arrow Query completed.")
         finally:
             self._release_conn(conn)
-
-    async def query(self, req_meta: dict, batch_size: int = 1000, template: str = None):
-        # 使用线程池执行器
-        loop = asyncio.get_event_loop()
-        result_queue = queue.Queue() # asyncio.queue 非线程安全导致数据无序
-        stop_signal = object()
-
-        def producer():
-            try:
-                for row in self._stream_query(req_meta, batch_size, template):
-                    result_queue.put(row)
-            except Exception as e:
-                result_queue.put(e)
-            finally:
-                result_queue.put(stop_signal)
-
-        with ThreadPoolExecutor(max_workers=1) as executor:
-            future = loop.run_in_executor(executor, producer)
-
-            try:
-                while True:
-                    try:
-                        item = await loop.run_in_executor(
-                            None, result_queue.get, True, 0.1
-                        )
-                    except queue.Empty:
-                        if future.done():
-                            try:
-                                future.result()  # 重新抛出可能出现的异常
-                            except:
-                                pass
-                            break
-                        continue
-
-                    if item is stop_signal:
-                        break
-                    elif isinstance(item, Exception):
-                        raise item
-                    else:
-                        yield item
-
-            finally:
-                if not future.done():
-                    future.cancel()
-                # 清空队列
-                while not result_queue.empty():
-                    try:
-                        result_queue.get_nowait()
-                    except queue.Empty:
-                        break
 
     def _save_cache(self):
         try:

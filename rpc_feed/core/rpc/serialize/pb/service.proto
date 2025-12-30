@@ -2,124 +2,98 @@ syntax="proto3";
 
 import "google/protobuf/empty.proto";
 
+// optional bytes title [(max_length) = 512];
 
-// optional string title [(max_length) = 512];
-// int32 old_field = 6 [deprecated = true];
-// reserved 6; reserved old_field
-
-// base frame
-
-message Calendar {
-  string tz_info = 1;
-  repeated int32 date = 2;
-}
-
-message Instrument {
-  string sid = 1;
-  string name = 2;
-  int32 first_trading = 3;
-  int32 delist = 4 ;
-}
-
-message Daily {
-  int32 date = 1;
-  int32 open = 2;
-  int32 close = 3;
-  int32 high = 4;
-  int32 low = 5;
-  int64 volume = 6;
-  int64 amount = 7;
-}
-
-message  Line {
-  int32 tick = 1;
-  int32 open = 2;
-  int32 high = 3;
-  int32 low = 4;
-  int32 close = 5;
-  int64 volume = 6;
-  int64 amount = 7;
-}
-
-message Close {
-  int32 date = 1;
-  int32 close = 2;
-}
-
-message Adjustment {
-  string sid = 1;
-  int32 register_date = 2;
-  int32 bonus_share = 3;
-  int32 transfer = 4;
-  int32 bonus = 5;
-}
-
-message Rightment {
-  string sid = 1;
-  int32 register_date = 2;
-  int32 price = 3;
-  int32 ratio = 4;
-}
-
-
-// struct frame
-
-message InstFrame {
-  repeated Instrument asset = 1;
-}
+// number packed memory packed
+// due to protobuf process repeated message too consuming so use columnar 
 
 message DailyFrame {
-  string sid = 1;
-  repeated Daily line = 2;
+    bytes sid = 1;
+    repeated int32 date = 2 [packed = true];
+    repeated int32 open = 3 [packed = true];
+    repeated int32 high = 4 [packed = true];
+    repeated int32 low = 5 [packed = true];
+    repeated int32 close = 6 [packed = true];
+    repeated int64 volume = 7 [packed = true];
+    repeated int64 amount = 8 [packed = true];
 }
 
 message TickFrame {
-   string sid = 1;
-   repeated Line line = 2; 
+    bytes sid = 1;
+    repeated int32 tick = 2 [packed = true];
+    repeated int32 open = 3 [packed = true];
+    repeated int32 high = 4 [packed = true];
+    repeated int32 low = 5 [packed = true];
+    repeated int32 close = 6 [packed = true];
+    repeated int64 volume = 7 [packed = true];
+    repeated int64 amount = 8 [packed = true];
 }
 
 message CloseFrame {
-   string sid = 1;
-   repeated Close close = 2; 
+    bytes sid = 1;
+    repeated int32 date = 2 [packed = true];
+    repeated int32 close = 3 [packed = true];
 }
 
-
 message AdjFrame {
-   int32 ex_date = 1;
-   repeated Adjustment adj = 2; 
+    bytes sid = 1;
+    repeated int32 ex_date = 2 [packed = true];
+    repeated int32 register_date = 3 [packed = true];
+    repeated int32 bonus_share = 4 [packed = true];
+    repeated int32 transfer = 5 [packed = true];
+    repeated int32 bonus = 6 [packed = true];
 }
 
 message RightmentFrame {
-   int32 ex_date = 1;
-   repeated Rightment rgt = 2; 
+    bytes sid = 1;
+    repeated int32 ex_date = 2 [packed = true];
+    repeated int32 register_date = 3 [packed = true];
+    repeated int32 price = 4 [packed = true];
+    repeated int32 ratio = 5 [packed = true];
 }
 
-// request
+message InstFrame {
+    repeated bytes sid = 1;
+    repeated bytes name = 2;
+    repeated int32 first_trading = 3 [packed = true];
+    repeated int32 delist = 4 [packed = true];
+}
+
+
+message Calendar {
+    bytes tz_info = 1;
+    repeated int32 date = 2 [packed = true];
+}
+
+
+// huge data ---> Arrow 
+message ArrowPayload {
+    bytes sid = 1;
+    string schema_type = 2; // "tick", "daily", etc.
+    bytes ipc_blob = 3;     // Serialize Arrow RecordBatch
+}
+
+// request 
 
 message QuoteRequest {
-  int32 start_date = 1;
-  int32 end_date = 2;
-  repeated string sid = 3;
+    int32 start_date = 1;
+    int32 end_date = 2;
+    repeated bytes sid = 3;
 }
 
-
-// response
-
-message Status {
-  int32 status = 1;
-  string error = 2;
-}
-
-// api
 service btDataFeed {
-    //rpc CalendarCall(google.protobuf.Empty) returns (Calendar);
     rpc CalendarCall(QuoteRequest) returns (stream Calendar);
+    
+    // Column Streaming
     rpc InstrumentCall (QuoteRequest) returns (stream InstFrame);
     rpc IndexStreamCall (QuoteRequest) returns (stream DailyFrame);
     rpc TickStreamCall (QuoteRequest) returns (stream TickFrame);
     rpc CloseStreamCall (QuoteRequest) returns (stream CloseFrame);
     rpc AdjustmentStreamCall (QuoteRequest) returns (stream AdjFrame);
     rpc RightStreamCall (QuoteRequest) returns (stream RightmentFrame);
-    // keepalive
+
+    // ultra uninveral Arrow 
+    // rpc UniversalArrowStream(QuoteRequest) returns (stream ArrowPayload);
+
     rpc HeartBeat(google.protobuf.Empty) returns (google.protobuf.Empty);
 }

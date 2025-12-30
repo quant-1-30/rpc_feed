@@ -1,11 +1,11 @@
 tick_template = """
-    SELECT sid, tick, open, high, low, close, volume, amount
+    SELECT sid::BLOB as sid, tick, open, high, low, close, volume, amount
     FROM (
         {union_sql}
     ) AS merged_view
     WHERE sid IN {sid_str}
       AND datetime BETWEEN TIMESTAMP '{start_str}' AND TIMESTAMP '{end_str}'
-    ORDER BY datetime ASC 
+    ORDER BY sid, datetime ASC 
     """
 
 close_template = """
@@ -27,8 +27,11 @@ close_template = """
         )
 
         SELECT
-            t.sid,
-            d.day,
+            t.sid::BLOB as sid,
+            -- d.day::INTEGER as day not supported  instead of EXTRACT  
+            (EXTRACT(YEAR FROM d.day) * 10000 + 
+            EXTRACT(MONTH FROM d.day) * 100 + 
+            EXTRACT(DAY FROM d.day))::INTEGER as day, 
             t.close
         FROM
           ({union_sql}
@@ -40,5 +43,5 @@ close_template = """
             AND
             TIMESTAMP '{end_str}' 
           AND t.sid in {sid_str}
-        ORDER BY t.sid ASC, d.day ASC;
+        ORDER BY t.sid, d.day ASC;
     """

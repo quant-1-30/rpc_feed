@@ -17,10 +17,10 @@ from avro.datafile import DataFileReader, DataFileWriter
 from avro.io import DatumReader, DatumWriter
 from avro.datafile import DataFileWriter
 
-from rpc_feed.core.graph.base import Node
-from rpc_feed.utils.registry import registry
-from rpc_feed.core.operator import async_ops
-from rpc_feed.utils.io import expand_path
+from .node import Node
+from core.gateway import async_ops
+from utils.registry import registry
+from utils.io import expand_path
 
 
 @registry

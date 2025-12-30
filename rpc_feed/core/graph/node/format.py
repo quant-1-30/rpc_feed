@@ -5,8 +5,8 @@ import datetime
 import pandas as pd
 import numpy as np
 
-from rpc_feed.utils.registry import registry
-from rpc_feed.core.graph.base import Node
+from utils.registry import registry
+from .node import Node
 
 
 @registry

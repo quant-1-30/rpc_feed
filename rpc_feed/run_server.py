@@ -9,12 +9,13 @@ import asyncio
 import grpc
 import signal
 import logging
+import uvloop
 from dotenv import load_dotenv
 from concurrent.futures import ThreadPoolExecutor
 
 from core.rpc.serialize.pb import service_pb2_grpc
 from core.server import RpcServer
-from core.operator import async_ops
+from core.gateway import async_ops
 
 
 async def serve() -> None:
@@ -38,7 +39,7 @@ async def serve() -> None:
     For more details, check: https://github.com/grpc/grpc/blob/master/doc/keepalive.md
     """
 
-    async with async_ops as ctx: # 初始化数据库连接或资源
+    async with async_ops as ctx: 
         pass
 
     address = os.getenv("GRPC_SERVER")
@@ -104,4 +105,5 @@ if __name__ == "__main__":
 
     load_dotenv()
     logging.basicConfig(level=logging.INFO)
+    asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
     asyncio.run(serve())

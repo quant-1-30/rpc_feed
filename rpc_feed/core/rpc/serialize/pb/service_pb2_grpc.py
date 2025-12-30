@@ -27,8 +27,7 @@ if _version_not_supported:
 
 
 class btDataFeedStub(object):
-    """api
-    """
+    """Missing associated documentation comment in .proto file."""
 
     def __init__(self, channel):
         """Constructor.
@@ -79,18 +78,17 @@ class btDataFeedStub(object):
 
 
 class btDataFeedServicer(object):
-    """api
-    """
+    """Missing associated documentation comment in .proto file."""
 
     def CalendarCall(self, request, context):
-        """rpc CalendarCall(google.protobuf.Empty) returns (Calendar);
-        """
+        """Missing associated documentation comment in .proto file."""
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
     def InstrumentCall(self, request, context):
-        """Missing associated documentation comment in .proto file."""
+        """Column Streaming
+        """
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
@@ -126,7 +124,9 @@ class btDataFeedServicer(object):
         raise NotImplementedError('Method not implemented!')
 
     def HeartBeat(self, request, context):
-        """keepalive
+        """ultra uninveral Arrow 
+        rpc UniversalArrowStream(QuoteRequest) returns (stream ArrowPayload);
+
         """
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
@@ -184,8 +184,7 @@ def add_btDataFeedServicer_to_server(servicer, server):
 
  # This class is part of an EXPERIMENTAL API.
 class btDataFeed(object):
-    """api
-    """
+    """Missing associated documentation comment in .proto file."""
 
     @staticmethod
     def CalendarCall(request,

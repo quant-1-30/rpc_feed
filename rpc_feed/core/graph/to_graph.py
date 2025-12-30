@@ -13,13 +13,12 @@ from concurrent.futures import ThreadPoolExecutor
 from pyvis.network import Network
 
 from .node import *
-from .graph_mem import GraphMemoryManager
-from .mp_util import init_worker, convert_node_to_serializable, run_sync_pipeline_global
-from rpc_feed.utils.loader import get_module_by_module_path
-from rpc_feed.utils.io import build_from_cfg
-from rpc_feed.utils.wrapper import singleton
-from rpc_feed.utils.mp_fix import fix_macos_mp
-from rpc_feed.utils.utility import signal_handler
+from .mp_mem import init_worker, convert_node_to_serializable, run_sync_pipeline_global, GraphMemoryManager
+from utils.loader import get_module_by_module_path
+from utils.io import build_from_cfg
+from utils.wrapper import singleton
+from utils.mp_fix import fix_macos_mp
+from utils.utility import signal_handler
 
 # 🔧 修复 macOS multiprocessing 问题
 fix_macos_mp()

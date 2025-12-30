@@ -2,50 +2,33 @@ from google.protobuf import empty_pb2 as _empty_pb2
 from google.protobuf.internal import containers as _containers
 from google.protobuf import descriptor as _descriptor
 from google.protobuf import message as _message
-from typing import ClassVar as _ClassVar, Iterable as _Iterable, Mapping as _Mapping, Optional as _Optional, Union as _Union
+from typing import ClassVar as _ClassVar, Iterable as _Iterable, Optional as _Optional
 
 DESCRIPTOR: _descriptor.FileDescriptor
 
-class Calendar(_message.Message):
-    __slots__ = ("tz_info", "date")
-    TZ_INFO_FIELD_NUMBER: _ClassVar[int]
-    DATE_FIELD_NUMBER: _ClassVar[int]
-    tz_info: str
-    date: _containers.RepeatedScalarFieldContainer[int]
-    def __init__(self, tz_info: _Optional[str] = ..., date: _Optional[_Iterable[int]] = ...) -> None: ...
-
-class Instrument(_message.Message):
-    __slots__ = ("sid", "name", "first_trading", "delist")
+class DailyFrame(_message.Message):
+    __slots__ = ("sid", "date", "open", "high", "low", "close", "volume", "amount")
     SID_FIELD_NUMBER: _ClassVar[int]
-    NAME_FIELD_NUMBER: _ClassVar[int]
-    FIRST_TRADING_FIELD_NUMBER: _ClassVar[int]
-    DELIST_FIELD_NUMBER: _ClassVar[int]
-    sid: str
-    name: str
-    first_trading: int
-    delist: int
-    def __init__(self, sid: _Optional[str] = ..., name: _Optional[str] = ..., first_trading: _Optional[int] = ..., delist: _Optional[int] = ...) -> None: ...
-
-class Daily(_message.Message):
-    __slots__ = ("date", "open", "close", "high", "low", "volume", "amount")
     DATE_FIELD_NUMBER: _ClassVar[int]
     OPEN_FIELD_NUMBER: _ClassVar[int]
-    CLOSE_FIELD_NUMBER: _ClassVar[int]
     HIGH_FIELD_NUMBER: _ClassVar[int]
     LOW_FIELD_NUMBER: _ClassVar[int]
+    CLOSE_FIELD_NUMBER: _ClassVar[int]
     VOLUME_FIELD_NUMBER: _ClassVar[int]
     AMOUNT_FIELD_NUMBER: _ClassVar[int]
-    date: int
-    open: int
-    close: int
-    high: int
-    low: int
-    volume: int
-    amount: int
-    def __init__(self, date: _Optional[int] = ..., open: _Optional[int] = ..., close: _Optional[int] = ..., high: _Optional[int] = ..., low: _Optional[int] = ..., volume: _Optional[int] = ..., amount: _Optional[int] = ...) -> None: ...
+    sid: bytes
+    date: _containers.RepeatedScalarFieldContainer[int]
+    open: _containers.RepeatedScalarFieldContainer[int]
+    high: _containers.RepeatedScalarFieldContainer[int]
+    low: _containers.RepeatedScalarFieldContainer[int]
+    close: _containers.RepeatedScalarFieldContainer[int]
+    volume: _containers.RepeatedScalarFieldContainer[int]
+    amount: _containers.RepeatedScalarFieldContainer[int]
+    def __init__(self, sid: _Optional[bytes] = ..., date: _Optional[_Iterable[int]] = ..., open: _Optional[_Iterable[int]] = ..., high: _Optional[_Iterable[int]] = ..., low: _Optional[_Iterable[int]] = ..., close: _Optional[_Iterable[int]] = ..., volume: _Optional[_Iterable[int]] = ..., amount: _Optional[_Iterable[int]] = ...) -> None: ...
 
-class Line(_message.Message):
-    __slots__ = ("tick", "open", "high", "low", "close", "volume", "amount")
+class TickFrame(_message.Message):
+    __slots__ = ("sid", "tick", "open", "high", "low", "close", "volume", "amount")
+    SID_FIELD_NUMBER: _ClassVar[int]
     TICK_FIELD_NUMBER: _ClassVar[int]
     OPEN_FIELD_NUMBER: _ClassVar[int]
     HIGH_FIELD_NUMBER: _ClassVar[int]
@@ -53,94 +36,85 @@ class Line(_message.Message):
     CLOSE_FIELD_NUMBER: _ClassVar[int]
     VOLUME_FIELD_NUMBER: _ClassVar[int]
     AMOUNT_FIELD_NUMBER: _ClassVar[int]
-    tick: int
-    open: int
-    high: int
-    low: int
-    close: int
-    volume: int
-    amount: int
-    def __init__(self, tick: _Optional[int] = ..., open: _Optional[int] = ..., high: _Optional[int] = ..., low: _Optional[int] = ..., close: _Optional[int] = ..., volume: _Optional[int] = ..., amount: _Optional[int] = ...) -> None: ...
+    sid: bytes
+    tick: _containers.RepeatedScalarFieldContainer[int]
+    open: _containers.RepeatedScalarFieldContainer[int]
+    high: _containers.RepeatedScalarFieldContainer[int]
+    low: _containers.RepeatedScalarFieldContainer[int]
+    close: _containers.RepeatedScalarFieldContainer[int]
+    volume: _containers.RepeatedScalarFieldContainer[int]
+    amount: _containers.RepeatedScalarFieldContainer[int]
+    def __init__(self, sid: _Optional[bytes] = ..., tick: _Optional[_Iterable[int]] = ..., open: _Optional[_Iterable[int]] = ..., high: _Optional[_Iterable[int]] = ..., low: _Optional[_Iterable[int]] = ..., close: _Optional[_Iterable[int]] = ..., volume: _Optional[_Iterable[int]] = ..., amount: _Optional[_Iterable[int]] = ...) -> None: ...
 
-class Close(_message.Message):
-    __slots__ = ("date", "close")
+class CloseFrame(_message.Message):
+    __slots__ = ("sid", "date", "close")
+    SID_FIELD_NUMBER: _ClassVar[int]
     DATE_FIELD_NUMBER: _ClassVar[int]
     CLOSE_FIELD_NUMBER: _ClassVar[int]
-    date: int
-    close: int
-    def __init__(self, date: _Optional[int] = ..., close: _Optional[int] = ...) -> None: ...
+    sid: bytes
+    date: _containers.RepeatedScalarFieldContainer[int]
+    close: _containers.RepeatedScalarFieldContainer[int]
+    def __init__(self, sid: _Optional[bytes] = ..., date: _Optional[_Iterable[int]] = ..., close: _Optional[_Iterable[int]] = ...) -> None: ...
 
-class Adjustment(_message.Message):
-    __slots__ = ("sid", "register_date", "bonus_share", "transfer", "bonus")
+class AdjFrame(_message.Message):
+    __slots__ = ("sid", "ex_date", "register_date", "bonus_share", "transfer", "bonus")
     SID_FIELD_NUMBER: _ClassVar[int]
+    EX_DATE_FIELD_NUMBER: _ClassVar[int]
     REGISTER_DATE_FIELD_NUMBER: _ClassVar[int]
     BONUS_SHARE_FIELD_NUMBER: _ClassVar[int]
     TRANSFER_FIELD_NUMBER: _ClassVar[int]
     BONUS_FIELD_NUMBER: _ClassVar[int]
-    sid: str
-    register_date: int
-    bonus_share: int
-    transfer: int
-    bonus: int
-    def __init__(self, sid: _Optional[str] = ..., register_date: _Optional[int] = ..., bonus_share: _Optional[int] = ..., transfer: _Optional[int] = ..., bonus: _Optional[int] = ...) -> None: ...
+    sid: bytes
+    ex_date: _containers.RepeatedScalarFieldContainer[int]
+    register_date: _containers.RepeatedScalarFieldContainer[int]
+    bonus_share: _containers.RepeatedScalarFieldContainer[int]
+    transfer: _containers.RepeatedScalarFieldContainer[int]
+    bonus: _containers.RepeatedScalarFieldContainer[int]
+    def __init__(self, sid: _Optional[bytes] = ..., ex_date: _Optional[_Iterable[int]] = ..., register_date: _Optional[_Iterable[int]] = ..., bonus_share: _Optional[_Iterable[int]] = ..., transfer: _Optional[_Iterable[int]] = ..., bonus: _Optional[_Iterable[int]] = ...) -> None: ...
 
-class Rightment(_message.Message):
-    __slots__ = ("sid", "register_date", "price", "ratio")
+class RightmentFrame(_message.Message):
+    __slots__ = ("sid", "ex_date", "register_date", "price", "ratio")
     SID_FIELD_NUMBER: _ClassVar[int]
+    EX_DATE_FIELD_NUMBER: _ClassVar[int]
     REGISTER_DATE_FIELD_NUMBER: _ClassVar[int]
     PRICE_FIELD_NUMBER: _ClassVar[int]
     RATIO_FIELD_NUMBER: _ClassVar[int]
-    sid: str
-    register_date: int
-    price: int
-    ratio: int
-    def __init__(self, sid: _Optional[str] = ..., register_date: _Optional[int] = ..., price: _Optional[int] = ..., ratio: _Optional[int] = ...) -> None: ...
+    sid: bytes
+    ex_date: _containers.RepeatedScalarFieldContainer[int]
+    register_date: _containers.RepeatedScalarFieldContainer[int]
+    price: _containers.RepeatedScalarFieldContainer[int]
+    ratio: _containers.RepeatedScalarFieldContainer[int]
+    def __init__(self, sid: _Optional[bytes] = ..., ex_date: _Optional[_Iterable[int]] = ..., register_date: _Optional[_Iterable[int]] = ..., price: _Optional[_Iterable[int]] = ..., ratio: _Optional[_Iterable[int]] = ...) -> None: ...
 
 class InstFrame(_message.Message):
-    __slots__ = ("asset",)
-    ASSET_FIELD_NUMBER: _ClassVar[int]
-    asset: _containers.RepeatedCompositeFieldContainer[Instrument]
-    def __init__(self, asset: _Optional[_Iterable[_Union[Instrument, _Mapping]]] = ...) -> None: ...
-
-class DailyFrame(_message.Message):
-    __slots__ = ("sid", "line")
+    __slots__ = ("sid", "name", "first_trading", "delist")
     SID_FIELD_NUMBER: _ClassVar[int]
-    LINE_FIELD_NUMBER: _ClassVar[int]
-    sid: str
-    line: _containers.RepeatedCompositeFieldContainer[Daily]
-    def __init__(self, sid: _Optional[str] = ..., line: _Optional[_Iterable[_Union[Daily, _Mapping]]] = ...) -> None: ...
+    NAME_FIELD_NUMBER: _ClassVar[int]
+    FIRST_TRADING_FIELD_NUMBER: _ClassVar[int]
+    DELIST_FIELD_NUMBER: _ClassVar[int]
+    sid: _containers.RepeatedScalarFieldContainer[bytes]
+    name: _containers.RepeatedScalarFieldContainer[bytes]
+    first_trading: _containers.RepeatedScalarFieldContainer[int]
+    delist: _containers.RepeatedScalarFieldContainer[int]
+    def __init__(self, sid: _Optional[_Iterable[bytes]] = ..., name: _Optional[_Iterable[bytes]] = ..., first_trading: _Optional[_Iterable[int]] = ..., delist: _Optional[_Iterable[int]] = ...) -> None: ...
 
-class TickFrame(_message.Message):
-    __slots__ = ("sid", "line")
+class Calendar(_message.Message):
+    __slots__ = ("tz_info", "date")
+    TZ_INFO_FIELD_NUMBER: _ClassVar[int]
+    DATE_FIELD_NUMBER: _ClassVar[int]
+    tz_info: bytes
+    date: _containers.RepeatedScalarFieldContainer[int]
+    def __init__(self, tz_info: _Optional[bytes] = ..., date: _Optional[_Iterable[int]] = ...) -> None: ...
+
+class ArrowPayload(_message.Message):
+    __slots__ = ("sid", "schema_type", "ipc_blob")
     SID_FIELD_NUMBER: _ClassVar[int]
-    LINE_FIELD_NUMBER: _ClassVar[int]
-    sid: str
-    line: _containers.RepeatedCompositeFieldContainer[Line]
-    def __init__(self, sid: _Optional[str] = ..., line: _Optional[_Iterable[_Union[Line, _Mapping]]] = ...) -> None: ...
-
-class CloseFrame(_message.Message):
-    __slots__ = ("sid", "close")
-    SID_FIELD_NUMBER: _ClassVar[int]
-    CLOSE_FIELD_NUMBER: _ClassVar[int]
-    sid: str
-    close: _containers.RepeatedCompositeFieldContainer[Close]
-    def __init__(self, sid: _Optional[str] = ..., close: _Optional[_Iterable[_Union[Close, _Mapping]]] = ...) -> None: ...
-
-class AdjFrame(_message.Message):
-    __slots__ = ("ex_date", "adj")
-    EX_DATE_FIELD_NUMBER: _ClassVar[int]
-    ADJ_FIELD_NUMBER: _ClassVar[int]
-    ex_date: int
-    adj: _containers.RepeatedCompositeFieldContainer[Adjustment]
-    def __init__(self, ex_date: _Optional[int] = ..., adj: _Optional[_Iterable[_Union[Adjustment, _Mapping]]] = ...) -> None: ...
-
-class RightmentFrame(_message.Message):
-    __slots__ = ("ex_date", "rgt")
-    EX_DATE_FIELD_NUMBER: _ClassVar[int]
-    RGT_FIELD_NUMBER: _ClassVar[int]
-    ex_date: int
-    rgt: _containers.RepeatedCompositeFieldContainer[Rightment]
-    def __init__(self, ex_date: _Optional[int] = ..., rgt: _Optional[_Iterable[_Union[Rightment, _Mapping]]] = ...) -> None: ...
+    SCHEMA_TYPE_FIELD_NUMBER: _ClassVar[int]
+    IPC_BLOB_FIELD_NUMBER: _ClassVar[int]
+    sid: bytes
+    schema_type: str
+    ipc_blob: bytes
+    def __init__(self, sid: _Optional[bytes] = ..., schema_type: _Optional[str] = ..., ipc_blob: _Optional[bytes] = ...) -> None: ...
 
 class QuoteRequest(_message.Message):
     __slots__ = ("start_date", "end_date", "sid")
@@ -149,13 +123,5 @@ class QuoteRequest(_message.Message):
     SID_FIELD_NUMBER: _ClassVar[int]
     start_date: int
     end_date: int
-    sid: _containers.RepeatedScalarFieldContainer[str]
-    def __init__(self, start_date: _Optional[int] = ..., end_date: _Optional[int] = ..., sid: _Optional[_Iterable[str]] = ...) -> None: ...
-
-class Status(_message.Message):
-    __slots__ = ("status", "error")
-    STATUS_FIELD_NUMBER: _ClassVar[int]
-    ERROR_FIELD_NUMBER: _ClassVar[int]
-    status: int
-    error: str
-    def __init__(self, status: _Optional[int] = ..., error: _Optional[str] = ...) -> None: ...
+    sid: _containers.RepeatedScalarFieldContainer[bytes]
+    def __init__(self, start_date: _Optional[int] = ..., end_date: _Optional[int] = ..., sid: _Optional[_Iterable[bytes]] = ...) -> None: ...

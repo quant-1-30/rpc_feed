@@ -2,10 +2,8 @@
 # -*- coding: utf-8 -*-
 import inspect
 
-from rpc_feed.meta import with_metaclass, MetaSingleton
 
-
-class Registry(with_metaclass(MetaSingleton, object)):
+class Registry():
         
     _module_dict = dict()
 

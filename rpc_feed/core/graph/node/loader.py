@@ -7,8 +7,8 @@ import pandas as pd
 from avro.datafile import DataFileReader
 from avro.io import DatumReader
 
-from rpc_feed.utils.registry import registry
-from rpc_feed.core.graph.base import Node
+from utils.registry import registry
+from .node import Node
 
 
 @registry

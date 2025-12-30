@@ -1,7 +1,7 @@
 #! /usr/bin/env python3 
 # -*- coding: utf-8 -*-
 
-from rpc_feed.meta import MetaParams, with_metaclass
+from core.graph.meta import MetaParams, with_metaclass
 
 
 class MetaNode(MetaParams):
