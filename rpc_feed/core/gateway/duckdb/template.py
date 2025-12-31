@@ -1,5 +1,5 @@
 tick_template = """
-    SELECT sid::BLOB as sid, tick, open, high, low, close, volume, amount
+    SELECT CAST(sid AS VARCHAR)::BLOB as sid, tick, open, high, low, close, volume, amount
     FROM (
         {union_sql}
     ) AS merged_view
@@ -27,7 +27,7 @@ close_template = """
         )
 
         SELECT
-            t.sid::BLOB as sid,
+            CAST(t.sid AS VARCHAR)::BLOB as sid, -- t.sid::BLOB as sid,
             -- d.day::INTEGER as day not supported  instead of EXTRACT  
             (EXTRACT(YEAR FROM d.day) * 10000 + 
             EXTRACT(MONTH FROM d.day) * 100 + 

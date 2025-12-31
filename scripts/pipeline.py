@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 import argparse
 from pathlib import Path
-from rpc_feed.core.feed import bt_feed
+from core.rpc.feed import bt_feed
 
 
 def parse_args():

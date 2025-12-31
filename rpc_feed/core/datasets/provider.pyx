@@ -6,7 +6,7 @@
 # cython: language_level=3, boundscheck=False, wraparound=False
 import pyarrow as pa
 import numpy as np
-from sqlalchemy import select, and_, or_ # SQLAlchemy 2.0.39 正确的导入方式
+from sqlalchemy import select, and_, or_, func, cast, Integer # SQLAlchemy 2.0.39 正确的导入方式
 
 from core.gateway import *
 from core.rpc.serialize.pb import service_pb2
@@ -66,8 +66,13 @@ cdef class Instrument:
         cdef:
             object item
             object row
-            object response = None
-            int count = 0
+            object response
+            bytes c_sid = b''
+        
+        def create_batch():
+            return {"sid": [], "name": [], "first_trading": [], "delist": []}
+
+        c_batch = create_batch()
 
         async with async_ops as ctx:
             stmt = select(Asset)
@@ -78,23 +83,32 @@ cdef class Instrument:
                     Asset.first_trading.between(start_date, end_date)
                 )
 
-            response = service_pb2.InstFrame() # initialize
-
             async for item in ctx.on_query(stmt):
                 row = item[0]
+                r_sid = row.sid
                 
-                response.sid.append(row.sid)
-                response.name.append(row.name)
-                response.first_trading.append(row.first_trading)
-                response.delist.append(row.delist)
-                count += 1
+                if (c_sid and r_sid != c_sid) or len(c_batch["sid"]) >= CHUNK_SIZE:
+                    response = service_pb2.InstFrame() # initialize 
 
-                if count >= CHUNK_SIZE:
+                    response.sid.extend(c_batch["sid"])
+                    response.name.extend(c_batch["name"])
+                    response.first_trading.extend(c_batch["first_trading"])
+                    response.delist.extend(c_batch["delist"])
+
                     yield response
-                    response = service_pb2.InstFrame()
-                    count = 0
+                    c_batch = create_batch()
 
-            if response is not None:
+                c_sid = r_sid
+
+                c_batch["sid"].append(row.sid)
+                c_batch["name"].append(row.name)
+                c_batch["first_trading"].append(row.first_trading)
+                c_batch["delist"].append(row.delist)
+
+            if c_batch["sid"]:
+                response = service_pb2.InstFrame()
+                for key in c_batch:
+                    getattr(response, key).extend(c_batch[key])
                 yield response
 
 
@@ -319,44 +333,55 @@ cdef class Adjust:
 
     async def __call__(self, int start_date, int end_date, list sids=[]):
         cdef:
-            object item
             object row
-            object response = None
+            object response 
             bytes c_sid = b''
-            int count = 0
+        
+        def create_batch():
+            return {"ex_date": [], "register_date": [], "bonus_share": [], "transfer": [], "bonus": []}
+
+        c_batch = create_batch()
 
         async with async_ops as ctx:
-            stmt = select(Adjustment).where(
-                     Adjustment.ex_date.between(start_date, end_date)
-            ).order_by(Adjustment.sid, Adjustment.ex_date)
-            
+            stmt = select(
+                        Adjustment.sid,
+                        Adjustment.ex_date,
+                        Adjustment.register_date,
+                        cast(func.round(Adjustment.bonus_share * EVENT_MULT), Integer).label("bonus_share_int"),
+                        cast(func.round(Adjustment.transfer * EVENT_MULT), Integer).label("transfer_int"),
+                        cast(func.round(Adjustment.bonus * EVENT_MULT), Integer).label("bonus_int")
+                    ).where(Adjustment.ex_date.between(start_date, end_date)
+                ).order_by(Adjustment.sid, Adjustment.ex_date) 
             if sids:
                 stmt = stmt.where(Adjustment.sid.in_(sids))
             
             response = service_pb2.AdjFrame() # initialize
 
-            async for item in ctx.on_query(stmt):
-                row = item[0]
-                r_sid = row.sid
+            async for row in ctx.on_query(stmt): # tuple 
+                r_sid = row[0]
                 
-                if c_sid and r_sid != c_sid or count >= CHUNK_SIZE:
-                    if response is not None:
-                        yield response
-                    
-                    response = service_pb2.AdjFrame()
-                    response.sid = r_sid
-                    c_sid = r_sid
-                    count = 0
+                if (c_sid and r_sid != c_sid) or len(c_batch["ex_date"]) >= CHUNK_SIZE:
+                    response = service_pb2.AdjFrame(sid=r_sid) # initialize  
 
-                response.ex_date.append(row.ex_date)
-                response.register_date.append(row.register_date)
-                response.bonus_share.append(<int>round(row.bonus_share * EVENT_MULT))
-                response.transfer.append(<int>round(row.transfer * EVENT_MULT))
-                response.bonus.append(<int>round(row.bonus * EVENT_MULT))
+                    response.ex_date.extend(c_batch["ex_date"])
+                    response.register_date.extend(c_batch["register_date"])
+                    response.bonus_share.extend(c_batch["bonus_share"])
+                    response.transfer.extend(c_batch["transfer"])
+                    response.bonus.extend(c_batch["bonus"])
+                    yield response
+                    c_batch = create_batch()
+
                 c_sid = r_sid
-                count += 1
+                c_batch["ex_date"].append(row[1])
+                c_batch["register_date"].append(row[2])
+                c_batch["bonus_share"].append(row[3])
+                c_batch["transfer"].append(row[4])
+                c_batch["bonus"].append(row[5])
 
-            if response is not None:
+            if c_batch["ex_date"]:
+                response = service_pb2.AdjFrame(sid=r_sid)
+                for key in c_batch:
+                    getattr(response, key).extend(c_batch[key])
                 yield response
 
 
@@ -364,41 +389,51 @@ cdef class Right:
 
     async def __call__(self, int start_date, int end_date, list sids=[]):
         cdef:
-            object item
             object row
             object response = None
             bytes c_sid = b''
-            int count = 0
+        
+        def create_batch():
+            return {"ex_date": [], "register_date": [], "price": [], "ratio": []}
+
+        c_batch = create_batch()
 
         async with async_ops as ctx:
-            stmt = select(Rightment).where(
-                     Rightment.ex_date.between(start_date, end_date)
-            ).order_by(Rightment.sid, Rightment.ex_date)
-            
+            stmt = select(
+                        Rightment.sid,
+                        Rightment.ex_date,
+                        Rightment.register_date,
+                        cast(func.round(Rightment.price * EVENT_MULT), Integer).label("price_int"),
+                        cast(func.round(Rightment.ratio * EVENT_MULT), Integer).label("ratio_int"),
+                    ).where(Rightment.ex_date.between(start_date, end_date)
+                ).order_by(Rightment.sid, Rightment.ex_date) 
             if sids:
                 stmt = stmt.where(Rightment.sid.in_(sids))
             
             response = service_pb2.RightmentFrame() # initialize
 
-            async for item in ctx.on_query(stmt):
-                row = item[0]
-                r_sid = row.sid
+            async for row in ctx.on_query(stmt): # tuple
+                r_sid = row[0]
                 
-                if c_sid and r_sid != c_sid or count >= CHUNK_SIZE:
-                    if response is not None:
-                        yield response
-                    
-                    response = service_pb2.RightmentFrame()
-                    response.sid = r_sid
-                    c_sid = r_sid
-                    count = 0
+                if (c_sid and r_sid != c_sid) or len(c_batch["ex_date"]) >= CHUNK_SIZE:
+                    response = service_pb2.RightmentFrame(sid=r_sid) # initialize  
+                     
+                    response.ex_date.extend(c_batch["ex_date"])
+                    response.register_date.extend(c_batch["register_date"])
+                    response.price.extend(c_batch["price"])
+                    response.ratio.extend(c_batch["ratio"])
+                    yield response
+                    c_batch = create_batch()
 
-                response.ex_date.append(row.ex_date)
-                response.register_date.append(row.register_date)
-                response.price.append(<int>round(row.price * EVENT_MULT))
-                response.ratio.append(<int>round(row.ratio * EVENT_MULT))
                 c_sid = r_sid
-                count += 1
+                c_batch["ex_date"].append(row[1])
+                c_batch["register_date"].append(row[2])
+                c_batch["price"].append(row[3])
+                c_batch["ratio"].append(row[4])
 
-            if response is not None:
+            if c_batch["ex_date"]:
+                response = service_pb2.RightmentFrame(sid=r_sid)
+                for key in c_batch:
+                    getattr(response, key).extend(c_batch[key])
                 yield response
+
