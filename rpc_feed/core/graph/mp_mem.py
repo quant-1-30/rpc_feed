@@ -28,7 +28,7 @@ class GraphMemoryManager:
             memory = psutil.virtual_memory()
             available_mb = self.threshold * memory.available / (1024 * 1024)
             q_size = int(os.getenv("GRAPH_QSIZE", int(os.cpu_count() / 4)))
-            print(f"🧠 内存优化: 分配最大内存 {available_mb:.0f}MB, 队列大小设置为 {q_size}")
+            print(f"🧠 内存优化: 最大可分配内存 {available_mb:.0f}MB, 队列大小设置为 {q_size}")
             return q_size, available_mb
             
         except Exception as e:

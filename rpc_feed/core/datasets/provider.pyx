@@ -6,7 +6,7 @@
 # cython: language_level=3, boundscheck=False, wraparound=False
 import pyarrow as pa
 import numpy as np
-from sqlalchemy import select, and_, or_, func, cast, Integer # SQLAlchemy 2.0.39 正确的导入方式
+from sqlalchemy import select, and_, or_, func, cast, Integer, BigInteger # SQLAlchemy 2.0.39 正确的导入方式
 
 from core.gateway import *
 from core.rpc.serialize.pb import service_pb2
@@ -17,7 +17,7 @@ cimport numpy as cnp
 cnp.import_array() # initialize numpy c_api
 
 cdef long CHUNK_SIZE = 1024 
-cdef long EVENT_MULT = 1000 
+cdef long MULT = 1000 
 
 
 cdef class TradingCalendar:
@@ -51,7 +51,8 @@ cdef class TradingCalendar:
                     Benchmark.date.between(start_date, end_date)
             ).order_by(Benchmark.date)
 
-            async for row in ctx.on_query(stmt): # async trans struct to dict to keep state
+            # async with await async_ops.on_query(stmt) as stream: # stream wrap
+            async for row in ctx.on_query(stmt):
                 dates.append(row[0])
             
             response = service_pb2.Calendar()
@@ -127,21 +128,28 @@ cdef class Index:
 
         c_batch = create_batch()
 
-        async with async_ops as ctx:
-            stmt = select(Benchmark).where(
-                    Benchmark.date.between(start_date, end_date)
-                ).order_by(Benchmark.sid, Benchmark.date) 
+        async with async_ops as ctx: # keep mult with tick
+            stmt = select(
+                        Benchmark.sid,
+                        Benchmark.date,
+                        cast(func.round(Benchmark.open * MULT), Integer).label("open_int"),
+                        cast(func.round(Benchmark.high * MULT), Integer).label("high_int"),
+                        cast(func.round(Benchmark.low * MULT), Integer).label("low_int"),
+                        cast(func.round(Benchmark.close * MULT), Integer).label("close_int"),
+                        cast(func.round(Benchmark.volume * MULT), BigInteger).label("volume_bint"), # BigInteger 19 / Int 10
+                        cast(func.round(Benchmark.amount * MULT), BigInteger).label("amount_bint"),
+                    ).where(Benchmark.date.between(start_date, end_date)
+                ).order_by(Benchmark.sid, Benchmark.date)
             if sids:
                 stmt = stmt.where(Benchmark.sid.in_(sids))
             
-            async for item in ctx.on_query(stmt):
+            async for row in ctx.on_query(stmt):
                 # avoid serialize(), direct via index 
-                row = item[0]
-                r_sid = row.sid
+                r_sid = row[0]
 
                 if (c_sid and r_sid != c_sid) or len(c_batch["date"]) >= CHUNK_SIZE:
+                    response = service_pb2.DailyFrame(sid=r_sid) # initialize  
 
-                    response = service_pb2.DailyFrame(sid=r_sid) # initialize   
                     response.date.extend(c_batch["date"])
                     response.open.extend(c_batch["open"])
                     response.high.extend(c_batch["high"])
@@ -153,16 +161,17 @@ cdef class Index:
                     c_batch = create_batch()
 
                 c_sid = r_sid
-                c_batch["date"].append(row.date)
-                c_batch["open"].append(row.open)
-                c_batch["high"].append(row.high)
-                c_batch["low"].append(row.low)
-                c_batch["close"].append(row.close)
-                c_batch["volume"].append(row.volume)
-                c_batch["amount"].append(row.amount)
+                c_batch["date"].append(row[1])
+                c_batch["open"].append(row[2])
+                c_batch["high"].append(row[3])
+                c_batch["low"].append(row[4])
+                c_batch["close"].append(row[5])
+                c_batch["volume"].append(row[6])
+                c_batch["amount"].append(row[7])
 
             if c_batch["date"]:
                 response = service_pb2.DailyFrame(sid=r_sid)
+                
                 for key in c_batch:
                     getattr(response, key).extend(c_batch[key])
                 yield response
@@ -200,6 +209,7 @@ cdef class Tick:
             "end_date": end_date,
             "sid": sid_str
         }
+        print("tick req_dict :", req_dict)
         # yield context switch  / avoid yield every time
 
         # async with duck_mgr as ctx: # only suited for one chunke eg: one sid and intended for calculate */+ ...
@@ -252,6 +262,7 @@ cdef class Tick:
                     # slice zero_copy and fast
                     sub_table = table.slice(start, end - start)
                     t_sid = sid_array[start] # bytes
+                    print("sub_table and t_sid :", sub_table, t_sid)
 
                     response_frame = service_pb2.TickFrame()
                     response_frame.sid = t_sid
@@ -347,9 +358,9 @@ cdef class Adjust:
                         Adjustment.sid,
                         Adjustment.ex_date,
                         Adjustment.register_date,
-                        cast(func.round(Adjustment.bonus_share * EVENT_MULT), Integer).label("bonus_share_int"),
-                        cast(func.round(Adjustment.transfer * EVENT_MULT), Integer).label("transfer_int"),
-                        cast(func.round(Adjustment.bonus * EVENT_MULT), Integer).label("bonus_int")
+                        cast(func.round(Adjustment.bonus_share * MULT), Integer).label("bonus_share_int"),
+                        cast(func.round(Adjustment.transfer * MULT), Integer).label("transfer_int"),
+                        cast(func.round(Adjustment.bonus * MULT), Integer).label("bonus_int")
                     ).where(Adjustment.ex_date.between(start_date, end_date)
                 ).order_by(Adjustment.sid, Adjustment.ex_date) 
             if sids:
@@ -403,8 +414,8 @@ cdef class Right:
                         Rightment.sid,
                         Rightment.ex_date,
                         Rightment.register_date,
-                        cast(func.round(Rightment.price * EVENT_MULT), Integer).label("price_int"),
-                        cast(func.round(Rightment.ratio * EVENT_MULT), Integer).label("ratio_int"),
+                        cast(func.round(Rightment.price * MULT), Integer).label("price_int"),
+                        cast(func.round(Rightment.ratio * MULT), Integer).label("ratio_int"),
                     ).where(Rightment.ex_date.between(start_date, end_date)
                 ).order_by(Rightment.sid, Rightment.ex_date) 
             if sids:

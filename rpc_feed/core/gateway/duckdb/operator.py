@@ -94,6 +94,7 @@ class DuckDBManager: # 非线程安全
         self.db_path = cache_path / os.getenv("DUCKDB") # joinpath
         self.view_cache_file = cache_path / os.getenv("DUCKVIEW")
         self.dataset_root = Path(os.getenv("DUCKDATASET")).expanduser()
+        self.batch_size = int(os.getenv("DUCKBATCHSIZE"))
 
         self.regex = r"^(6|0|3)\d{5}"  # stock/fund 
         self._cache_modified = False
@@ -215,16 +216,17 @@ class DuckDBManager: # 非线程安全
     #     finally:
     #         self._release_conn(conn)
 
-    async def query(self, req_meta: dict, raw_template: str, batch_size=65536):
+    async def query(self, req_meta: dict, raw_template: str):
         conn = self._get_conn()
         try:
             req_views = self.register_views(conn, req_meta)
             if not req_views: return
 
             req_sql = request_to_sql(req_views, req_meta, raw_template)
+            print("req_sql :", req_sql)
             
             # based on Arrow return RecordBatchReader --- Array not ChunkedArray and memory continual
-            reader = conn.execute(req_sql).fetch_record_batch(batch_size)
+            reader = conn.execute(req_sql).fetch_record_batch(self.batch_size)
 
             # batch --- multi_columns bytes 
             while True:
