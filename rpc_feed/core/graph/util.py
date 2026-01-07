@@ -1,24 +1,18 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-"""
-macOS Multiprocessing 兼容性修复工具
-
-这个模块专门解决 macOS 上的 multiprocessing 问题：
-- OSError: [Errno 6] Device not configured
-- fork() 安全性问题  
-- pandas/numpy 在子进程中的兼容性问题
-- fork 与 spawn 区别 --- fork 复制进程副本 快速启动无需导入模块 unix/ linux | spawn 启动python解释器 需要导入模块 隔离性好 所有平台都可用
-"""
-
 import platform
 import multiprocessing
 
 
 def fix_macos_mp(force: bool = True) -> bool:
     """
-    修复 macOS multiprocessing 问题
-    
+    修复 macOS multiprocessing 兼容性修复工具
+        - OSError: [Errno 6] Device not configured
+        - fork() 安全性问题  
+        - pandas/numpy 在子进程中的兼容性问题
+        - fork 与 spawn 区别 --- fork 复制进程副本快速启动无需导入模块 unix/ linux | spawn 启动python解释器需要导入模块隔离性好所有平台都可用
+        
     Args:
         force: 是否强制设置 (默认 True)
         
@@ -61,7 +55,16 @@ def fix_macos_mp(force: bool = True) -> bool:
             return False
 
 
-if __name__ == "__main__":
+def signal_handler(loop):
 
-    fix_macos_mp()
-    
+    def _shutdown_handler(loop):
+        print("Signal received, cancelling tasks...")
+        for task in asyncio.all_tasks(loop):
+            task.cancel()
+        
+    if platform.system() != "Windows":
+        # 🔧 添加 Ctrl+C 捕获
+        for sig in (signal.SIGINT, signal.SIGTERM):
+            loop.add_signal_handler(sig, lambda: _shutdown_handler(loop))
+    else:
+        print("Windows system, no signal handler")

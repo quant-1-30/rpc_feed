@@ -5,7 +5,7 @@ import numpy as np
 import pandas as pd
 
 from .node import Node
-from utils.registry import registry
+from utils.wrapper import registry
 
 
 @registry

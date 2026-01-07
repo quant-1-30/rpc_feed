@@ -219,3 +219,16 @@ def _weak_lru_cache(maxsize=100):
         return wrapper
 
     return decorating_function
+
+
+class Lazyproperty:
+    def __init__(self, func):
+        self.func = func
+
+    def __get__(self, instance, cls):
+        if instance is None:
+            return self
+        else:
+            value = self.func(instance)
+            setattr(instance, self.func.__name__, value)
+            return value

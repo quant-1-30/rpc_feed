@@ -8,9 +8,36 @@ import psycopg
 from dotenv import load_dotenv
 from sqlalchemy import text
 from dateutil.relativedelta import relativedelta
-from rpc_feed.utils.dt_utilty import ensure_utc
 from rpc_feed.core.operator import async_ops
 from .pg_init import create_database
+
+
+def ensure_utc(dt: Any, tz="Asia/Shanghai", fmt="%Y-%m-%d") -> float:
+    """
+        datetime / timestamp(float) / string → UTC timestamp(float)
+    """
+    local_tz = pytz.timezone(tz)
+    utc_tz = pytz.utc
+
+    # datetime.datetime 
+    if isinstance(dt, datetime.datetime):
+        if dt.tzinfo is None:
+            dt = local_tz.localize(dt)
+        dt_utc = dt.astimezone(utc_tz)
+
+    # float/int timestamp
+    elif isinstance(dt, (float, int)):
+        dt = datetime.datetime.fromtimestamp(dt, tz=local_tz)
+        dt_utc = dt.astimezone(utc_tz)
+
+    elif isinstance(dt, str):
+        dt = datetime.datetime.strptime(dt, fmt)
+        dt = local_tz.localize(dt)
+        dt_utc = dt.astimezone(utc_tz)
+
+    else:
+        raise ValueError(f"Unsupported datetime format: {type(dt)}")
+    return dt_utc  # return dt_utc.timestamp()
 
 
 async def create_partitions_by_quarter(start: str, end: str):

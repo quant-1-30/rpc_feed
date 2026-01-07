@@ -17,7 +17,7 @@ from types import ModuleType
 from typing import Union
 from pathlib import Path
 
-from .paths import default_extension, ensure_file
+from .io import default_extension, ensure_file
 
 _loaded_extensions = set()
 
