@@ -47,7 +47,7 @@ class RpcServer(service_pb2_grpc.btDataFeedServicer):
         # google._upb._message.RepeatedScalarContainer -> list
         response_iterator = bt_feed.fetch("calendar", request.start_date, request.end_date, list(request.sid))
         async for response in response_iterator:
-            print("CalendarCall repsonse size ", response.ByteSize())
+            # print("CalendarCall repsonse size ", response.ByteSize())
             yield response
 
     async def InstrumentCall(
@@ -63,7 +63,7 @@ class RpcServer(service_pb2_grpc.btDataFeedServicer):
         response_iterator = bt_feed.fetch("asset", request.start_date, request.end_date, list(request.sid)) 
 
         async for response in response_iterator:
-            print("InstrumentCall repsonse size ", response.ByteSize())
+            # print("InstrumentCall repsonse size ", response.ByteSize())
             yield response
     
     async def IndexStreamCall(
@@ -78,7 +78,7 @@ class RpcServer(service_pb2_grpc.btDataFeedServicer):
 
         response_iterator = bt_feed.fetch("index", request.start_date, request.end_date, list(request.sid))
         async for response in response_iterator:
-            print("IndexStreamCall repsonse size ", response.ByteSize())
+            # print("IndexStreamCall repsonse size ", response.ByteSize())
             yield response
     
     async def TickStreamCall(
@@ -92,7 +92,7 @@ class RpcServer(service_pb2_grpc.btDataFeedServicer):
 
         response_iterator = bt_feed.fetch("tick", request.start_date, request.end_date, list(request.sid))
         async for response in response_iterator:
-            print("LineStreamCall repsonse size ", response.ByteSize())
+            # print("LineStreamCall repsonse size ", response.ByteSize())
             yield response
 
     async def CloseStreamCall(
@@ -106,7 +106,7 @@ class RpcServer(service_pb2_grpc.btDataFeedServicer):
         logging.info("Received Close")
         response_iterator = bt_feed.fetch("close", request.start_date, request.end_date, list(request.sid))
         async for response in response_iterator:
-            print("CloseStreamCall repsonse size ", response.ByteSize())
+            # print("CloseStreamCall repsonse size ", response.ByteSize())
             yield response
 
     async def AdjustmentStreamCall(
@@ -121,7 +121,7 @@ class RpcServer(service_pb2_grpc.btDataFeedServicer):
 
         response_iterator = bt_feed.fetch("adjust", request.start_date, request.end_date, list(request.sid))
         async for response in response_iterator:
-            print("AdjustmentStreamCall repsonse size ", response.ByteSize())
+            # print("AdjustmentStreamCall repsonse size ", response.ByteSize())
             yield response
 
     async def RightStreamCall(
@@ -136,6 +136,6 @@ class RpcServer(service_pb2_grpc.btDataFeedServicer):
 
         response_iterator = bt_feed.fetch("right", request.start_date, request.end_date, list(request.sid))
         async for response in response_iterator:
-            print("RightStreamCall repsonse size ", response.ByteSize())
+            # print("RightStreamCall repsonse size ", response.ByteSize())
             yield response
  

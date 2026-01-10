@@ -1,0 +1,7 @@
+include bt_sdk/core/lib/factor/*.so
+include bt_sdk/core/lib/factor/*.dylib
+include bt_sdk/core/lib/factor/*.pyd
+
+recursive-include bt_sdk *.so
+recursive-include bt_sdk *.pyd
+

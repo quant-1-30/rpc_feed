@@ -4,7 +4,7 @@
 import os
 import pandas as pd
 from sqlalchemy import Select
-from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
+from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, AsyncResult
 from sqlalchemy.ext.automap import automap_base
 from sqlalchemy.orm import sessionmaker
 from contextlib import asynccontextmanager, AbstractAsyncContextManager
@@ -14,28 +14,32 @@ from .schema import Base
 from utils.wrapper import singleton
 
 
-class AsyncResultStream(AbstractAsyncContextManager):
-    def __init__(self, session_ctx, query):
-        self._session_ctx = session_ctx
-        self._query = query
-        self._stream = None
-        self._scalars = None
-
+class AsyncStreamProxy:
+    def __init__(self, session, result: AsyncResult):
+        self._session = session
+        self._result = result
+    
     async def __aenter__(self):
-        _session = await self._session_ctx.__aenter__()
-        self._stream = await _session.stream(self._query)
-        self._scalars = self._stream.scalars()
         return self
 
-    async def __aexit__(self, exc_type, exc_val, exc_tb):
-        try:
-            if self._stream is not None:
-                await self._stream.close()
-        finally:
-            await self._session_ctx.__aexit__(exc_type, exc_val, exc_tb)
+    def scalars(self):
+        return self._result.scalars()
 
-    def __aiter__(self) -> AsyncGenerator[Any, None]:
-        return self._scalars.__aiter__()
+    def __aiter__(self):
+        return self._result.__aiter__() # original iterator row is C wrap
+
+    async def close(self):
+        try:
+            await self._result.close()
+            if self._session.in_transaction():
+                await self._session.commit()
+        except Exception:
+            await self._session.rollback()
+        finally:
+            await self._session.close() # ensure session close
+
+    async def __aexit__(self, exc_type, exc_val, exc_tb):
+        await self.close()
 
 
 @singleton
@@ -53,20 +57,22 @@ class AsyncOps:
         self.engine = None
         self._session_factory = None # singleton session cause bug when async
 
-    
+    async def __aenter__(self):
+        await self._ensure_initialized()
+        return self
+ 
+    async def _ensure_initialized(self):
+        """Helper method to ensure initialization"""
+        if not self._initialized:
+            await self.initialize()
+
     async def initialize(self):
         """Async initialization method"""
         if self._initialized:
             return
         await self._build_engine()
         self._initialized = True
-    
-    async def _ensure_initialized(self):
-        """Helper method to ensure initialization"""
-        if not self._initialized:
-            await self.initialize()
 
-    # @classmethod
     async def _build_engine(self):
         """
             a. create all tables
@@ -107,10 +113,7 @@ class AsyncOps:
     @asynccontextmanager
     async def get_db(self):
         """Get database session with proper lifecycle management"""
-        await self._ensure_initialized()        
-                
-        # Create a new session for each context
-        session = self._session_factory()
+        session = self._session_factory() # Create a new session for each context
         try:
             yield session
         except Exception as e:
@@ -119,28 +122,31 @@ class AsyncOps:
         finally:
             await session.close() # force close return to conn
 
-    async def __aenter__(self):
-        await self._ensure_initialized()
-        return self
-
-    # async def on_query(self, query):
-    #     session_ctx = self.get_db()
-    #     # session = await session_ctx.__aenter__()  
-    #     return AsyncResultStream(session_ctx, query)  
-
     async def on_query(self, query):
-        async with self.get_db() as session:
-                # stream.scalars() one field / stream.scalars().all() all scalars values into list
-                # in asynchronous mode, the synchronous yield_per isn't directly applicable. 
-                # Instead stream() method, which allows streaming query results asynchronously.
-                # result = await session.stream(
-                #     query.execution_options(yield_per=1000)
-                # )
-                # async for row in result:
-                    # yield row
-                stream = await session.stream(query) # GeneratorExit when break
-                async for row in stream: 
-                    yield row
+        # in asynchronous mode, the synchronous yield_per isn't directly applicable. Instead stream() method
+        # result = await session.stream(query.execution_options(yield_per=1000))
+        # async for row in stream: # row (User_Object, ) is used for mulit column 
+        #     yield row # row[0] 
+        # async for item in result.scalars(): # recommended for single than row[0]
+        #     yield item # GeneratorExit when break
+        # stream.scalars().all() # retrieve all data into list (not stream)
+        session = self._session_factory()
+        try:
+            await session.begin()
+            result = await session.stream(query)
+            return AsyncStreamProxy(session, result) # session control move to Proxy
+        except Exception as e:
+            await session.close()
+            raise e
+
+    # @asynccontextmanager
+    # async def on_query(self, query): 
+    #     async with self.get_db() as session:
+    #         result = await session.stream(query)
+    #         try:
+    #             yield result
+    #         finally:
+    #             await result.close()  # ensure result is close
 
     async def on_insert(self, table_name: str, data: Union[pd.DataFrame, List[dict], dict]):
         async with self.get_db() as session:

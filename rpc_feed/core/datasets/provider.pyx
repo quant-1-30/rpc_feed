@@ -1,23 +1,27 @@
-#! /usr/bin/env python3
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
+# cython: language_level=3
+# cython: boundscheck=False
+# cython: wraparound=False 
+# cython: cdivision=True
 
-# Copyright (c) Microsoft Corporation.
-# Licensed under the MIT License.
-# cython: language_level=3, boundscheck=False, wraparound=False
 import pyarrow as pa
 import numpy as np
-from sqlalchemy import select, and_, or_, func, cast, Integer, BigInteger # SQLAlchemy 2.0.39 正确的导入方式
+from sqlalchemy import select, and_, or_, func, cast, Integer, BigInteger
+from sqlalchemy.orm import load_only  # load_only 在 orm 模块中
 
 from core.gateway import *
 from core.rpc.serialize.pb import service_pb2
 
-from libc.stdint cimport uint8_t, int64_t
 from libc.math cimport round 
-cimport numpy as cnp
-cnp.import_array() # initialize numpy c_api
+from libc.stdint cimport uint8_t, int64_t
+from libcpp.string cimport string as cpp_string
+from rpc_feed.core.gateway.duckdb.utils cimport Request
+
 
 cdef long CHUNK_SIZE = 1024 
 cdef long MULT = 1000 
+cdef cpp_string tz_info = b"Asia/Shanghai"
 
 
 cdef class TradingCalendar:
@@ -25,6 +29,9 @@ cdef class TradingCalendar:
 
     Provide calendar data.
     """
+
+    def __init__(self): # __cinit__ used for memory allocate in C
+        self._buf_date = np.empty(CHUNK_SIZE, dtype=np.int32)
 
     async def __call__(self, int start_date, int end_date, list sids=[]):
         """Get calendar of certain market in given time range.
@@ -41,245 +48,202 @@ cdef class TradingCalendar:
             whether including future trading day.
 
         Returns: List[int]
-        """     
-        cdef list dates=[]
-        cdef object response 
-        cdef object row
+        """ 
+        cdef int i    
+        cdef object row, stream, result
 
         async with async_ops as ctx:
             stmt = select(Benchmark.date).distinct().where(
                     Benchmark.date.between(start_date, end_date)
             ).order_by(Benchmark.date)
 
-            # async with await async_ops.on_query(stmt) as stream: # stream wrap
-            async for row in ctx.on_query(stmt):
-                dates.append(row[0])
-            
-            response = service_pb2.Calendar()
-            response.tz_info = b"Asia/Shanghai"
-            response.date.extend(dates) 
-            yield response
+            stream_wrap = await ctx.on_query(stmt) # stream wrap
+
+            async with stream_wrap as stream_proxy:
+                async for row in stream_proxy.scalars():
+                    r_sid = row
+
+                    if i >= CHUNK_SIZE:
+                        yield self._flush(i)
+                        i = 0
+
+                    self._buf_date[i] = row
+                    i += 1
+
+                if i > 0:
+                    yield self._flush(i)
+
+    cdef object _flush(self, int count): # protobuf extend slice copy avoid append 
+        cdef object resp = service_pb2.Calendar()
+
+        resp.tz_info = tz_info
+        resp.date.extend(self._buf_date[:count])
+        return resp
 
 
 cdef class Instrument:
+    """
+        内存复用  预分配和NumPy 数组
+        减少对象创建 load_only
+        零拷贝思想 Protobuf 高效 extend 接口
+    """
 
-    async def __call__(self, int start_date, int end_date, list sids=[]):
+    def __init__(self):
+        self._buf_first_trading = np.empty(CHUNK_SIZE, dtype=np.int32)
+        self._buf_delist = np.empty(CHUNK_SIZE, dtype=np.int32)
+        # str / bytes not allowed preallocate memory / prefill
+        self._buf_sid = [b''] * CHUNK_SIZE
+        self._buf_name = [b''] * CHUNK_SIZE
+
+    async def __call__(self, int start_date, int end_date, list sids=None):
         cdef:
-            object item
-            object row
-            object response
-            bytes c_sid = b''
-        
-        def create_batch():
-            return {"sid": [], "name": [], "first_trading": [], "delist": []}
-
-        c_batch = create_batch()
+            int i = 0
+            object row, stream
 
         async with async_ops as ctx:
-            stmt = select(Asset)
+            stmt = select(Asset).options(
+                load_only(Asset.sid, Asset.name, Asset.first_trading, Asset.delist) # only load necessary columns
+            )
+            
             if sids:
                 stmt = stmt.where(Asset.sid.in_(sids))
             else:
-                stmt = stmt.where(
-                    Asset.first_trading.between(start_date, end_date)
-                )
+                stmt = stmt.where(Asset.first_trading.between(start_date, end_date))
 
-            async for item in ctx.on_query(stmt):
-                row = item[0]
-                r_sid = row.sid
-                
-                if (c_sid and r_sid != c_sid) or len(c_batch["sid"]) >= CHUNK_SIZE:
-                    response = service_pb2.InstFrame() # initialize 
+            stream_wrap = await ctx.on_query(stmt)
 
-                    response.sid.extend(c_batch["sid"])
-                    response.name.extend(c_batch["name"])
-                    response.first_trading.extend(c_batch["first_trading"])
-                    response.delist.extend(c_batch["delist"])
+            async with stream_wrap as stream_proxy: 
+                async for row in stream_proxy.scalars():
+                    if i >= CHUNK_SIZE:
+                        yield self._flush(i)
+                        i = 0
 
-                    yield response
-                    c_batch = create_batch()
+                    self._buf_sid[i] = row.sid # avoid row.sid so rather than row.sid
+                    self._buf_name[i] = row.name
+                    self._buf_first_trading[i] = row.first_trading
+                    self._buf_delist[i] = row.delist
+                    i += 1
+                if i > 0:
+                    yield self._flush(i)
 
-                c_sid = r_sid
-
-                c_batch["sid"].append(row.sid)
-                c_batch["name"].append(row.name)
-                c_batch["first_trading"].append(row.first_trading)
-                c_batch["delist"].append(row.delist)
-
-            if c_batch["sid"]:
-                response = service_pb2.InstFrame()
-                for key in c_batch:
-                    getattr(response, key).extend(c_batch[key])
-                yield response
+    cdef object _flush(self, int count): # protobuf extend slice copy avoid append 
+        cdef object resp = service_pb2.InstFrame()
+        resp.sid.extend(self._buf_sid[:count])
+        resp.name.extend(self._buf_name[:count])
+        resp.first_trading.extend(self._buf_first_trading[:count])
+        resp.delist.extend(self._buf_delist[:count])
+        return resp
 
 
 cdef class Index:
-    """Index provider base class
-    """
-    async def __call__(self, int start_date, int end_date, list sids=[]):
-        """Get the existiongconfig dictionary for a base market adding several dynamic filters.
-        """
-        cdef object row
-        cdef bytes r_sid, c_sid = b''
-        cdef dict c_batch
 
-        def create_batch():
-            return {"date": [], "open": [], "high": [], "low": [], "close": [], "volume": [], "amount": []}
+    def __init__(self):
+        self._buf_date = np.empty(CHUNK_SIZE, dtype=np.int32)
+        self._buf_open = np.empty(CHUNK_SIZE, dtype=np.int32)
+        self._buf_high = np.empty(CHUNK_SIZE, dtype=np.int32)
+        self._buf_low = np.empty(CHUNK_SIZE, dtype=np.int32)
+        self._buf_close = np.empty(CHUNK_SIZE, dtype=np.int32)
+        self._buf_volume = np.empty(CHUNK_SIZE, dtype=np.int64)
+        self._buf_amount = np.empty(CHUNK_SIZE, dtype=np.int64)
 
-        c_batch = create_batch()
+    async def __call__(self, int start_date, int end_date, list sids=None):
+        cdef:
+            int i = 0
+            object row, stream
+            bytes r_sid, last_sid = b''
 
-        async with async_ops as ctx: # keep mult with tick
+        async with async_ops as ctx:
             stmt = select(
-                        Benchmark.sid,
-                        Benchmark.date,
-                        cast(func.round(Benchmark.open * MULT), Integer).label("open_int"),
-                        cast(func.round(Benchmark.high * MULT), Integer).label("high_int"),
-                        cast(func.round(Benchmark.low * MULT), Integer).label("low_int"),
-                        cast(func.round(Benchmark.close * MULT), Integer).label("close_int"),
-                        cast(func.round(Benchmark.volume * MULT), BigInteger).label("volume_bint"), # BigInteger 19 / Int 10
-                        cast(func.round(Benchmark.amount * MULT), BigInteger).label("amount_bint"),
-                    ).where(Benchmark.date.between(start_date, end_date)
-                ).order_by(Benchmark.sid, Benchmark.date)
-            if sids:
-                stmt = stmt.where(Benchmark.sid.in_(sids))
+                Benchmark.sid, Benchmark.date,
+                cast(func.round(Benchmark.open * MULT), Integer),
+                cast(func.round(Benchmark.high * MULT), Integer),
+                cast(func.round(Benchmark.low * MULT), Integer),
+                cast(func.round(Benchmark.close * MULT), Integer),
+                cast(func.round(Benchmark.volume * MULT), BigInteger),
+                cast(func.round(Benchmark.amount * MULT), BigInteger),
+            ).where(Benchmark.date.between(start_date, end_date)).order_by(Benchmark.sid, Benchmark.date)
             
-            async for row in ctx.on_query(stmt):
-                # avoid serialize(), direct via index 
-                r_sid = row[0]
+            if sids: stmt = stmt.where(Benchmark.sid.in_(sids))
+            
+            stream_wrap = await ctx.on_query(stmt)
 
-                if (c_sid and r_sid != c_sid) or len(c_batch["date"]) >= CHUNK_SIZE:
-                    response = service_pb2.DailyFrame(sid=r_sid) # initialize  
+            async with stream_wrap as stream_proxy:
+                async for row in stream_proxy:
+                    r_sid = row[0]
 
-                    response.date.extend(c_batch["date"])
-                    response.open.extend(c_batch["open"])
-                    response.high.extend(c_batch["high"])
-                    response.low.extend(c_batch["low"])
-                    response.close.extend(c_batch["close"])
-                    response.volume.extend(c_batch["volume"])
-                    response.amount.extend(c_batch["amount"])
-                    yield response
-                    c_batch = create_batch()
+                    if (last_sid and r_sid != last_sid) or i >= CHUNK_SIZE:
+                        yield self._flush(i, last_sid)
+                        i = 0
 
-                c_sid = r_sid
-                c_batch["date"].append(row[1])
-                c_batch["open"].append(row[2])
-                c_batch["high"].append(row[3])
-                c_batch["low"].append(row[4])
-                c_batch["close"].append(row[5])
-                c_batch["volume"].append(row[6])
-                c_batch["amount"].append(row[7])
+                    self._buf_date[i] = row[1]
+                    self._buf_open[i] = row[2]
+                    self._buf_high[i] = row[3]
+                    self._buf_low[i] = row[4]
+                    self._buf_close[i] = row[5]
+                    self._buf_volume[i] = row[6]
+                    self._buf_amount[i] = row[7]
+                    last_sid = r_sid
+                    i += 1
 
-            if c_batch["date"]:
-                response = service_pb2.DailyFrame(sid=r_sid)
-                
-                for key in c_batch:
-                    getattr(response, key).extend(c_batch[key])
-                yield response
+                if i > 0: yield self._flush(i, last_sid)
+
+    cdef object _flush(self, int count, bytes sid):
+        cdef object resp = service_pb2.DailyFrame(sid=sid)
+        resp.date.extend(self._buf_date[:count])
+        resp.open.extend(self._buf_open[:count])
+        resp.high.extend(self._buf_high[:count])
+        resp.low.extend(self._buf_low[:count])
+        resp.close.extend(self._buf_close[:count])
+        resp.volume.extend(self._buf_volume[:count])
+        resp.amount.extend(self._buf_amount[:count])
+        return resp
 
 
 cdef class Tick:
-    """Dataset provider class via duckdb
-    """
-    
+
+    # def __init__(self):
+    #     self._buf_sid = np.empty((CHUNK_SIZE, 16), dtype=np.uint8) # cdef cnp.uint8_t[:, :] _buf_sid_raw 
+
     async def __call__(self, int start_date, int end_date, list sids=[]):
         cdef:
-            object batch
-            object duck_mgr = get_duckdb_manager()
-            dict req_dict
-            list sid_str
+            int num_rows # cdef Py_ssize_t num_rows  # used index
+            Request req = Request(start_date=start_date, end_date=end_date, sid=sids)
+            object batch, duck_mgr = get_duckdb_manager()
 
-            # # primitive buffers (zero-copy) | const means readonly because arrow not mutable
-            # # const （int, double, char* ...）
-            # # cdef const char[:] sid_mv      # str
-            # # cdef const uint8_t[:] sid_mv   # bytes
-            # object sid_mv
-            # const int64_t[:] tick_mv
-            # const long[:] open_mv
-            # const long[:] high_mv
-            # const long[:] low_mv
-            # const long[:] close_mv
-            # const long[:] volume_mv
-            # const long[:] amount_mv
-
-            int i, num_rows, start, end # Py_ssize_t
-
-        sid_str = [sid.decode("utf-8") for sid in sids]
-        req_dict = {
-            "start_date": start_date,
-            "end_date": end_date,
-            "sid": sid_str
-        }
-        print("tick req_dict :", req_dict)
-        # yield context switch  / avoid yield every time
-
-        # async with duck_mgr as ctx: # only suited for one chunke eg: one sid and intended for calculate */+ ...
-        #     async for batch in ctx.query(req_dict, tick_template):
-
-        #         num_rows = batch.num_rows
-        #         if num_rows == 0:
-        #             continue
-
-        #         # RecordBatchReader ---> primitive array suited for to_numpy C ptr pyarrow  0-bitmap 1-data
-        #         sid_mv = batch.column(0).to_numpy(zero_copy_only=False) # bytes 
-        #         tick_mv = batch.column(1).to_numpy(zero_copy_only=True)
-        #         open_mv = batch.column(2).to_numpy(zero_copy_only=True)
-        #         high_mv = batch.column(3).to_numpy(zero_copy_only=True)
-        #         low_mv = batch.column(4).to_numpy(zero_copy_only=True)
-        #         close_mv = batch.column(5).to_numpy(zero_copy_only=True)
-        #         volume_mv = batch.column(6).to_numpy(zero_copy_only=True)
-        #         amount_mv = batch.column(7).to_numpy(zero_copy_only=True)
-
-        #         response_frame = service_pb2.TickFrame()
-        #         response_frame.sid = current_sid
-
-        #         # Protobuf  repeated  extend numpy / memoryview
-        #         # for i in range(n): append(...) fast 10-50 
-        #         response_frame.tick.extend(tick_np)
-        #         response_frame.open.extend(open_np)
-        #         response_frame.high.extend(high_np)
-        #         response_frame.low.extend(low_np)
-        #         response_frame.close.extend(close_np)
-        #         response_frame.volume.extend(volume_np)
-        #         response_frame.amount.extend(amount_np)
-        #         yield response_frame
-        
-        async with duck_mgr as ctx: # RecordBatch is the most safe to transfer to numpy
-            async for batch in ctx.query(req_dict, tick_template):
+        async with duck_mgr as ctx:
+            # async for batch in ctx.query(req_dict, tick_template):
+            async for batch in ctx.query(req, tick_template):
+                # print("batch :", batch)
                 num_rows = batch.num_rows
-                if num_rows == 0:
-                    continue
+                if num_rows == 0: continue
                 
-                # RecordBatch to Table for group_by
-                table = pa.Table.from_batches([batch])
-                sid_array = table.column("sid").to_numpy()
-
-                # seek sid change indice
-                c_indices = np.where(sid_array[:-1] != sid_array[1:])[0] + 1
+                # RecordBatchReader ---> primitive array suited for to_numpy C ptr pyarrow  0-bitmap 1-data / avoid table = pa.Table.from_batches([batch]) 
+                # _buf_sid = batch.column(0).to_numpy(zero_copy_only=False) # due to pyarrow bytes/str differ from NumPy memory layout 
+                _buf_sid = batch.column("sid").to_pylist() # to_pylist is faster than to_numpy for bytes/str
+                # grp by sid indices
+                c_indices = np.where(_buf_sid[:num_rows-1] != _buf_sid[1:])[0] + 1 
                 s_indices = np.insert(c_indices, 0, 0)
-                e_indices = np.append(c_indices, len(sid_array))
+                e_indices = np.append(c_indices, num_rows)
 
                 for start, end in zip(s_indices, e_indices):
-                    # slice zero_copy and fast
-                    sub_table = table.slice(start, end - start)
-                    t_sid = sid_array[start] # bytes
-                    print("sub_table and t_sid :", sub_table, t_sid)
-
-                    response_frame = service_pb2.TickFrame()
-                    response_frame.sid = t_sid
-
-                    # Vectorized Extend to_numpy() zero_copy
-                    response_frame.tick.extend(sub_table.column("tick").to_numpy())
-                    response_frame.open.extend(sub_table.column("open").to_numpy())
-                    response_frame.high.extend(sub_table.column("high").to_numpy())
-                    response_frame.low.extend(sub_table.column("low").to_numpy())
-                    response_frame.close.extend(sub_table.column("close").to_numpy())
-                    response_frame.volume.extend(sub_table.column("volume").to_numpy())
-                    response_frame.amount.extend(sub_table.column("amount").to_numpy())
-
-                    yield response_frame
+                    sub_batch = batch.slice(start, end - start)
+                    
+                    resp = service_pb2.TickFrame()
+                    resp.sid = _buf_sid[start] 
+                    resp.tick.extend(sub_batch.column(1).to_numpy(zero_copy_only=True))
+                    resp.open.extend(sub_batch.column(2).to_numpy(zero_copy_only=True))
+                    resp.high.extend(sub_batch.column(3).to_numpy(zero_copy_only=True))
+                    resp.low.extend(sub_batch.column(4).to_numpy(zero_copy_only=True))
+                    resp.close.extend(sub_batch.column(5).to_numpy(zero_copy_only=True))
+                    resp.volume.extend(sub_batch.column(6).to_numpy(zero_copy_only=True))
+                    resp.amount.extend(sub_batch.column(7).to_numpy(zero_copy_only=True))
+                    yield resp
 
 
 cdef class Close:
+
+    # def __init__(self):
+    #     self._buf_sid = np.empty((CHUNK_SIZE, 16), dtype=np.uint8) # cdef cnp.uint8_t[:, :] _buf_sid_raw 
 
     async def __call__(self, int start_date, int end_date, list sids=[]):
         """Get dataset data.
@@ -295,63 +259,55 @@ cdef class Close:
         # hive_partitioning  --- automate path to key=value in partition cols 
         """
         cdef:
-            object batch
-            object duck_mgr = get_duckdb_manager()
-            dict req_dict
-            list sid_str
-
             int num_rows  # Py_ssize_t
-
-        sid_str = [sid.decode("utf-8") for sid in sids]
-        req_dict = {
-            "start_date": start_date,
-            "end_date": end_date,
-            "sid": sid_str
-        }
+            object batch, duck_mgr = get_duckdb_manager()
+            Request req = Request(start_date=start_date, end_date=end_date, sid=sids)
 
         async with duck_mgr as ctx:
-            async for batch in ctx.query(req_dict, close_template):
-
+            async for batch in ctx.query(req, close_template):
                 num_rows = batch.num_rows
                 if num_rows == 0:
                     continue
                 
-                # RecordBatch to Table for group_by
-                table = pa.Table.from_batches([batch])
-                sid_array = table.column("sid").to_numpy()
+                # RecordBatchReader ---> primitive array suited for to_numpy C ptr pyarrow  0-bitmap 1-data / avoid table = pa.Table.from_batches([batch]) 
+                # _buf_sid = batch.column(0).to_numpy(zero_copy_only=False) # due to pyarrow bytes/str differ from NumPy memory layout 
+                _buf_sid = batch.column("sid").to_pylist() # to_pylist is faster than to_numpy for bytes/str
 
-                # seek sid change indice
-                c_indices = np.where(sid_array[:-1] != sid_array[1:])[0] + 1
+                # grp by sid indices
+                c_indices = np.where(_buf_sid[:num_rows-1] != _buf_sid[1:])[0] + 1
                 s_indices = np.insert(c_indices, 0, 0)
-                e_indices = np.append(c_indices, len(sid_array))
+                e_indices = np.append(c_indices, len(_buf_sid))
 
                 for start, end in zip(s_indices, e_indices):
                     # slice zero_copy and fast
-                    sub_table = table.slice(start, end - start)
-                    t_sid = sid_array[start] # bytes
+                    sub_btach = batch.slice(start, end - start)
 
-                    response_frame = service_pb2.CloseFrame()
-                    response_frame.sid = t_sid
-
-                    # Vectorized Extend to_numpy() zero_copy
-                    response_frame.date.extend(sub_table.column("day").to_numpy())
-                    response_frame.close.extend(sub_table.column("close").to_numpy())
-
-                    yield response_frame
+                    resp = service_pb2.CloseFrame()
+                    resp.sid = _buf_sid[start] 
+                    resp.date.extend(sub_btach.column("day").to_numpy()) # Vectorized Extend to_numpy() zero_copy
+                    resp.close.extend(sub_btach.column("close").to_numpy())
+                    yield resp
 
 
 cdef class Adjust:
+    """
+        内存复用  预分配和NumPy 数组
+        减少对象创建 load_only
+        零拷贝思想 Protobuf 高效 extend 接口
+    """
 
-    async def __call__(self, int start_date, int end_date, list sids=[]):
+    def __init__(self):
+        self._buf_ex_date = np.empty(CHUNK_SIZE, dtype=np.int32)
+        self._buf_register_date = np.empty(CHUNK_SIZE, dtype=np.int32)
+        self._buf_bonus_share = np.empty(CHUNK_SIZE, dtype=np.int32)
+        self._buf_transfer = np.empty(CHUNK_SIZE, dtype=np.int32)
+        self._buf_bonus = np.empty(CHUNK_SIZE, dtype=np.int32)
+
+    async def __call__(self, int start_date, int end_date, list sids=None):
         cdef:
-            object row
-            object response 
-            bytes c_sid = b''
-        
-        def create_batch():
-            return {"ex_date": [], "register_date": [], "bonus_share": [], "transfer": [], "bonus": []}
-
-        c_batch = create_batch()
+            int i = 0
+            object row, stream
+            bytes r_sid, last_sid = b''
 
         async with async_ops as ctx:
             stmt = select(
@@ -365,50 +321,53 @@ cdef class Adjust:
                 ).order_by(Adjustment.sid, Adjustment.ex_date) 
             if sids:
                 stmt = stmt.where(Adjustment.sid.in_(sids))
-            
-            response = service_pb2.AdjFrame() # initialize
 
-            async for row in ctx.on_query(stmt): # tuple 
-                r_sid = row[0]
-                
-                if (c_sid and r_sid != c_sid) or len(c_batch["ex_date"]) >= CHUNK_SIZE:
-                    response = service_pb2.AdjFrame(sid=r_sid) # initialize  
+            stream_wrap = await ctx.on_query(stmt)
 
-                    response.ex_date.extend(c_batch["ex_date"])
-                    response.register_date.extend(c_batch["register_date"])
-                    response.bonus_share.extend(c_batch["bonus_share"])
-                    response.transfer.extend(c_batch["transfer"])
-                    response.bonus.extend(c_batch["bonus"])
-                    yield response
-                    c_batch = create_batch()
+            async with stream_wrap as stream_proxy:
+                async for row in stream_proxy:
+                    r_sid = row[0]
 
-                c_sid = r_sid
-                c_batch["ex_date"].append(row[1])
-                c_batch["register_date"].append(row[2])
-                c_batch["bonus_share"].append(row[3])
-                c_batch["transfer"].append(row[4])
-                c_batch["bonus"].append(row[5])
+                    if (last_sid and r_sid != last_sid) or i >= CHUNK_SIZE:
+                        yield self._flush(i, last_sid)
+                        i = 0
 
-            if c_batch["ex_date"]:
-                response = service_pb2.AdjFrame(sid=r_sid)
-                for key in c_batch:
-                    getattr(response, key).extend(c_batch[key])
-                yield response
+                    self._buf_ex_date[i] = row[1]
+                    self._buf_register_date[i] = row[2]
+                    self._buf_bonus_share[i] = row[3]
+                    self._buf_transfer[i] = row[4]
+                    self._buf_bonus[i] = row[5]
+
+                    last_sid = r_sid
+                    i += 1
+
+                if i > 0:
+                    yield self._flush(i, last_sid)
+
+    cdef object _flush(self, int count, bytes sid):
+        cdef object resp = service_pb2.AdjFrame(sid=sid)
+        resp.ex_date.extend(self._buf_ex_date[:count]) # protobuf extend
+        resp.register_date.extend(self._buf_register_date[:count])
+        resp.bonus_share.extend(self._buf_bonus_share[:count])
+        resp.transfer.extend(self._buf_transfer[:count])
+        resp.bonus.extend(self._buf_bonus[:count])
+        return resp
 
 
 cdef class Right:
 
+    def __init__(self):
+        self._buf_ex_date = np.empty(CHUNK_SIZE, dtype=np.int32)
+        self._buf_register_date = np.empty(CHUNK_SIZE, dtype=np.int32)
+        self._buf_price = np.empty(CHUNK_SIZE, dtype=np.int32) # np.float32 
+        self._buf_ratio = np.empty(CHUNK_SIZE, dtype=np.int32)
+
     async def __call__(self, int start_date, int end_date, list sids=[]):
         cdef:
-            object row
-            object response = None
-            bytes c_sid = b''
+            int i = 0
+            object row, stream, result
+            bytes last_sid = b'', r_sid
         
-        def create_batch():
-            return {"ex_date": [], "register_date": [], "price": [], "ratio": []}
-
-        c_batch = create_batch()
-
         async with async_ops as ctx:
             stmt = select(
                         Rightment.sid,
@@ -420,31 +379,32 @@ cdef class Right:
                 ).order_by(Rightment.sid, Rightment.ex_date) 
             if sids:
                 stmt = stmt.where(Rightment.sid.in_(sids))
-            
-            response = service_pb2.RightmentFrame() # initialize
-
-            async for row in ctx.on_query(stmt): # tuple
-                r_sid = row[0]
                 
-                if (c_sid and r_sid != c_sid) or len(c_batch["ex_date"]) >= CHUNK_SIZE:
-                    response = service_pb2.RightmentFrame(sid=r_sid) # initialize  
-                     
-                    response.ex_date.extend(c_batch["ex_date"])
-                    response.register_date.extend(c_batch["register_date"])
-                    response.price.extend(c_batch["price"])
-                    response.ratio.extend(c_batch["ratio"])
-                    yield response
-                    c_batch = create_batch()
+            strteam_wrap = await async_ops.on_query(stmt)
 
-                c_sid = r_sid
-                c_batch["ex_date"].append(row[1])
-                c_batch["register_date"].append(row[2])
-                c_batch["price"].append(row[3])
-                c_batch["ratio"].append(row[4])
+            async with strteam_wrap as stream_proxy:
+                async for row in stream_proxy:
+                    r_sid = row[0]
 
-            if c_batch["ex_date"]:
-                response = service_pb2.RightmentFrame(sid=r_sid)
-                for key in c_batch:
-                    getattr(response, key).extend(c_batch[key])
-                yield response
+                    if (last_sid and r_sid != last_sid) or i >= CHUNK_SIZE:
+                        yield self._flush(i, last_sid)
+                        i = 0
 
+                    self._buf_ex_date[i] = row[1]
+                    self._buf_register_date[i] = row[2]
+                    self._buf_price[i] = row[3]
+                    self._buf_ratio[i] = row[4]
+
+                    last_sid = r_sid
+                    i += 1
+
+                if i > 0:
+                    yield self._flush(i, last_sid)
+
+    cdef object _flush(self, int count, bytes sid):
+        cdef object resp = service_pb2.RightmentFrame(sid=sid)
+        resp.ex_date.extend(self._buf_ex_date[:count])
+        resp.register_date.extend(self._buf_register_date[:count])
+        resp.price.extend(self._buf_price[:count])
+        resp.ratio.extend(self._buf_ratio[:count])
+        return resp

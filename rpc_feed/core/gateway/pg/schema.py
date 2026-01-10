@@ -17,9 +17,8 @@ from sqlalchemy import Identity
 __all__ = ["Asset", "Benchmark", "Adjustment", "Rightment"]
 
 
-# declarative base class
 class Base(DeclarativeBase):
-    # PostgreSQL 主键 / SERIAL 或 IDENTITY 声明时才会自动自增
+    # PostgreSQL id autoincrement when primary_key / SERIAL / IDENTITY 
     
     def serialize(self, include_id=False):
         if include_id:
@@ -39,7 +38,7 @@ class Asset(Base):
 
     id: Mapped[int] = mapped_column(Integer, autoincrement=True)
     sid: Mapped[bytes] = mapped_column(LargeBinary, unique=True, nullable=False)
-    name: Mapped[bytes] = mapped_column(LargeBinary, nullable=False)
+    name: Mapped[bytes] = mapped_column(LargeBinary, nullable=False) # String(32, collation="c")
     first_trading: Mapped[int] = mapped_column(Integer, nullable=False)
     delist: Mapped[int] = mapped_column(Integer, default=0)
 

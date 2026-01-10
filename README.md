@@ -24,3 +24,44 @@ buffers[1] → offsets (int32 / int64)
 buffers[2] → data (byte blob) -->
 
 # Arrow 格式**（如 DuckDB、Parquet 文件、Pandas DataFrame）时，转为 PyArrow 才有性能优势，因为那时是 **Zero-Copy**
+
+compiled = compile(
+    exec_str,
+    func.__code__.co_filename,
+    mode='exec',
+)
+#
+exec_locals = {}
+exec_(compiled, exec_globals, exec_locals)
+
+
+## provider 深度优化总结
+
+#### 1. 内存复用 (Memory Reuse)
+*   **SQLAlchemy 路径**：通过 `__cinit__` 预分配 NumPy 数组。在 `async for` 循环中完全消除了 `list.append` 产生的 `realloc` 开销
+*   **Arrow 路径**：利用 `batch.slice()`。Arrow 的切片只是指针的操作（Offset 和 Length 的改变），完全没有内存拷贝
+
+#### 2. 属性访问优化 (Attribute Access)
+*   **去字典化**：所有 `Index`/`Adjust` 类不再使用 `c_batch["date"]` 这种字符串哈希查找，而是直接访问 `self._buf_date`（C 结构体偏移量访问）
+*   **去反射化**：移除了 `getattr(response, key)`，改为显式的属性调用
+
+#### 3. 向量化填充 (Vectorized Proto-fill)
+*   Protobuf 的 Python 扩展在处理 `extend(numpy_array)` 时，底层会尝试使用特定的优化路径（尤其是在启用 `PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=cpp` 时），这比 Python 循环快一个数量级
+
+#### 4. 类型安全与转换
+*   在 `Tick` 和 `Close` 中，`to_numpy(zero_copy_only=True)` 是性能的“防火墙”。如果数据不是连续内存，它会报错提醒你，而不是默默地在后台进行昂贵的拷贝
+
+数据提供层（Data Provider）在处理高频 Tick 或大规模历史数据时，CPU 使用率将主要集中在数据库 I/O 和序列化上，而 Python 虚拟机的调度开销将降至最低
+
+
+`__cinit__` vs `__init__` 的本质区别
+
+*   **`__cinit__` (C-level Constructor)**:
+    *   **触发时机**：在对象的内存被分配后**立即**调用。
+    *   **核心用途**：专门用于初始化 **纯 C 成员**（如 `malloc` 申请的 C 指针、C++ 的 `new` 对象）。
+    *   **状态**：此时 Python 对象可能尚未完全准备好。虽然你可以调用 `np.empty`，但如果初始化过程中抛出异常，由于 `__cinit__` 保证会被执行，可能会导致复杂的垃圾回收问题。
+*   **`__init__` (Python-level Constructor)**:
+    *   **触发时机**：在 `__cinit__` 完成之后调用。
+    *   **核心用途**：初始化 **Python 对象成员**（如 `list`、`dict`、`np.ndarray`）。
+    *   **状态**：此时对象已经是一个完整的 Python 扩展对象。
+

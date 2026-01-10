@@ -9,8 +9,8 @@ current_dir = os.path.abspath(os.getcwd())
 
 extensions = [
     Extension(
-        name="core.datasets.provider", 
-        sources=["core/datasets/provider.pyx"],
+        name="rpc_feed.core.datasets.provider", 
+        sources=["rpc_feed/core/datasets/provider.pyx"],
         include_dirs=[np.get_include(), current_dir],
         language="c++",
         extra_compile_args=["-O3", "-std=c++11"],
@@ -21,15 +21,15 @@ extensions = [
         # "-Wno-sign-compare", # O3 极致优化，C++11 标准
     ),
     Extension(
-        name="core.rpc.feed", 
-        sources=["core/rpc/feed.pyx"],
+        name="rpc_feed.core.rpc.feed", 
+        sources=["rpc_feed/core/rpc/feed.pyx"],
         include_dirs=[np.get_include(), current_dir],
         language="c++",
         extra_compile_args=["-O3", "-std=c++11"],
     ),
      Extension(
-        name="core.gateway.duckdb.utils", 
-        sources=["core/gateway/duckdb/utils.pyx"],
+        name="rpc_feed.core.gateway.duckdb.utils", 
+        sources=["rpc_feed/core/gateway/duckdb/utils.pyx"],
         include_dirs=[np.get_include(), "."],  
         language="c++",                         
         extra_compile_args=["-O3", "-std=c++11"]

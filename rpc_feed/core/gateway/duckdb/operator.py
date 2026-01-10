@@ -97,6 +97,7 @@ class DuckDBManager: # 非线程安全
         self.batch_size = int(os.getenv("DUCKBATCHSIZE"))
 
         self.regex = r"^(6|0|3)\d{5}"  # stock/fund 
+        self._bin_regex = re.compile(self.regex.encode('ascii'))
         self._cache_modified = False
         self._tasks = set()
         self._registered_views = set()
@@ -132,7 +133,7 @@ class DuckDBManager: # 非线程安全
         return f"year{year}_quarter{quarter}_sid{sid}_date{y_month}"
 
     def _glob_path(self, sid: str, year: int, quarter: str, y_month: str) -> str:
-        sub_dir = "stock" if re.match(self.regex, sid) else "fund"
+        sub_dir = "stock" if re.match(self.regex, sid) else "fund" # re.match(self._bin_regex, sid)
         return os.path.join(self.dataset_root, sub_dir, f"year={year}", f"quarter={quarter}", f"sid={sid}", f"date={y_month}")
 
     def _register_macro_if_needed(self, conn, sid: str, year: int, quarter: str, y_month: str):
@@ -176,45 +177,12 @@ class DuckDBManager: # 非线程安全
         req_views = []
         ranges = schema_range(req)
         for sid in req["sid"]:
+            sid_str = sid.decode("utf-8")
             for r in ranges:
-                view_name = self._register_macro_if_needed(conn, sid, *r)
+                view_name = self._register_macro_if_needed(conn, sid_str, *r)
                 if view_name:
                     req_views.append(view_name)
         return req_views
-
-    # def _stream_query(self, req_meta: dict, batch_size, raw_template): # register and query in separate connection or conflict
-    #     # register_views
-    #     conn = self._get_conn()
-    #     try:
-    #         req_views = self.register_views(conn, req_meta)
-    #         print("Registered views:", req_views)
-    #         if not req_views:
-    #             # return duckdb.from_df([])
-    #             return
-
-    #         # request_to_sql 
-    #         req_sql = request_to_sql(req_views, req_meta, raw_template)
-    #         print("Executing SQL:", req_sql)
-    #         cursor = conn.execute(req_sql)
-    #         # df = conn.execute(req_sql).df()
-    #         # if "tick" in df.columns:
-    #         #     df = df.sort_values('tick').reset_index(drop=True)
-    #         # else:
-    #         #     df = df.sort_values('day').reset_index(drop=True)
-    #         # assert df['tick'].is_monotonic_increasing, "tick not is_monotonic_increasing"
-    #         # for row in df_copy.itertuples(index=False):
-    #         #       yield tuple(row) # pandas.core.frame.Pandas to tuple
-            
-    #         while True:
-    #             rows = cursor.fetchmany(batch_size)
-    #             print("fetched rows:", len(rows))
-    #             if not rows:
-    #                 break
-    #             for row in rows:
-    #                 yield row
-    #         print("Query completed, closing connection.")
-    #     finally:
-    #         self._release_conn(conn)
 
     async def query(self, req_meta: dict, raw_template: str):
         conn = self._get_conn()
@@ -223,9 +191,9 @@ class DuckDBManager: # 非线程安全
             if not req_views: return
 
             req_sql = request_to_sql(req_views, req_meta, raw_template)
-            print("req_sql :", req_sql)
-            
             # based on Arrow return RecordBatchReader --- Array not ChunkedArray and memory continual
+            # df = conn.execute(req_sql).df()
+            # rows = conn.execute(req_sql).fetchmany(batch_size)
             reader = conn.execute(req_sql).fetch_record_batch(self.batch_size)
 
             # batch --- multi_columns bytes 
