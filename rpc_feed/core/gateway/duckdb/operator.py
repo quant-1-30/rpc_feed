@@ -112,7 +112,7 @@ class DuckDBManager: # 非线程安全
                 with open(self.view_cache_file, "r") as f:
                     cached = json.load(f)
                     self._registered_views.update(cached)
-                    print(f"💾 Loaded cached registered views: {len(cached)}")
+                    # print(f"💾 Loaded cached registered views: {len(cached)}")
                     return cached
             except Exception as e:
                 print(f"⚠️ Failed to load cache file: {e}")
@@ -192,8 +192,7 @@ class DuckDBManager: # 非线程安全
 
             req_sql = request_to_sql(req_views, req_meta, raw_template)
             # based on Arrow return RecordBatchReader --- Array not ChunkedArray and memory continual
-            # df = conn.execute(req_sql).df()
-            # rows = conn.execute(req_sql).fetchmany(batch_size)
+            # df = conn.execute(req_sql).df() / rows = conn.execute(req_sql).fetchmany(batch_size)
             reader = conn.execute(req_sql).fetch_record_batch(self.batch_size)
 
             # batch --- multi_columns bytes 
@@ -213,7 +212,7 @@ class DuckDBManager: # 非线程安全
             with _duck_lock:
                 with open(self.view_cache_file, "w") as f:
                     json.dump(list(self._registered_views), f, indent=2)
-                print(f"💾 Saved cache file: {self.view_cache_file}")
+                # print(f"💾 Saved cache file: {self.view_cache_file}")
         except Exception as e:
             print(f"⚠️ Failed to save cache file: {e}")
 

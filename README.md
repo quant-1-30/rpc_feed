@@ -65,3 +65,12 @@ exec_(compiled, exec_globals, exec_locals)
     *   **核心用途**：初始化 **Python 对象成员**（如 `list`、`dict`、`np.ndarray`）。
     *   **状态**：此时对象已经是一个完整的 Python 扩展对象。
 
+# joblib replace mp avoid pickle instead of dill or cloudpickle
+
+to_numpy(zero_copy_only=False) not suitable for string
+
+# # grp by sid indices
+# c_indices = np.where(_buf_sid[:num_rows-1] != _buf_sid[1:])[0] + 1 
+# s_indices = np.insert(c_indices, 0, 0)
+# e_indices = np.append(c_indices, num_rows)
+

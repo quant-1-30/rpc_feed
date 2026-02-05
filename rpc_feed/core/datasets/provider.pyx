@@ -4,8 +4,9 @@
 # cython: boundscheck=False
 # cython: wraparound=False 
 # cython: cdivision=True
-
+import asyncio
 import pyarrow as pa
+import pyarrow.compute as pc
 import numpy as np
 from sqlalchemy import select, and_, or_, func, cast, Integer, BigInteger
 from sqlalchemy.orm import load_only  # load_only 在 orm 模块中
@@ -29,7 +30,6 @@ cdef class TradingCalendar:
 
     Provide calendar data.
     """
-
     def __init__(self): # __cinit__ used for memory allocate in C
         self._buf_date = np.empty(CHUNK_SIZE, dtype=np.int32)
 
@@ -82,11 +82,6 @@ cdef class TradingCalendar:
 
 
 cdef class Instrument:
-    """
-        内存复用  预分配和NumPy 数组
-        减少对象创建 load_only
-        零拷贝思想 Protobuf 高效 extend 接口
-    """
 
     def __init__(self):
         self._buf_first_trading = np.empty(CHUNK_SIZE, dtype=np.int32)
@@ -101,8 +96,11 @@ cdef class Instrument:
             object row, stream
 
         async with async_ops as ctx:
-            stmt = select(Asset).options(
-                load_only(Asset.sid, Asset.name, Asset.first_trading, Asset.delist) # only load necessary columns
+            # stmt = select(Asset).options(
+            #     load_only(Asset.sid, Asset.name, Asset.first_trading, Asset.delist) # only load necessary columns
+            # )
+            stmt = select(
+                Asset.sid, Asset.name, Asset.first_trading, Asset.delist
             )
             
             if sids:
@@ -113,20 +111,20 @@ cdef class Instrument:
             stream_wrap = await ctx.on_query(stmt)
 
             async with stream_wrap as stream_proxy: 
-                async for row in stream_proxy.scalars():
+                async for row in stream_proxy:
                     if i >= CHUNK_SIZE:
                         yield self._flush(i)
                         i = 0
 
-                    self._buf_sid[i] = row.sid # avoid row.sid so rather than row.sid
-                    self._buf_name[i] = row.name
-                    self._buf_first_trading[i] = row.first_trading
-                    self._buf_delist[i] = row.delist
+                    self._buf_sid[i] = row[0] # avoid row.sid
+                    self._buf_name[i] = row[1]
+                    self._buf_first_trading[i] = row[2]
+                    self._buf_delist[i] = row[3]
                     i += 1
                 if i > 0:
                     yield self._flush(i)
 
-    cdef object _flush(self, int count): # protobuf extend slice copy avoid append 
+    cdef object _flush(self, int count): # protobuf extend slice copy avoid append --- zero_copy 
         cdef object resp = service_pb2.InstFrame()
         resp.sid.extend(self._buf_sid[:count])
         resp.name.extend(self._buf_name[:count])
@@ -201,35 +199,59 @@ cdef class Index:
 
 cdef class Tick:
 
-    # def __init__(self):
-    #     self._buf_sid = np.empty((CHUNK_SIZE, 16), dtype=np.uint8) # cdef cnp.uint8_t[:, :] _buf_sid_raw 
-
     async def __call__(self, int start_date, int end_date, list sids=[]):
-        cdef:
-            int num_rows # cdef Py_ssize_t num_rows  # used index
-            Request req = Request(start_date=start_date, end_date=end_date, sid=sids)
-            object batch, duck_mgr = get_duckdb_manager()
+            cdef:
+                Request req = Request(start_date=start_date, end_date=end_date, sid=sids)
+                object batch, duck_mgr = get_duckdb_manager()
+                object loop = asyncio.get_running_loop()
 
-        async with duck_mgr as ctx:
-            # async for batch in ctx.query(req_dict, tick_template):
-            async for batch in ctx.query(req, tick_template):
-                # print("batch :", batch)
-                num_rows = batch.num_rows
-                if num_rows == 0: continue
+            async with duck_mgr as ctx:
+                async for batch in ctx.query(req, tick_template):
+                    if batch.num_rows == 0: continue
+                    _next_gen = await loop.run_in_executor(None, self._process_batch, batch)
+                    for resp in _next_gen: # yield from not supported in cython
+                        # print("tick resp ", resp)
+                        yield resp 
+    
+    cdef object _process_batch(self, object batch):
+            # RecordBatchReader ---> primitive array suited for to_numpy C ptr pyarrow  0-bitmap 1-data / avoid table = pa.Table.from_batches([batch]) 
+            cdef object sid_col = batch.column("sid") # avoid to_pylist
+            cdef int num_rows = len(sid_col) # cdef Py_ssize_t num_rows  # used index
+            cdef object s_indices = None
+            cdef object e_indices = None
+            cdef int start, end
+
+            if num_rows == 0: 
+                return service_pb2.TickFrame()
                 
-                # RecordBatchReader ---> primitive array suited for to_numpy C ptr pyarrow  0-bitmap 1-data / avoid table = pa.Table.from_batches([batch]) 
-                # _buf_sid = batch.column(0).to_numpy(zero_copy_only=False) # due to pyarrow bytes/str differ from NumPy memory layout 
-                _buf_sid = batch.column("sid").to_pylist() # to_pylist is faster than to_numpy for bytes/str
-                # grp by sid indices
-                c_indices = np.where(_buf_sid[:num_rows-1] != _buf_sid[1:])[0] + 1 
-                s_indices = np.insert(c_indices, 0, 0)
-                e_indices = np.append(c_indices, num_rows)
+            if num_rows == 1:
+                s_indices = pa.array([0], type=pa.int64())
+                e_indices = pa.array([1], type=pa.int64())
+            else:
+                equal_mask = pc.equal(sid_col, sid_col[0])
 
-                for start, end in zip(s_indices, e_indices):
+                all_same = pc.all(equal_mask).as_py() 
+                if all_same:
+                    s_indices = pa.array([0], type=pa.int64())
+                    e_indices = pa.array([num_rows], type=pa.int64())
+                else:
+                    lslice = sid_col.slice(offset=0, length=num_rows - 1)
+                    rslice = sid_col.slice(offset=1, length=num_rows - 1)
+
+                    bound_mask = pc.not_equal(lslice, rslice)
+                    bound_indices = pc.add(pc.indices_non_zero(bound_mask), 1)
+
+                    s_indices = pc.concat_arrays([pa.array([0], type=pa.int64()), bound_indices])
+                    e_indices = pc.concat_arrays([bound_indices, pa.array([num_rows], type=pa.int64())])
+    
+            def yield_generator():
+                for start_scalar, end_scalar in zip(s_indices, e_indices):
+                    start = start_scalar.as_py()
+                    end = end_scalar.as_py()
                     sub_batch = batch.slice(start, end - start)
-                    
+
                     resp = service_pb2.TickFrame()
-                    resp.sid = _buf_sid[start] 
+                    resp.sid = sid_col[start].as_py() 
                     resp.tick.extend(sub_batch.column(1).to_numpy(zero_copy_only=True))
                     resp.open.extend(sub_batch.column(2).to_numpy(zero_copy_only=True))
                     resp.high.extend(sub_batch.column(3).to_numpy(zero_copy_only=True))
@@ -238,63 +260,79 @@ cdef class Tick:
                     resp.volume.extend(sub_batch.column(6).to_numpy(zero_copy_only=True))
                     resp.amount.extend(sub_batch.column(7).to_numpy(zero_copy_only=True))
                     yield resp
+            return yield_generator()
 
 
 cdef class Close:
 
-    # def __init__(self):
-    #     self._buf_sid = np.empty((CHUNK_SIZE, 16), dtype=np.uint8) # cdef cnp.uint8_t[:, :] _buf_sid_raw 
-
     async def __call__(self, int start_date, int end_date, list sids=[]):
-        """Get dataset data.
-
-        Parameters
-        ----------
-
-        Returns
-        ----------
-        # SELECT * FROM stock
-        # WHERE datetime >= TIMESTAMP '2024-06-01 09:30:00'
-        # DuckDB 会自动把 '2024-06-01 09:30:00' 解析为内部 TIMESTAMP 类型，与 Parquet 里的 datetime 字段对齐 
-        # hive_partitioning  --- automate path to key=value in partition cols 
+        """
+            Parameters
+            ----------
+            Returns
+            ----------
+            # SELECT * FROM stock
+            # WHERE datetime >= TIMESTAMP '2024-06-01 09:30:00'
+            # DuckDB 会自动把 '2024-06-01 09:30:00' 解析为内部 TIMESTAMP 类型，与 Parquet 里的 datetime 字段对齐 
+            # hive_partitioning  --- automate path to key=value in partition cols 
         """
         cdef:
-            int num_rows  # Py_ssize_t
             object batch, duck_mgr = get_duckdb_manager()
+            object loop = asyncio.get_running_loop()
             Request req = Request(start_date=start_date, end_date=end_date, sid=sids)
 
         async with duck_mgr as ctx:
             async for batch in ctx.query(req, close_template):
-                num_rows = batch.num_rows
-                if num_rows == 0:
-                    continue
-                
-                # RecordBatchReader ---> primitive array suited for to_numpy C ptr pyarrow  0-bitmap 1-data / avoid table = pa.Table.from_batches([batch]) 
-                # _buf_sid = batch.column(0).to_numpy(zero_copy_only=False) # due to pyarrow bytes/str differ from NumPy memory layout 
-                _buf_sid = batch.column("sid").to_pylist() # to_pylist is faster than to_numpy for bytes/str
+                    _next_gen = await loop.run_in_executor(None, self._process_batch, batch)
+                    # yield from _next_gen
+                    for resp in _next_gen:
+                        yield resp 
 
-                # grp by sid indices
-                c_indices = np.where(_buf_sid[:num_rows-1] != _buf_sid[1:])[0] + 1
-                s_indices = np.insert(c_indices, 0, 0)
-                e_indices = np.append(c_indices, len(_buf_sid))
+    cdef object _process_batch(self, batch):
+        cdef object sid_col = batch.column("sid")
+        cdef int num_rows = len(sid_col)
+        cdef object s_indices = None
+        cdef object e_indices = None
+        cdef int start, end
 
-                for start, end in zip(s_indices, e_indices):
-                    # slice zero_copy and fast
-                    sub_btach = batch.slice(start, end - start)
+        if num_rows == 0: 
+            return service_pb2.CloseFrame() 
+            
+        if num_rows == 1:
+            s_indices = pa.array([0], type=pa.int64())
+            e_indices = pa.array([1], type=pa.int64())
+        else:
+            equal_mask = pc.equal(sid_col, sid_col[0])
 
-                    resp = service_pb2.CloseFrame()
-                    resp.sid = _buf_sid[start] 
-                    resp.date.extend(sub_btach.column("day").to_numpy()) # Vectorized Extend to_numpy() zero_copy
-                    resp.close.extend(sub_btach.column("close").to_numpy())
-                    yield resp
+            all_same = pc.all(equal_mask).as_py()
+            if all_same:
+                s_indices = pa.array([0], type=pa.int64())
+                e_indices = pa.array([num_rows], type=pa.int64())
+            else:
+                lslice = sid_col.slice(offset=0, length=num_rows - 1)
+                rslice = sid_col.slice(offset=1, length=num_rows - 1)
+
+                bound_mask = pc.not_equal(lslice, rslice)
+                bound_indices = pc.add(pc.indices_non_zero(bound_mask), 1)
+
+                s_indices = pc.concat_arrays([pa.array([0], type=pa.int64()), bound_indices])
+                e_indices = pc.concat_arrays([bound_indices, pa.array([num_rows], type=pa.int64())])
+
+        def yield_generator():
+            for start_scalar, end_scalar in zip(s_indices, e_indices):
+                start = start_scalar.as_py()
+                end = end_scalar.as_py()
+
+                sub_btach = batch.slice(start, end - start)
+                resp = service_pb2.CloseFrame()
+                resp.sid = sid_col[start].as_py() 
+                resp.date.extend(sub_btach.column("day").to_numpy()) 
+                resp.close.extend(sub_btach.column("close").to_numpy())
+                yield resp 
+        return yield_generator()
 
 
 cdef class Adjust:
-    """
-        内存复用  预分配和NumPy 数组
-        减少对象创建 load_only
-        零拷贝思想 Protobuf 高效 extend 接口
-    """
 
     def __init__(self):
         self._buf_ex_date = np.empty(CHUNK_SIZE, dtype=np.int32)
