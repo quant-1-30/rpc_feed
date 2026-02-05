@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 import argparse
 from pathlib import Path
-from core.rpc.feed import bt_feed
+from rpc_feed.core.rpc.feed import bt_feed
 
 
 def parse_args():
@@ -55,10 +55,10 @@ if __name__ == "__main__":
    # bt_feed.load(xml, dataset_path, prefix=".01", _filter="fund")
 
    # # dataset csv
-   # dataset_path = Path("~/Downloads/raw_data/csv/stock/2022").expanduser()
-   # xml = "../xml/tick_csv.graphml"
-   # bt_feed.load(xml, dataset_path, prefix=".csv", _filter="asset")
+   dataset_path = Path("~/Downloads/raw_data/csv/stock/2019").expanduser()
+   xml = "../xml/tick_csv.graphml"
+   bt_feed.load(xml, str(dataset_path), prefix="csv_stock")
 
-   dataset_path = Path("~/Downloads/raw_data/csv/fund/2022").expanduser()
-   xml = "../xml/fund_csv.graphml"
-   bt_feed.load(xml, dataset_path, prefix=".csv", _filter="fund")
+#    dataset_path = Path("~/Downloads/raw_data/csv/fund/2022").expanduser()
+#    xml = "../xml/fund_csv.graphml"
+#    bt_feed.load(xml, dataset_path, prefix=".csv", _filter="fund")

@@ -16,7 +16,7 @@ from rpc_feed.utils.wrapper import singleton
 
 
 class ConnectionPool:
-    def __init__(self, db_path, max_connections=10):
+    def __init__(self, db_path, max_connections):
         self.db_path = db_path
         self.max_connections = max_connections
         self._pool = queue.Queue(max_connections)
@@ -95,6 +95,7 @@ class DuckDBManager: # 非线程安全
         self.view_cache_file = cache_path / os.getenv("DUCKVIEW")
         self.dataset_root = Path(os.getenv("DUCKDATASET")).expanduser()
         self.batch_size = int(os.getenv("DUCKBATCHSIZE"))
+        self.max_connections = int(os.getenv("DUCKCONNECTION"))
 
         self.regex = r"^(6|0|3)\d{5}"  # stock/fund 
         self._bin_regex = re.compile(self.regex.encode('ascii'))
@@ -104,7 +105,7 @@ class DuckDBManager: # 非线程安全
 
         self._thread_local = threading.local()
         self.db_query_lock = threading.Lock()
-        self.connection_pool = ConnectionPool(self.db_path, max_connections=20)
+        self.connection_pool = ConnectionPool(self.db_path, max_connections=max_connections)
 
     def _load_cache(self):
         if Path(self.view_cache_file).exists():
@@ -203,7 +204,7 @@ class DuckDBManager: # 非线程安全
                     
                 except StopIteration:
                     break
-            print("Arrow Query completed.")
+            # print("Arrow Query completed.")
         finally:
             self._release_conn(conn)
 
@@ -218,11 +219,11 @@ class DuckDBManager: # 非线程安全
 
     async def __aexit__(self, exc_type, exc_val, exc_tb):
         print("__aexit__", exc_type, exc_val, exc_tb)
-        # 等待所有后台任务完成
         self._save_cache()
         if self._tasks:
             await asyncio.gather(*self._tasks, return_exceptions=True)
         self._tasks = set()
+        return False
 
 
 def get_duckdb_manager():

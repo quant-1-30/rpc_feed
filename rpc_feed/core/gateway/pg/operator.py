@@ -11,7 +11,7 @@ from contextlib import asynccontextmanager, AbstractAsyncContextManager
 from typing import Union, List, Iterable, Any, AsyncGenerator
 
 from .schema import Base
-from utils.wrapper import singleton
+from rpc_feed.utils.wrapper import singleton
 
 
 class AsyncStreamProxy:
@@ -193,8 +193,7 @@ class AsyncOps:
 
     async def __aexit__(self, exc_type, exc_value, traceback): # bool
             if exc_type is not None:
-                print(f"AsyncOps Error: {exc_type}, {exc_value}, {traceback}")
-            # __aexit__  True mean suppress exception
+                print(f"AsyncOps Error: {exc_type}, {exc_value}, {traceback}") # __aexit__  True mean suppress exception
             return False
     
     async def cleanup(self):

@@ -30,7 +30,7 @@ class RpcServer(service_pb2_grpc.btDataFeedServicer):
         self,
         request: service_pb2.QuoteRequest,
         context: grpc.ServicerContext,
-    ) -> service_pb2.Calendar: # type: ignore
+    ) -> service_pb2.ArrowFrame: # type: ignore
         
         await self._set_context(context)
 
@@ -54,7 +54,7 @@ class RpcServer(service_pb2_grpc.btDataFeedServicer):
         self,
         request: service_pb2.QuoteRequest,
         context: grpc.ServicerContext,
-    ) -> service_pb2.Calendar: # type: ignore
+    ) -> service_pb2.ArrowFrame: # type: ignore
         
         await self._set_context(context)
 
@@ -70,7 +70,7 @@ class RpcServer(service_pb2_grpc.btDataFeedServicer):
         self,
         request: service_pb2.QuoteRequest,
         context: grpc.ServicerContext,
-    ) -> service_pb2.DailyFrame: # type: ignore
+    ) -> service_pb2.ArrowFrame: # type: ignore
         
         await self._set_context(context)
 
@@ -85,10 +85,10 @@ class RpcServer(service_pb2_grpc.btDataFeedServicer):
         self,
         request: service_pb2.QuoteRequest,
         context: grpc.ServicerContext,
-    ) -> service_pb2.TickFrame: # type: ignore
+    ) -> service_pb2.ArrowFrame: # type: ignore
         
         await self._set_context(context)
-        logging.info("Received Line")
+        logging.info("Received Tick")
 
         response_iterator = bt_feed.fetch("tick", request.start_date, request.end_date, list(request.sid))
         async for response in response_iterator:
@@ -99,7 +99,7 @@ class RpcServer(service_pb2_grpc.btDataFeedServicer):
         self,
         request: service_pb2.QuoteRequest,
         context: grpc.ServicerContext,
-    ) -> service_pb2.CloseFrame: # type: ignore
+    ) -> service_pb2.ArrowFrame: # type: ignore
         
         await self._set_context(context)
 
@@ -113,7 +113,7 @@ class RpcServer(service_pb2_grpc.btDataFeedServicer):
         self,
         request: service_pb2.QuoteRequest,
         context: grpc.ServicerContext,
-    ) -> service_pb2.AdjFrame: # type: ignore
+    ) -> service_pb2.ArrowFrame: # type: ignore
         
         await self._set_context(context)
 
@@ -128,7 +128,7 @@ class RpcServer(service_pb2_grpc.btDataFeedServicer):
         self,
         request: service_pb2.QuoteRequest,
         context: grpc.ServicerContext,
-    ) -> service_pb2.RightmentFrame: # type: ignore
+    ) -> service_pb2.ArrowFrame: # type: ignore
         
         await self._set_context(context)
 

@@ -11,18 +11,35 @@ import numpy as np
 from sqlalchemy import select, and_, or_, func, cast, Integer, BigInteger
 from sqlalchemy.orm import load_only  # load_only 在 orm 模块中
 
-from core.gateway import *
-from core.rpc.serialize.pb import service_pb2
-
 from libc.math cimport round 
 from libc.stdint cimport uint8_t, int64_t
 from libcpp.string cimport string as cpp_string
-from rpc_feed.core.gateway.duckdb.utils cimport Request
 
+from rpc_feed.core.gateway import *
+from rpc_feed.core.rpc.serialize.pb import service_pb2
+from rpc_feed.core.gateway.duckdb.utils cimport Request
 
 cdef long CHUNK_SIZE = 1024 
 cdef long MULT = 1000 
 cdef cpp_string tz_info = b"Asia/Shanghai"
+cdef TICK_PROCESS_TIMEOUT = 100
+
+
+cdef object arrow_options = pa.ipc.IpcWriteOptions(
+    compression='lz4', # lz4 internal / zstd public 
+    use_threads=True
+) 
+
+cdef object batch_to_resp(object batch):
+    sink = pa.BufferOutputStream() # ipc stream bytes 
+    with pa.ipc.new_stream(sink, batch.schema, options=arrow_options) as writer:
+        writer.write_batch(batch) # writer.write_table(batch)
+
+    buf = sink.getvalue()
+    resp = service_pb2.ArrowFrame(
+        payload=buf.to_pybytes()  # $O(N)$ copy ops 
+    )
+    return resp 
 
 
 cdef class TradingCalendar:
@@ -73,20 +90,29 @@ cdef class TradingCalendar:
                 if i > 0:
                     yield self._flush(i)
 
-    cdef object _flush(self, int count): # protobuf extend slice copy avoid append 
-        cdef object resp = service_pb2.Calendar()
+    cdef object _flush(self, int count): # protobuf extend slice copy 
+        cdef dict metadata
+        cdef object batch
 
-        resp.tz_info = tz_info
-        resp.date.extend(self._buf_date[:count])
-        return resp
-
+        batch = pa.RecordBatch.from_arrays(
+            [
+                pa.array(self._buf_date[:count], type=pa.int32())
+            ],
+            names=["date"]
+        )
+        metadata = {
+            # b"tz_info": meta.tz_info,
+            b"rpc_type": b"calendar"
+        }
+        batch = batch.replace_schema_metadata(metadata) # zero_copy
+        return batch_to_resp(batch)
+  
 
 cdef class Instrument:
 
     def __init__(self):
         self._buf_first_trading = np.empty(CHUNK_SIZE, dtype=np.int32)
         self._buf_delist = np.empty(CHUNK_SIZE, dtype=np.int32)
-        # str / bytes not allowed preallocate memory / prefill
         self._buf_sid = [b''] * CHUNK_SIZE
         self._buf_name = [b''] * CHUNK_SIZE
 
@@ -125,12 +151,23 @@ cdef class Instrument:
                     yield self._flush(i)
 
     cdef object _flush(self, int count): # protobuf extend slice copy avoid append --- zero_copy 
-        cdef object resp = service_pb2.InstFrame()
-        resp.sid.extend(self._buf_sid[:count])
-        resp.name.extend(self._buf_name[:count])
-        resp.first_trading.extend(self._buf_first_trading[:count])
-        resp.delist.extend(self._buf_delist[:count])
-        return resp
+        cdef dict metadata
+        cdef object batch
+
+        batch = pa.RecordBatch.from_arrays(
+            [
+                pa.array(self._buf_sid[:count], type=pa.binary()),
+                pa.array(self._buf_name[:count], type=pa.binary()),
+                pa.array(self._buf_first_trading[:count], type=pa.int32()),
+                pa.array(self._buf_delist[:count], type=pa.int32()),
+            ],
+            names=["sid", "name", "first_trading", "delist"]
+        )
+        metadata = {
+            b"rpc_type": b"instrument"
+        }
+        batch = batch.replace_schema_metadata(metadata) 
+        return batch_to_resp(batch)
 
 
 cdef class Index:
@@ -186,150 +223,148 @@ cdef class Index:
                 if i > 0: yield self._flush(i, last_sid)
 
     cdef object _flush(self, int count, bytes sid):
-        cdef object resp = service_pb2.DailyFrame(sid=sid)
-        resp.date.extend(self._buf_date[:count])
-        resp.open.extend(self._buf_open[:count])
-        resp.high.extend(self._buf_high[:count])
-        resp.low.extend(self._buf_low[:count])
-        resp.close.extend(self._buf_close[:count])
-        resp.volume.extend(self._buf_volume[:count])
-        resp.amount.extend(self._buf_amount[:count])
-        return resp
+        cdef dict metadata
+        cdef object batch
+        
+        batch = pa.RecordBatch.from_arrays(
+            [
+                pa.array(self._buf_date[:count], type=pa.int32()),
+                pa.array(self._buf_open[:count], type=pa.int32()),
+                pa.array(self._buf_high[:count], type=pa.int32()),
+                pa.array(self._buf_low[:count], type=pa.int32()),
+                pa.array(self._buf_close[:count], type=pa.int32()),
+                pa.array(self._buf_volume[:count], type=pa.int64()),
+                pa.array(self._buf_amount[:count], type=pa.int64()),
+            ],
+            names=["tick", "open", "high", "low", "close", "volume", "amount"]
+        )
+        metadata = {
+            b"sid": sid,
+            b"rpc_type": b"tick"
+        }
+        batch = batch.replace_schema_metadata(metadata) # zero_copy
+        return batch_to_resp(batch)
 
 
 cdef class Tick:
 
     async def __call__(self, int start_date, int end_date, list sids=[]):
-            cdef:
-                Request req = Request(start_date=start_date, end_date=end_date, sid=sids)
-                object batch, duck_mgr = get_duckdb_manager()
-                object loop = asyncio.get_running_loop()
-
-            async with duck_mgr as ctx:
-                async for batch in ctx.query(req, tick_template):
-                    if batch.num_rows == 0: continue
-                    _next_gen = await loop.run_in_executor(None, self._process_batch, batch)
-                    for resp in _next_gen: # yield from not supported in cython
-                        # print("tick resp ", resp)
-                        yield resp 
-    
-    cdef object _process_batch(self, object batch):
-            # RecordBatchReader ---> primitive array suited for to_numpy C ptr pyarrow  0-bitmap 1-data / avoid table = pa.Table.from_batches([batch]) 
-            cdef object sid_col = batch.column("sid") # avoid to_pylist
-            cdef int num_rows = len(sid_col) # cdef Py_ssize_t num_rows  # used index
-            cdef object s_indices = None
-            cdef object e_indices = None
-            cdef int start, end
-
-            if num_rows == 0: 
-                return service_pb2.TickFrame()
-                
-            if num_rows == 1:
-                s_indices = pa.array([0], type=pa.int64())
-                e_indices = pa.array([1], type=pa.int64())
-            else:
-                equal_mask = pc.equal(sid_col, sid_col[0])
-
-                all_same = pc.all(equal_mask).as_py() 
-                if all_same:
-                    s_indices = pa.array([0], type=pa.int64())
-                    e_indices = pa.array([num_rows], type=pa.int64())
-                else:
-                    lslice = sid_col.slice(offset=0, length=num_rows - 1)
-                    rslice = sid_col.slice(offset=1, length=num_rows - 1)
-
-                    bound_mask = pc.not_equal(lslice, rslice)
-                    bound_indices = pc.add(pc.indices_non_zero(bound_mask), 1)
-
-                    s_indices = pc.concat_arrays([pa.array([0], type=pa.int64()), bound_indices])
-                    e_indices = pc.concat_arrays([bound_indices, pa.array([num_rows], type=pa.int64())])
-    
-            def yield_generator():
-                for start_scalar, end_scalar in zip(s_indices, e_indices):
-                    start = start_scalar.as_py()
-                    end = end_scalar.as_py()
-                    sub_batch = batch.slice(start, end - start)
-
-                    resp = service_pb2.TickFrame()
-                    resp.sid = sid_col[start].as_py() 
-                    resp.tick.extend(sub_batch.column(1).to_numpy(zero_copy_only=True))
-                    resp.open.extend(sub_batch.column(2).to_numpy(zero_copy_only=True))
-                    resp.high.extend(sub_batch.column(3).to_numpy(zero_copy_only=True))
-                    resp.low.extend(sub_batch.column(4).to_numpy(zero_copy_only=True))
-                    resp.close.extend(sub_batch.column(5).to_numpy(zero_copy_only=True))
-                    resp.volume.extend(sub_batch.column(6).to_numpy(zero_copy_only=True))
-                    resp.amount.extend(sub_batch.column(7).to_numpy(zero_copy_only=True))
-                    yield resp
-            return yield_generator()
-
-
-cdef class Close:
-
-    async def __call__(self, int start_date, int end_date, list sids=[]):
-        """
-            Parameters
-            ----------
-            Returns
-            ----------
-            # SELECT * FROM stock
-            # WHERE datetime >= TIMESTAMP '2024-06-01 09:30:00'
-            # DuckDB 会自动把 '2024-06-01 09:30:00' 解析为内部 TIMESTAMP 类型，与 Parquet 里的 datetime 字段对齐 
-            # hive_partitioning  --- automate path to key=value in partition cols 
-        """
         cdef:
+            Request req = Request(start_date=start_date, end_date=end_date, sid=sids)
             object batch, duck_mgr = get_duckdb_manager()
             object loop = asyncio.get_running_loop()
-            Request req = Request(start_date=start_date, end_date=end_date, sid=sids)
+            list batch_results
 
         async with duck_mgr as ctx:
-            async for batch in ctx.query(req, close_template):
-                    _next_gen = await loop.run_in_executor(None, self._process_batch, batch)
-                    # yield from _next_gen
-                    for resp in _next_gen:
+            async for batch in ctx.query(req, tick_template):
+                if batch.num_rows == 0: continue
+                # batch_results = await asyncio.wait_for( # block util finish
+                #     loop.run_in_executor(None, self._process_batch, batch),
+                #     timeout=TICK_PROCESS_TIMEOUT)
+                try:
+                    for resp in self._process_batch(batch):
                         yield resp 
-
-    cdef object _process_batch(self, batch):
+                except asyncio.TimeoutError:
+                    print("_process_batch Timeout")
+                    continue 
+                except asyncio.CancelledError:
+                    print("_process_batch CancelledError")
+                    raise 
+                    
+    def _process_batch(self, object batch):
         cdef object sid_col = batch.column("sid")
-        cdef int num_rows = len(sid_col)
+        cdef Py_ssize_t num_rows = len(sid_col)
+        
         cdef object s_indices = None
         cdef object e_indices = None
-        cdef int start, end
-
+        cdef object slice_batch, resp
+        cdef Py_ssize_t start, end
+        
         if num_rows == 0: 
-            return service_pb2.CloseFrame() 
+            return
             
         if num_rows == 1:
             s_indices = pa.array([0], type=pa.int64())
             e_indices = pa.array([1], type=pa.int64())
         else:
             equal_mask = pc.equal(sid_col, sid_col[0])
-
-            all_same = pc.all(equal_mask).as_py()
-            if all_same:
+            if pc.all(equal_mask).as_py():
                 s_indices = pa.array([0], type=pa.int64())
                 e_indices = pa.array([num_rows], type=pa.int64())
             else:
                 lslice = sid_col.slice(offset=0, length=num_rows - 1)
                 rslice = sid_col.slice(offset=1, length=num_rows - 1)
-
                 bound_mask = pc.not_equal(lslice, rslice)
                 bound_indices = pc.add(pc.indices_non_zero(bound_mask), 1)
-
                 s_indices = pc.concat_arrays([pa.array([0], type=pa.int64()), bound_indices])
                 e_indices = pc.concat_arrays([bound_indices, pa.array([num_rows], type=pa.int64())])
 
-        def yield_generator():
-            for start_scalar, end_scalar in zip(s_indices, e_indices):
-                start = start_scalar.as_py()
-                end = end_scalar.as_py()
+        for start_scalar, end_scalar in zip(s_indices, e_indices):
+            start = start_scalar.as_py()
+            end = end_scalar.as_py()
+            sid = sid_col[start].as_py()
+            slice_batch = batch.slice(start, end - start)
+            yield self._flush(sid, slice_batch)
 
-                sub_btach = batch.slice(start, end - start)
-                resp = service_pb2.CloseFrame()
-                resp.sid = sid_col[start].as_py() 
-                resp.date.extend(sub_btach.column("day").to_numpy()) 
-                resp.close.extend(sub_btach.column("close").to_numpy())
-                yield resp 
-        return yield_generator()
+    cdef _flush(self, bytes sid, object batch):
+        metadata = {
+        b"sid": sid,
+        b"rpc_type": b"tick"
+        }
+        batch = batch.replace_schema_metadata(metadata) # zero_copy
+        return batch_to_resp(batch)
+
+
+cdef class Close:
+
+    async def __call__(self, int start_date, int end_date, list sids=[]):
+        """Get dataset data.
+
+        Parameters
+        ----------
+
+        Returns
+        ----------
+        # SELECT * FROM stock
+        # WHERE datetime >= TIMESTAMP '2024-06-01 09:30:00'
+        # DuckDB 会自动把 '2024-06-01 09:30:00' 解析为内部 TIMESTAMP 类型，与 Parquet 里的 datetime 字段对齐 
+        # hive_partitioning  --- automate path to key=value in partition cols 
+        """
+        cdef:
+            object batch, slice_batch
+            object duck_mgr = get_duckdb_manager()
+            bytes sid
+
+            int num_rows  # Py_ssize_t
+            Request req = Request(start_date=start_date, end_date=end_date, sid=sids)
+
+        async with duck_mgr as ctx:
+            async for batch in ctx.query(req, close_template):
+                num_rows = batch.num_rows
+                if num_rows == 0:
+                    continue
+                
+                sid_array = batch.column("sid").to_numpy(zero_copy_only=False)
+
+                c_indices = np.where(sid_array[:num_rows-1] != sid_array[1:])[0] + 1
+                s_indices = np.insert(c_indices, 0, 0)
+                e_indices = np.append(c_indices, len(sid_array))
+
+                for start, end in zip(s_indices, e_indices):
+                    sid = sid_array[start]
+                    slice_batch = batch.slice(start, end - start)
+                    frame = self._flush(sid, slice_batch)
+                    yield frame
+
+    cdef object _flush(self, bytes sid, object batch):
+        cdef dict metadata
+        
+        metadata = {
+            b"sid": sid,
+            b"rpc_type": b"close"
+        }
+        batch = batch.replace_schema_metadata(metadata) # zero_copy
+        return batch_to_resp(batch)
 
 
 cdef class Adjust:
@@ -383,13 +418,25 @@ cdef class Adjust:
                     yield self._flush(i, last_sid)
 
     cdef object _flush(self, int count, bytes sid):
-        cdef object resp = service_pb2.AdjFrame(sid=sid)
-        resp.ex_date.extend(self._buf_ex_date[:count]) # protobuf extend
-        resp.register_date.extend(self._buf_register_date[:count])
-        resp.bonus_share.extend(self._buf_bonus_share[:count])
-        resp.transfer.extend(self._buf_transfer[:count])
-        resp.bonus.extend(self._buf_bonus[:count])
-        return resp
+        cdef dict metadata
+        cdef object batch
+
+        batch = pa.RecordBatch.from_arrays(
+            [
+                pa.array(self._buf_ex_date[:count], type=pa.int32()),
+                pa.array(self._buf_register_date[:count], type=pa.int32()),
+                pa.array(self._buf_bonus_share[:count], type=pa.int32()),
+                pa.array(self._buf_transfer[:count], type=pa.int32()),
+                pa.array(self._buf_bonus[:count], type=pa.int32()),
+            ],
+            names=["ex_date", "register_date", "bonus_share", "transfer", "bonus"]
+        )
+        metadata = {
+            b"sid": sid,
+            b"rpc_type": b"adjustment"
+        }
+        batch = batch.replace_schema_metadata(metadata) # zero_copy
+        return batch_to_resp(batch)
 
 
 cdef class Right:
@@ -440,9 +487,21 @@ cdef class Right:
                     yield self._flush(i, last_sid)
 
     cdef object _flush(self, int count, bytes sid):
-        cdef object resp = service_pb2.RightmentFrame(sid=sid)
-        resp.ex_date.extend(self._buf_ex_date[:count])
-        resp.register_date.extend(self._buf_register_date[:count])
-        resp.price.extend(self._buf_price[:count])
-        resp.ratio.extend(self._buf_ratio[:count])
-        return resp
+        cdef dict rightment
+        cdef object batch
+
+        batch = pa.RecordBatch.from_arrays(
+            [
+                pa.array(self._buf_ex_date[:count], type=pa.int32()),
+                pa.array(self._buf_register_date[:count], type=pa.int32()),
+                pa.array(self._buf_price[:count], type=pa.int32()),
+                pa.array(self._buf_ratio[:count], type=pa.int32()),
+            ],
+            names=["ex_date", "register_date", "price", "ratio"]
+        )
+        metadata = {
+            b"sid": sid,
+            b"rpc_type": b"right"
+        }
+        batch = batch.replace_schema_metadata(metadata) # zero_copy
+        return batch_to_resp(batch)

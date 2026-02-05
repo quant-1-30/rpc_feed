@@ -7,10 +7,10 @@
 
 import os
 
-from core.graph import Graph
-from utils.io import recursive_glob
+from rpc_feed.core.graph import Graph
+from rpc_feed.utils.io import recursive_glob
 
-from core.datasets import _providers
+from rpc_feed.core.datasets import _providers
 
 
 cdef class BtFeed:
@@ -49,7 +49,7 @@ cdef class BtFeed:
 
         suffix, sub_suffix = prefix.split("_") # struct_fund
 
-        iterables = recursive_glob(dataset_path, suffix=prefix, filter=self._pattern[suffix][sub_suffix])
+        iterables = recursive_glob(dataset_path, suffix=suffix, pattern=self._pattern[suffix][sub_suffix])
         self.pipeline.to_execute(graph_xml, iterables, parallel)
 
 

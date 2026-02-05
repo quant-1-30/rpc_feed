@@ -38,37 +38,37 @@ class btDataFeedStub(object):
         self.CalendarCall = channel.unary_stream(
                 '/btDataFeed/CalendarCall',
                 request_serializer=service__pb2.QuoteRequest.SerializeToString,
-                response_deserializer=service__pb2.Calendar.FromString,
+                response_deserializer=service__pb2.ArrowFrame.FromString,
                 _registered_method=True)
         self.InstrumentCall = channel.unary_stream(
                 '/btDataFeed/InstrumentCall',
                 request_serializer=service__pb2.QuoteRequest.SerializeToString,
-                response_deserializer=service__pb2.InstFrame.FromString,
+                response_deserializer=service__pb2.ArrowFrame.FromString,
                 _registered_method=True)
         self.IndexStreamCall = channel.unary_stream(
                 '/btDataFeed/IndexStreamCall',
                 request_serializer=service__pb2.QuoteRequest.SerializeToString,
-                response_deserializer=service__pb2.DailyFrame.FromString,
+                response_deserializer=service__pb2.ArrowFrame.FromString,
                 _registered_method=True)
         self.TickStreamCall = channel.unary_stream(
                 '/btDataFeed/TickStreamCall',
                 request_serializer=service__pb2.QuoteRequest.SerializeToString,
-                response_deserializer=service__pb2.TickFrame.FromString,
+                response_deserializer=service__pb2.ArrowFrame.FromString,
                 _registered_method=True)
         self.CloseStreamCall = channel.unary_stream(
                 '/btDataFeed/CloseStreamCall',
                 request_serializer=service__pb2.QuoteRequest.SerializeToString,
-                response_deserializer=service__pb2.CloseFrame.FromString,
+                response_deserializer=service__pb2.ArrowFrame.FromString,
                 _registered_method=True)
         self.AdjustmentStreamCall = channel.unary_stream(
                 '/btDataFeed/AdjustmentStreamCall',
                 request_serializer=service__pb2.QuoteRequest.SerializeToString,
-                response_deserializer=service__pb2.AdjFrame.FromString,
+                response_deserializer=service__pb2.ArrowFrame.FromString,
                 _registered_method=True)
         self.RightStreamCall = channel.unary_stream(
                 '/btDataFeed/RightStreamCall',
                 request_serializer=service__pb2.QuoteRequest.SerializeToString,
-                response_deserializer=service__pb2.RightmentFrame.FromString,
+                response_deserializer=service__pb2.ArrowFrame.FromString,
                 _registered_method=True)
         self.HeartBeat = channel.unary_unary(
                 '/btDataFeed/HeartBeat',
@@ -87,8 +87,7 @@ class btDataFeedServicer(object):
         raise NotImplementedError('Method not implemented!')
 
     def InstrumentCall(self, request, context):
-        """Column Streaming
-        """
+        """Missing associated documentation comment in .proto file."""
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
@@ -138,37 +137,37 @@ def add_btDataFeedServicer_to_server(servicer, server):
             'CalendarCall': grpc.unary_stream_rpc_method_handler(
                     servicer.CalendarCall,
                     request_deserializer=service__pb2.QuoteRequest.FromString,
-                    response_serializer=service__pb2.Calendar.SerializeToString,
+                    response_serializer=service__pb2.ArrowFrame.SerializeToString,
             ),
             'InstrumentCall': grpc.unary_stream_rpc_method_handler(
                     servicer.InstrumentCall,
                     request_deserializer=service__pb2.QuoteRequest.FromString,
-                    response_serializer=service__pb2.InstFrame.SerializeToString,
+                    response_serializer=service__pb2.ArrowFrame.SerializeToString,
             ),
             'IndexStreamCall': grpc.unary_stream_rpc_method_handler(
                     servicer.IndexStreamCall,
                     request_deserializer=service__pb2.QuoteRequest.FromString,
-                    response_serializer=service__pb2.DailyFrame.SerializeToString,
+                    response_serializer=service__pb2.ArrowFrame.SerializeToString,
             ),
             'TickStreamCall': grpc.unary_stream_rpc_method_handler(
                     servicer.TickStreamCall,
                     request_deserializer=service__pb2.QuoteRequest.FromString,
-                    response_serializer=service__pb2.TickFrame.SerializeToString,
+                    response_serializer=service__pb2.ArrowFrame.SerializeToString,
             ),
             'CloseStreamCall': grpc.unary_stream_rpc_method_handler(
                     servicer.CloseStreamCall,
                     request_deserializer=service__pb2.QuoteRequest.FromString,
-                    response_serializer=service__pb2.CloseFrame.SerializeToString,
+                    response_serializer=service__pb2.ArrowFrame.SerializeToString,
             ),
             'AdjustmentStreamCall': grpc.unary_stream_rpc_method_handler(
                     servicer.AdjustmentStreamCall,
                     request_deserializer=service__pb2.QuoteRequest.FromString,
-                    response_serializer=service__pb2.AdjFrame.SerializeToString,
+                    response_serializer=service__pb2.ArrowFrame.SerializeToString,
             ),
             'RightStreamCall': grpc.unary_stream_rpc_method_handler(
                     servicer.RightStreamCall,
                     request_deserializer=service__pb2.QuoteRequest.FromString,
-                    response_serializer=service__pb2.RightmentFrame.SerializeToString,
+                    response_serializer=service__pb2.ArrowFrame.SerializeToString,
             ),
             'HeartBeat': grpc.unary_unary_rpc_method_handler(
                     servicer.HeartBeat,
@@ -202,7 +201,7 @@ class btDataFeed(object):
             target,
             '/btDataFeed/CalendarCall',
             service__pb2.QuoteRequest.SerializeToString,
-            service__pb2.Calendar.FromString,
+            service__pb2.ArrowFrame.FromString,
             options,
             channel_credentials,
             insecure,
@@ -229,7 +228,7 @@ class btDataFeed(object):
             target,
             '/btDataFeed/InstrumentCall',
             service__pb2.QuoteRequest.SerializeToString,
-            service__pb2.InstFrame.FromString,
+            service__pb2.ArrowFrame.FromString,
             options,
             channel_credentials,
             insecure,
@@ -256,7 +255,7 @@ class btDataFeed(object):
             target,
             '/btDataFeed/IndexStreamCall',
             service__pb2.QuoteRequest.SerializeToString,
-            service__pb2.DailyFrame.FromString,
+            service__pb2.ArrowFrame.FromString,
             options,
             channel_credentials,
             insecure,
@@ -283,7 +282,7 @@ class btDataFeed(object):
             target,
             '/btDataFeed/TickStreamCall',
             service__pb2.QuoteRequest.SerializeToString,
-            service__pb2.TickFrame.FromString,
+            service__pb2.ArrowFrame.FromString,
             options,
             channel_credentials,
             insecure,
@@ -310,7 +309,7 @@ class btDataFeed(object):
             target,
             '/btDataFeed/CloseStreamCall',
             service__pb2.QuoteRequest.SerializeToString,
-            service__pb2.CloseFrame.FromString,
+            service__pb2.ArrowFrame.FromString,
             options,
             channel_credentials,
             insecure,
@@ -337,7 +336,7 @@ class btDataFeed(object):
             target,
             '/btDataFeed/AdjustmentStreamCall',
             service__pb2.QuoteRequest.SerializeToString,
-            service__pb2.AdjFrame.FromString,
+            service__pb2.ArrowFrame.FromString,
             options,
             channel_credentials,
             insecure,
@@ -364,7 +363,7 @@ class btDataFeed(object):
             target,
             '/btDataFeed/RightStreamCall',
             service__pb2.QuoteRequest.SerializeToString,
-            service__pb2.RightmentFrame.FromString,
+            service__pb2.ArrowFrame.FromString,
             options,
             channel_credentials,
             insecure,

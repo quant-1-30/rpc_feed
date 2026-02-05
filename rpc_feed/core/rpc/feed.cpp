@@ -9,15 +9,15 @@
         ],
         "include_dirs": [
             "/Users/hengxinliu/Library/Caches/pypoetry/virtualenvs/rpc-feed-IfJ-cfpj-py3.11/lib/python3.11/site-packages/numpy/core/include",
-            "/Users/hengxinliu/startup/rpc_feed/rpc_feed"
+            "/Users/hengxinliu/startup/rpc_feed"
         ],
         "language": "c++",
-        "name": "core.rpc.feed",
+        "name": "rpc_feed.core.rpc.feed",
         "sources": [
-            "core/rpc/feed.pyx"
+            "rpc_feed/core/rpc/feed.pyx"
         ]
     },
-    "module_name": "core.rpc.feed"
+    "module_name": "rpc_feed.core.rpc.feed"
 }
 END: Cython Metadata */
 
@@ -1147,8 +1147,8 @@ static int __Pyx_init_co_variables(void) {
     #define __PYX_EXTERN_C extern "C++"
 #endif
 
-#define __PYX_HAVE__core__rpc__feed
-#define __PYX_HAVE_API__core__rpc__feed
+#define __PYX_HAVE__rpc_feed__core__rpc__feed
+#define __PYX_HAVE_API__rpc_feed__core__rpc__feed
 /* Early includes */
 #ifdef _OPENMP
 #include <omp.h>
@@ -1366,7 +1366,7 @@ static const char *__pyx_filename;
 /* #### Code section: filename_table ### */
 
 static const char* const __pyx_f[] = {
-  "core/rpc/feed.pyx",
+  "rpc_feed/core/rpc/feed.pyx",
   "<stringsource>",
 };
 /* #### Code section: utility_code_proto_before_types ### */
@@ -1544,49 +1544,49 @@ static const char* const __pyx_f[] = {
 /* #### Code section: type_declarations ### */
 
 /*--- Type declarations ---*/
-struct __pyx_obj_4core_3rpc_4feed_BtFeed;
-struct __pyx_obj_4core_3rpc_4feed___pyx_scope_struct__fetch;
-struct __pyx_opt_args_4core_3rpc_4feed_6BtFeed_load;
+struct __pyx_obj_8rpc_feed_4core_3rpc_4feed_BtFeed;
+struct __pyx_obj_8rpc_feed_4core_3rpc_4feed___pyx_scope_struct__fetch;
+struct __pyx_opt_args_8rpc_feed_4core_3rpc_4feed_6BtFeed_load;
 
-/* "core/rpc/feed.pxd":9
+/* "rpc_feed/core/rpc/feed.pxd":9
  *     cdef object pipeline
  * 
  *     cpdef void load(self, str graph_xml, str dataset_path, str prefix, bint parallel=?)             # <<<<<<<<<<<<<<
 */
-struct __pyx_opt_args_4core_3rpc_4feed_6BtFeed_load {
+struct __pyx_opt_args_8rpc_feed_4core_3rpc_4feed_6BtFeed_load {
   int __pyx_n;
   int parallel;
 };
 
-/* "core/rpc/feed.pxd":2
+/* "rpc_feed/core/rpc/feed.pxd":2
  * 
  * cdef class BtFeed:             # <<<<<<<<<<<<<<
  * 
  *     cdef object _providers
 */
-struct __pyx_obj_4core_3rpc_4feed_BtFeed {
+struct __pyx_obj_8rpc_feed_4core_3rpc_4feed_BtFeed {
   PyObject_HEAD
-  struct __pyx_vtabstruct_4core_3rpc_4feed_BtFeed *__pyx_vtab;
+  struct __pyx_vtabstruct_8rpc_feed_4core_3rpc_4feed_BtFeed *__pyx_vtab;
   PyObject *_providers;
   PyObject *_pattern;
   PyObject *pipeline;
 };
 
 
-/* "core/rpc/feed.pyx":34
+/* "rpc_feed/core/rpc/feed.pyx":34
  *         self.pipeline = Graph()
  * 
  *     async def fetch(self, str topic, int start_date, int end_date, list sids=[]):             # <<<<<<<<<<<<<<
  *         cdef object iterator = self._providers[topic]
  *         cdef object c_obj
 */
-struct __pyx_obj_4core_3rpc_4feed___pyx_scope_struct__fetch {
+struct __pyx_obj_8rpc_feed_4core_3rpc_4feed___pyx_scope_struct__fetch {
   PyObject_HEAD
   PyObject *__pyx_v_c_obj;
   int __pyx_v_end_date;
   PyObject *__pyx_v_iterator;
   PyObject *__pyx_v_pb_obj;
-  struct __pyx_obj_4core_3rpc_4feed_BtFeed *__pyx_v_self;
+  struct __pyx_obj_8rpc_feed_4core_3rpc_4feed_BtFeed *__pyx_v_self;
   PyObject *__pyx_v_sids;
   int __pyx_v_start_date;
   PyObject *__pyx_v_topic;
@@ -1595,7 +1595,7 @@ struct __pyx_obj_4core_3rpc_4feed___pyx_scope_struct__fetch {
 
 
 
-/* "core/rpc/feed.pyx":16
+/* "rpc_feed/core/rpc/feed.pyx":16
  * 
  * 
  * cdef class BtFeed:             # <<<<<<<<<<<<<<
@@ -1603,10 +1603,10 @@ struct __pyx_obj_4core_3rpc_4feed___pyx_scope_struct__fetch {
  *     def __init__(self):
 */
 
-struct __pyx_vtabstruct_4core_3rpc_4feed_BtFeed {
-  void (*load)(struct __pyx_obj_4core_3rpc_4feed_BtFeed *, PyObject *, PyObject *, PyObject *, int __pyx_skip_dispatch, struct __pyx_opt_args_4core_3rpc_4feed_6BtFeed_load *__pyx_optional_args);
+struct __pyx_vtabstruct_8rpc_feed_4core_3rpc_4feed_BtFeed {
+  void (*load)(struct __pyx_obj_8rpc_feed_4core_3rpc_4feed_BtFeed *, PyObject *, PyObject *, PyObject *, int __pyx_skip_dispatch, struct __pyx_opt_args_8rpc_feed_4core_3rpc_4feed_6BtFeed_load *__pyx_optional_args);
 };
-static struct __pyx_vtabstruct_4core_3rpc_4feed_BtFeed *__pyx_vtabptr_4core_3rpc_4feed_BtFeed;
+static struct __pyx_vtabstruct_8rpc_feed_4core_3rpc_4feed_BtFeed *__pyx_vtabptr_8rpc_feed_4core_3rpc_4feed_BtFeed;
 /* #### Code section: utility_code_proto ### */
 
 /* --- Runtime support code (head) --- */
@@ -2613,29 +2613,29 @@ static int __Pyx_State_RemoveModule(void*);
 #define __PYX_ABI_MODULE_NAME "_cython_" CYTHON_ABI
 #define __PYX_TYPE_MODULE_PREFIX __PYX_ABI_MODULE_NAME "."
 
-static void __pyx_f_4core_3rpc_4feed_6BtFeed_load(struct __pyx_obj_4core_3rpc_4feed_BtFeed *__pyx_v_self, PyObject *__pyx_v_graph_xml, PyObject *__pyx_v_dataset_path, PyObject *__pyx_v_prefix, int __pyx_skip_dispatch, struct __pyx_opt_args_4core_3rpc_4feed_6BtFeed_load *__pyx_optional_args); /* proto*/
+static void __pyx_f_8rpc_feed_4core_3rpc_4feed_6BtFeed_load(struct __pyx_obj_8rpc_feed_4core_3rpc_4feed_BtFeed *__pyx_v_self, PyObject *__pyx_v_graph_xml, PyObject *__pyx_v_dataset_path, PyObject *__pyx_v_prefix, int __pyx_skip_dispatch, struct __pyx_opt_args_8rpc_feed_4core_3rpc_4feed_6BtFeed_load *__pyx_optional_args); /* proto*/
 
-/* Module declarations from "core.rpc.feed" */
-static PyObject *__pyx_f_4core_3rpc_4feed___pyx_unpickle_BtFeed__set_state(struct __pyx_obj_4core_3rpc_4feed_BtFeed *, PyObject *); /*proto*/
+/* Module declarations from "rpc_feed.core.rpc.feed" */
+static PyObject *__pyx_f_8rpc_feed_4core_3rpc_4feed___pyx_unpickle_BtFeed__set_state(struct __pyx_obj_8rpc_feed_4core_3rpc_4feed_BtFeed *, PyObject *); /*proto*/
 /* #### Code section: typeinfo ### */
 /* #### Code section: before_global_var ### */
-#define __Pyx_MODULE_NAME "core.rpc.feed"
-extern int __pyx_module_is_main_core__rpc__feed;
-int __pyx_module_is_main_core__rpc__feed = 0;
+#define __Pyx_MODULE_NAME "rpc_feed.core.rpc.feed"
+extern int __pyx_module_is_main_rpc_feed__core__rpc__feed;
+int __pyx_module_is_main_rpc_feed__core__rpc__feed = 0;
 
-/* Implementation of "core.rpc.feed" */
+/* Implementation of "rpc_feed.core.rpc.feed" */
 /* #### Code section: global_var ### */
 /* #### Code section: string_decls ### */
 static const char __pyx_k_pattern__providers_pipeline[] = "_pattern, _providers, pipeline";
 /* #### Code section: decls ### */
-static int __pyx_pf_4core_3rpc_4feed_6BtFeed___init__(struct __pyx_obj_4core_3rpc_4feed_BtFeed *__pyx_v_self); /* proto */
-static PyObject *__pyx_pf_4core_3rpc_4feed_6BtFeed_2fetch(struct __pyx_obj_4core_3rpc_4feed_BtFeed *__pyx_v_self, PyObject *__pyx_v_topic, int __pyx_v_start_date, int __pyx_v_end_date, PyObject *__pyx_v_sids); /* proto */
-static PyObject *__pyx_pf_4core_3rpc_4feed_6BtFeed_5load(struct __pyx_obj_4core_3rpc_4feed_BtFeed *__pyx_v_self, PyObject *__pyx_v_graph_xml, PyObject *__pyx_v_dataset_path, PyObject *__pyx_v_prefix, int __pyx_v_parallel); /* proto */
-static PyObject *__pyx_pf_4core_3rpc_4feed_6BtFeed_7__reduce_cython__(struct __pyx_obj_4core_3rpc_4feed_BtFeed *__pyx_v_self); /* proto */
-static PyObject *__pyx_pf_4core_3rpc_4feed_6BtFeed_9__setstate_cython__(struct __pyx_obj_4core_3rpc_4feed_BtFeed *__pyx_v_self, PyObject *__pyx_v___pyx_state); /* proto */
-static PyObject *__pyx_pf_4core_3rpc_4feed___pyx_unpickle_BtFeed(CYTHON_UNUSED PyObject *__pyx_self, PyObject *__pyx_v___pyx_type, long __pyx_v___pyx_checksum, PyObject *__pyx_v___pyx_state); /* proto */
-static PyObject *__pyx_tp_new_4core_3rpc_4feed_BtFeed(PyTypeObject *t, PyObject *a, PyObject *k); /*proto*/
-static PyObject *__pyx_tp_new_4core_3rpc_4feed___pyx_scope_struct__fetch(PyTypeObject *t, PyObject *a, PyObject *k); /*proto*/
+static int __pyx_pf_8rpc_feed_4core_3rpc_4feed_6BtFeed___init__(struct __pyx_obj_8rpc_feed_4core_3rpc_4feed_BtFeed *__pyx_v_self); /* proto */
+static PyObject *__pyx_pf_8rpc_feed_4core_3rpc_4feed_6BtFeed_2fetch(struct __pyx_obj_8rpc_feed_4core_3rpc_4feed_BtFeed *__pyx_v_self, PyObject *__pyx_v_topic, int __pyx_v_start_date, int __pyx_v_end_date, PyObject *__pyx_v_sids); /* proto */
+static PyObject *__pyx_pf_8rpc_feed_4core_3rpc_4feed_6BtFeed_5load(struct __pyx_obj_8rpc_feed_4core_3rpc_4feed_BtFeed *__pyx_v_self, PyObject *__pyx_v_graph_xml, PyObject *__pyx_v_dataset_path, PyObject *__pyx_v_prefix, int __pyx_v_parallel); /* proto */
+static PyObject *__pyx_pf_8rpc_feed_4core_3rpc_4feed_6BtFeed_7__reduce_cython__(struct __pyx_obj_8rpc_feed_4core_3rpc_4feed_BtFeed *__pyx_v_self); /* proto */
+static PyObject *__pyx_pf_8rpc_feed_4core_3rpc_4feed_6BtFeed_9__setstate_cython__(struct __pyx_obj_8rpc_feed_4core_3rpc_4feed_BtFeed *__pyx_v_self, PyObject *__pyx_v___pyx_state); /* proto */
+static PyObject *__pyx_pf_8rpc_feed_4core_3rpc_4feed___pyx_unpickle_BtFeed(CYTHON_UNUSED PyObject *__pyx_self, PyObject *__pyx_v___pyx_type, long __pyx_v___pyx_checksum, PyObject *__pyx_v___pyx_state); /* proto */
+static PyObject *__pyx_tp_new_8rpc_feed_4core_3rpc_4feed_BtFeed(PyTypeObject *t, PyObject *a, PyObject *k); /*proto*/
+static PyObject *__pyx_tp_new_8rpc_feed_4core_3rpc_4feed___pyx_scope_struct__fetch(PyTypeObject *t, PyObject *a, PyObject *k); /*proto*/
 /* #### Code section: late_includes ### */
 /* #### Code section: module_state ### */
 /* SmallCodeConfig */
@@ -2656,10 +2656,10 @@ typedef struct {
   PyObject *__pyx_empty_tuple;
   PyObject *__pyx_empty_bytes;
   PyObject *__pyx_empty_unicode;
-  PyObject *__pyx_type_4core_3rpc_4feed_BtFeed;
-  PyObject *__pyx_type_4core_3rpc_4feed___pyx_scope_struct__fetch;
-  PyTypeObject *__pyx_ptype_4core_3rpc_4feed_BtFeed;
-  PyTypeObject *__pyx_ptype_4core_3rpc_4feed___pyx_scope_struct__fetch;
+  PyObject *__pyx_type_8rpc_feed_4core_3rpc_4feed_BtFeed;
+  PyObject *__pyx_type_8rpc_feed_4core_3rpc_4feed___pyx_scope_struct__fetch;
+  PyTypeObject *__pyx_ptype_8rpc_feed_4core_3rpc_4feed_BtFeed;
+  PyTypeObject *__pyx_ptype_8rpc_feed_4core_3rpc_4feed___pyx_scope_struct__fetch;
   __Pyx_CachedCFunction __pyx_umethod_PyDict_Type_items;
   __Pyx_CachedCFunction __pyx_umethod_PyDict_Type_pop;
   __Pyx_CachedCFunction __pyx_umethod_PyDict_Type_values;
@@ -2688,8 +2688,8 @@ PyTypeObject *__pyx_CoroutineAwaitType;
 
 
 #if CYTHON_USE_FREELISTS
-struct __pyx_obj_4core_3rpc_4feed___pyx_scope_struct__fetch *__pyx_freelist_4core_3rpc_4feed___pyx_scope_struct__fetch[8];
-int __pyx_freecount_4core_3rpc_4feed___pyx_scope_struct__fetch;
+struct __pyx_obj_8rpc_feed_4core_3rpc_4feed___pyx_scope_struct__fetch *__pyx_freelist_8rpc_feed_4core_3rpc_4feed___pyx_scope_struct__fetch[8];
+int __pyx_freecount_8rpc_feed_4core_3rpc_4feed___pyx_scope_struct__fetch;
 #endif
 /* CachedMethodType.module_state_decls */
 #if CYTHON_COMPILING_IN_LIMITED_API
@@ -2745,11 +2745,11 @@ static __pyx_mstatetype * const __pyx_mstate_global = &__pyx_mstate_global_stati
 #define __pyx_kp_u__3 __pyx_string_tab[3]
 #define __pyx_kp_u__4 __pyx_string_tab[4]
 #define __pyx_kp_u_add_note __pyx_string_tab[5]
-#define __pyx_kp_u_core_rpc_feed_pyx __pyx_string_tab[6]
-#define __pyx_kp_u_disable __pyx_string_tab[7]
-#define __pyx_kp_u_enable __pyx_string_tab[8]
-#define __pyx_kp_u_gc __pyx_string_tab[9]
-#define __pyx_kp_u_isenabled __pyx_string_tab[10]
+#define __pyx_kp_u_disable __pyx_string_tab[6]
+#define __pyx_kp_u_enable __pyx_string_tab[7]
+#define __pyx_kp_u_gc __pyx_string_tab[8]
+#define __pyx_kp_u_isenabled __pyx_string_tab[9]
+#define __pyx_kp_u_rpc_feed_core_rpc_feed_pyx __pyx_string_tab[10]
 #define __pyx_kp_u_self__pattern_is_not_None_or_sel __pyx_string_tab[11]
 #define __pyx_kp_u_sh51_sz15_sz16_d_4 __pyx_string_tab[12]
 #define __pyx_kp_u_sh6_sz0_sz3_d_5 __pyx_string_tab[13]
@@ -2768,71 +2768,71 @@ static __pyx_mstatetype * const __pyx_mstate_global = &__pyx_mstate_global_stati
 #define __pyx_n_u_c_obj __pyx_string_tab[26]
 #define __pyx_n_u_cline_in_traceback __pyx_string_tab[27]
 #define __pyx_n_u_close __pyx_string_tab[28]
-#define __pyx_n_u_core_datasets __pyx_string_tab[29]
-#define __pyx_n_u_core_graph __pyx_string_tab[30]
-#define __pyx_n_u_core_rpc_feed __pyx_string_tab[31]
-#define __pyx_n_u_csv __pyx_string_tab[32]
-#define __pyx_n_u_dataset_path __pyx_string_tab[33]
-#define __pyx_n_u_dict __pyx_string_tab[34]
-#define __pyx_n_u_dict_2 __pyx_string_tab[35]
-#define __pyx_n_u_end_date __pyx_string_tab[36]
-#define __pyx_n_u_fetch __pyx_string_tab[37]
-#define __pyx_n_u_filter __pyx_string_tab[38]
-#define __pyx_n_u_func __pyx_string_tab[39]
-#define __pyx_n_u_fund __pyx_string_tab[40]
-#define __pyx_n_u_getstate __pyx_string_tab[41]
-#define __pyx_n_u_graph_xml __pyx_string_tab[42]
-#define __pyx_n_u_is_coroutine __pyx_string_tab[43]
-#define __pyx_n_u_items __pyx_string_tab[44]
-#define __pyx_n_u_iterator __pyx_string_tab[45]
-#define __pyx_n_u_load __pyx_string_tab[46]
-#define __pyx_n_u_main __pyx_string_tab[47]
-#define __pyx_n_u_module __pyx_string_tab[48]
-#define __pyx_n_u_name __pyx_string_tab[49]
-#define __pyx_n_u_new __pyx_string_tab[50]
-#define __pyx_n_u_next __pyx_string_tab[51]
-#define __pyx_n_u_os __pyx_string_tab[52]
-#define __pyx_n_u_parallel __pyx_string_tab[53]
-#define __pyx_n_u_pb_obj __pyx_string_tab[54]
-#define __pyx_n_u_pop __pyx_string_tab[55]
-#define __pyx_n_u_prefix __pyx_string_tab[56]
-#define __pyx_n_u_providers __pyx_string_tab[57]
-#define __pyx_n_u_pyx_checksum __pyx_string_tab[58]
-#define __pyx_n_u_pyx_result __pyx_string_tab[59]
-#define __pyx_n_u_pyx_state __pyx_string_tab[60]
-#define __pyx_n_u_pyx_type __pyx_string_tab[61]
-#define __pyx_n_u_pyx_unpickle_BtFeed __pyx_string_tab[62]
-#define __pyx_n_u_pyx_vtable __pyx_string_tab[63]
-#define __pyx_n_u_qualname __pyx_string_tab[64]
-#define __pyx_n_u_recursive_glob __pyx_string_tab[65]
-#define __pyx_n_u_reduce __pyx_string_tab[66]
-#define __pyx_n_u_reduce_cython __pyx_string_tab[67]
-#define __pyx_n_u_reduce_ex __pyx_string_tab[68]
-#define __pyx_n_u_self __pyx_string_tab[69]
-#define __pyx_n_u_send __pyx_string_tab[70]
-#define __pyx_n_u_set_name __pyx_string_tab[71]
-#define __pyx_n_u_setdefault __pyx_string_tab[72]
-#define __pyx_n_u_setstate __pyx_string_tab[73]
-#define __pyx_n_u_setstate_cython __pyx_string_tab[74]
-#define __pyx_n_u_sids __pyx_string_tab[75]
-#define __pyx_n_u_start_date __pyx_string_tab[76]
-#define __pyx_n_u_state __pyx_string_tab[77]
-#define __pyx_n_u_stock __pyx_string_tab[78]
-#define __pyx_n_u_struct __pyx_string_tab[79]
-#define __pyx_n_u_suffix __pyx_string_tab[80]
-#define __pyx_n_u_test __pyx_string_tab[81]
-#define __pyx_n_u_throw __pyx_string_tab[82]
-#define __pyx_n_u_to_execute __pyx_string_tab[83]
-#define __pyx_n_u_topic __pyx_string_tab[84]
-#define __pyx_n_u_update __pyx_string_tab[85]
-#define __pyx_n_u_use_setstate __pyx_string_tab[86]
-#define __pyx_n_u_utils_io __pyx_string_tab[87]
+#define __pyx_n_u_csv __pyx_string_tab[29]
+#define __pyx_n_u_dataset_path __pyx_string_tab[30]
+#define __pyx_n_u_dict __pyx_string_tab[31]
+#define __pyx_n_u_dict_2 __pyx_string_tab[32]
+#define __pyx_n_u_end_date __pyx_string_tab[33]
+#define __pyx_n_u_fetch __pyx_string_tab[34]
+#define __pyx_n_u_func __pyx_string_tab[35]
+#define __pyx_n_u_fund __pyx_string_tab[36]
+#define __pyx_n_u_getstate __pyx_string_tab[37]
+#define __pyx_n_u_graph_xml __pyx_string_tab[38]
+#define __pyx_n_u_is_coroutine __pyx_string_tab[39]
+#define __pyx_n_u_items __pyx_string_tab[40]
+#define __pyx_n_u_iterator __pyx_string_tab[41]
+#define __pyx_n_u_load __pyx_string_tab[42]
+#define __pyx_n_u_main __pyx_string_tab[43]
+#define __pyx_n_u_module __pyx_string_tab[44]
+#define __pyx_n_u_name __pyx_string_tab[45]
+#define __pyx_n_u_new __pyx_string_tab[46]
+#define __pyx_n_u_next __pyx_string_tab[47]
+#define __pyx_n_u_os __pyx_string_tab[48]
+#define __pyx_n_u_parallel __pyx_string_tab[49]
+#define __pyx_n_u_pattern __pyx_string_tab[50]
+#define __pyx_n_u_pb_obj __pyx_string_tab[51]
+#define __pyx_n_u_pop __pyx_string_tab[52]
+#define __pyx_n_u_prefix __pyx_string_tab[53]
+#define __pyx_n_u_providers __pyx_string_tab[54]
+#define __pyx_n_u_pyx_checksum __pyx_string_tab[55]
+#define __pyx_n_u_pyx_result __pyx_string_tab[56]
+#define __pyx_n_u_pyx_state __pyx_string_tab[57]
+#define __pyx_n_u_pyx_type __pyx_string_tab[58]
+#define __pyx_n_u_pyx_unpickle_BtFeed __pyx_string_tab[59]
+#define __pyx_n_u_pyx_vtable __pyx_string_tab[60]
+#define __pyx_n_u_qualname __pyx_string_tab[61]
+#define __pyx_n_u_recursive_glob __pyx_string_tab[62]
+#define __pyx_n_u_reduce __pyx_string_tab[63]
+#define __pyx_n_u_reduce_cython __pyx_string_tab[64]
+#define __pyx_n_u_reduce_ex __pyx_string_tab[65]
+#define __pyx_n_u_rpc_feed_core_datasets __pyx_string_tab[66]
+#define __pyx_n_u_rpc_feed_core_graph __pyx_string_tab[67]
+#define __pyx_n_u_rpc_feed_core_rpc_feed __pyx_string_tab[68]
+#define __pyx_n_u_rpc_feed_utils_io __pyx_string_tab[69]
+#define __pyx_n_u_self __pyx_string_tab[70]
+#define __pyx_n_u_send __pyx_string_tab[71]
+#define __pyx_n_u_set_name __pyx_string_tab[72]
+#define __pyx_n_u_setdefault __pyx_string_tab[73]
+#define __pyx_n_u_setstate __pyx_string_tab[74]
+#define __pyx_n_u_setstate_cython __pyx_string_tab[75]
+#define __pyx_n_u_sids __pyx_string_tab[76]
+#define __pyx_n_u_start_date __pyx_string_tab[77]
+#define __pyx_n_u_state __pyx_string_tab[78]
+#define __pyx_n_u_stock __pyx_string_tab[79]
+#define __pyx_n_u_struct __pyx_string_tab[80]
+#define __pyx_n_u_suffix __pyx_string_tab[81]
+#define __pyx_n_u_test __pyx_string_tab[82]
+#define __pyx_n_u_throw __pyx_string_tab[83]
+#define __pyx_n_u_to_execute __pyx_string_tab[84]
+#define __pyx_n_u_topic __pyx_string_tab[85]
+#define __pyx_n_u_update __pyx_string_tab[86]
+#define __pyx_n_u_use_setstate __pyx_string_tab[87]
 #define __pyx_n_u_value __pyx_string_tab[88]
 #define __pyx_n_u_values __pyx_string_tab[89]
 #define __pyx_kp_b_iso88591_AV1 __pyx_string_tab[90]
 #define __pyx_kp_b_iso88591_MQ __pyx_string_tab[91]
 #define __pyx_kp_b_iso88591_T_D_T_G1F_a_vWE_Q_q_q_t1G_gQ_t1 __pyx_string_tab[92]
-#define __pyx_kp_b_iso88591_UUV_V6_N_t9TUU_I_Kq __pyx_string_tab[93]
+#define __pyx_kp_b_iso88591_UUV_V6_N_IUVV___I_Kq __pyx_string_tab[93]
 #define __pyx_kp_b_iso88591_q_0_kQR_6_7_1 __pyx_string_tab[94]
 #define __pyx_int_37030610 __pyx_number_tab[0]
 /* #### Code section: module_state_clear ### */
@@ -2849,10 +2849,10 @@ static CYTHON_SMALL_CODE int __pyx_m_clear(PyObject *m) {
   #if CYTHON_PEP489_MULTI_PHASE_INIT
   __Pyx_State_RemoveModule(NULL);
   #endif
-  Py_CLEAR(clear_module_state->__pyx_ptype_4core_3rpc_4feed_BtFeed);
-  Py_CLEAR(clear_module_state->__pyx_type_4core_3rpc_4feed_BtFeed);
-  Py_CLEAR(clear_module_state->__pyx_ptype_4core_3rpc_4feed___pyx_scope_struct__fetch);
-  Py_CLEAR(clear_module_state->__pyx_type_4core_3rpc_4feed___pyx_scope_struct__fetch);
+  Py_CLEAR(clear_module_state->__pyx_ptype_8rpc_feed_4core_3rpc_4feed_BtFeed);
+  Py_CLEAR(clear_module_state->__pyx_type_8rpc_feed_4core_3rpc_4feed_BtFeed);
+  Py_CLEAR(clear_module_state->__pyx_ptype_8rpc_feed_4core_3rpc_4feed___pyx_scope_struct__fetch);
+  Py_CLEAR(clear_module_state->__pyx_type_8rpc_feed_4core_3rpc_4feed___pyx_scope_struct__fetch);
   Py_CLEAR(clear_module_state->__pyx_k_);
   for (int i=0; i<2; ++i) { Py_CLEAR(clear_module_state->__pyx_tuple[i]); }
   for (int i=0; i<5; ++i) { Py_CLEAR(clear_module_state->__pyx_codeobj_tab[i]); }
@@ -2890,10 +2890,10 @@ static CYTHON_SMALL_CODE int __pyx_m_traverse(PyObject *m, visitproc visit, void
   __Pyx_VISIT_CONST(traverse_module_state->__pyx_empty_tuple);
   __Pyx_VISIT_CONST(traverse_module_state->__pyx_empty_bytes);
   __Pyx_VISIT_CONST(traverse_module_state->__pyx_empty_unicode);
-  Py_VISIT(traverse_module_state->__pyx_ptype_4core_3rpc_4feed_BtFeed);
-  Py_VISIT(traverse_module_state->__pyx_type_4core_3rpc_4feed_BtFeed);
-  Py_VISIT(traverse_module_state->__pyx_ptype_4core_3rpc_4feed___pyx_scope_struct__fetch);
-  Py_VISIT(traverse_module_state->__pyx_type_4core_3rpc_4feed___pyx_scope_struct__fetch);
+  Py_VISIT(traverse_module_state->__pyx_ptype_8rpc_feed_4core_3rpc_4feed_BtFeed);
+  Py_VISIT(traverse_module_state->__pyx_type_8rpc_feed_4core_3rpc_4feed_BtFeed);
+  Py_VISIT(traverse_module_state->__pyx_ptype_8rpc_feed_4core_3rpc_4feed___pyx_scope_struct__fetch);
+  Py_VISIT(traverse_module_state->__pyx_type_8rpc_feed_4core_3rpc_4feed___pyx_scope_struct__fetch);
   Py_VISIT(traverse_module_state->__pyx_k_);
   for (int i=0; i<2; ++i) { __Pyx_VISIT_CONST(traverse_module_state->__pyx_tuple[i]); }
   for (int i=0; i<5; ++i) { __Pyx_VISIT_CONST(traverse_module_state->__pyx_codeobj_tab[i]); }
@@ -2922,7 +2922,7 @@ return 0;
 #endif
 /* #### Code section: module_code ### */
 
-/* "core/rpc/feed.pyx":18
+/* "rpc_feed/core/rpc/feed.pyx":18
  * cdef class BtFeed:
  * 
  *     def __init__(self):             # <<<<<<<<<<<<<<
@@ -2931,8 +2931,8 @@ return 0;
 */
 
 /* Python wrapper */
-static int __pyx_pw_4core_3rpc_4feed_6BtFeed_1__init__(PyObject *__pyx_v_self, PyObject *__pyx_args, PyObject *__pyx_kwds); /*proto*/
-static int __pyx_pw_4core_3rpc_4feed_6BtFeed_1__init__(PyObject *__pyx_v_self, PyObject *__pyx_args, PyObject *__pyx_kwds) {
+static int __pyx_pw_8rpc_feed_4core_3rpc_4feed_6BtFeed_1__init__(PyObject *__pyx_v_self, PyObject *__pyx_args, PyObject *__pyx_kwds); /*proto*/
+static int __pyx_pw_8rpc_feed_4core_3rpc_4feed_6BtFeed_1__init__(PyObject *__pyx_v_self, PyObject *__pyx_args, PyObject *__pyx_kwds) {
   CYTHON_UNUSED Py_ssize_t __pyx_nargs;
   CYTHON_UNUSED PyObject *const *__pyx_kwvalues;
   int __pyx_r;
@@ -2948,14 +2948,14 @@ static int __pyx_pw_4core_3rpc_4feed_6BtFeed_1__init__(PyObject *__pyx_v_self, P
   const Py_ssize_t __pyx_kwds_len = unlikely(__pyx_kwds) ? __Pyx_NumKwargs_VARARGS(__pyx_kwds) : 0;
   if (unlikely(__pyx_kwds_len < 0)) return -1;
   if (unlikely(__pyx_kwds_len > 0)) {__Pyx_RejectKeywords("__init__", __pyx_kwds); return -1;}
-  __pyx_r = __pyx_pf_4core_3rpc_4feed_6BtFeed___init__(((struct __pyx_obj_4core_3rpc_4feed_BtFeed *)__pyx_v_self));
+  __pyx_r = __pyx_pf_8rpc_feed_4core_3rpc_4feed_6BtFeed___init__(((struct __pyx_obj_8rpc_feed_4core_3rpc_4feed_BtFeed *)__pyx_v_self));
 
   /* function exit code */
   __Pyx_RefNannyFinishContext();
   return __pyx_r;
 }
 
-static int __pyx_pf_4core_3rpc_4feed_6BtFeed___init__(struct __pyx_obj_4core_3rpc_4feed_BtFeed *__pyx_v_self) {
+static int __pyx_pf_8rpc_feed_4core_3rpc_4feed_6BtFeed___init__(struct __pyx_obj_8rpc_feed_4core_3rpc_4feed_BtFeed *__pyx_v_self) {
   int __pyx_r;
   __Pyx_RefNannyDeclarations
   PyObject *__pyx_t_1 = NULL;
@@ -2967,7 +2967,7 @@ static int __pyx_pf_4core_3rpc_4feed_6BtFeed___init__(struct __pyx_obj_4core_3rp
   int __pyx_clineno = 0;
   __Pyx_RefNannySetupContext("__init__", 0);
 
-  /* "core/rpc/feed.pyx":19
+  /* "rpc_feed/core/rpc/feed.pyx":19
  * 
  *     def __init__(self):
  *         self._providers = _providers             # <<<<<<<<<<<<<<
@@ -2982,7 +2982,7 @@ static int __pyx_pf_4core_3rpc_4feed_6BtFeed___init__(struct __pyx_obj_4core_3rp
   __pyx_v_self->_providers = __pyx_t_1;
   __pyx_t_1 = 0;
 
-  /* "core/rpc/feed.pyx":22
+  /* "rpc_feed/core/rpc/feed.pyx":22
  * 
  *         self._pattern = {
  *             "struct":{             # <<<<<<<<<<<<<<
@@ -2992,7 +2992,7 @@ static int __pyx_pf_4core_3rpc_4feed_6BtFeed___init__(struct __pyx_obj_4core_3rp
   __pyx_t_1 = __Pyx_PyDict_NewPresized(2); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 22, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
 
-  /* "core/rpc/feed.pyx":23
+  /* "rpc_feed/core/rpc/feed.pyx":23
  *         self._pattern = {
  *             "struct":{
  *                 "stock": "^(sh6|sz0|sz3)\d{5}(?:)",             # <<<<<<<<<<<<<<
@@ -3006,7 +3006,7 @@ static int __pyx_pf_4core_3rpc_4feed_6BtFeed___init__(struct __pyx_obj_4core_3rp
   if (PyDict_SetItem(__pyx_t_1, __pyx_mstate_global->__pyx_n_u_struct, __pyx_t_2) < (0)) __PYX_ERR(0, 22, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
 
-  /* "core/rpc/feed.pyx":27
+  /* "rpc_feed/core/rpc/feed.pyx":27
  *             },
  *             "csv": {
  *                 "stock": "^(SH\.6|SZ\.0|SZ\.3)\d{5}(?:)",             # <<<<<<<<<<<<<<
@@ -3020,7 +3020,7 @@ static int __pyx_pf_4core_3rpc_4feed_6BtFeed___init__(struct __pyx_obj_4core_3rp
   if (PyDict_SetItem(__pyx_t_1, __pyx_mstate_global->__pyx_n_u_csv, __pyx_t_2) < (0)) __PYX_ERR(0, 22, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
 
-  /* "core/rpc/feed.pyx":21
+  /* "rpc_feed/core/rpc/feed.pyx":21
  *         self._providers = _providers
  * 
  *         self._pattern = {             # <<<<<<<<<<<<<<
@@ -3033,7 +3033,7 @@ static int __pyx_pf_4core_3rpc_4feed_6BtFeed___init__(struct __pyx_obj_4core_3rp
   __pyx_v_self->_pattern = __pyx_t_1;
   __pyx_t_1 = 0;
 
-  /* "core/rpc/feed.pyx":32
+  /* "rpc_feed/core/rpc/feed.pyx":32
  *         }
  * 
  *         self.pipeline = Graph()             # <<<<<<<<<<<<<<
@@ -3069,7 +3069,7 @@ static int __pyx_pf_4core_3rpc_4feed_6BtFeed___init__(struct __pyx_obj_4core_3rp
   __pyx_v_self->pipeline = __pyx_t_1;
   __pyx_t_1 = 0;
 
-  /* "core/rpc/feed.pyx":18
+  /* "rpc_feed/core/rpc/feed.pyx":18
  * cdef class BtFeed:
  * 
  *     def __init__(self):             # <<<<<<<<<<<<<<
@@ -3084,15 +3084,15 @@ static int __pyx_pf_4core_3rpc_4feed_6BtFeed___init__(struct __pyx_obj_4core_3rp
   __Pyx_XDECREF(__pyx_t_1);
   __Pyx_XDECREF(__pyx_t_2);
   __Pyx_XDECREF(__pyx_t_3);
-  __Pyx_AddTraceback("core.rpc.feed.BtFeed.__init__", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __Pyx_AddTraceback("rpc_feed.core.rpc.feed.BtFeed.__init__", __pyx_clineno, __pyx_lineno, __pyx_filename);
   __pyx_r = -1;
   __pyx_L0:;
   __Pyx_RefNannyFinishContext();
   return __pyx_r;
 }
-static PyObject *__pyx_gb_4core_3rpc_4feed_6BtFeed_4generator(__pyx_CoroutineObject *__pyx_generator, CYTHON_UNUSED PyThreadState *__pyx_tstate, PyObject *__pyx_sent_value); /* proto */
+static PyObject *__pyx_gb_8rpc_feed_4core_3rpc_4feed_6BtFeed_4generator(__pyx_CoroutineObject *__pyx_generator, CYTHON_UNUSED PyThreadState *__pyx_tstate, PyObject *__pyx_sent_value); /* proto */
 
-/* "core/rpc/feed.pyx":34
+/* "rpc_feed/core/rpc/feed.pyx":34
  *         self.pipeline = Graph()
  * 
  *     async def fetch(self, str topic, int start_date, int end_date, list sids=[]):             # <<<<<<<<<<<<<<
@@ -3101,15 +3101,15 @@ static PyObject *__pyx_gb_4core_3rpc_4feed_6BtFeed_4generator(__pyx_CoroutineObj
 */
 
 /* Python wrapper */
-static PyObject *__pyx_pw_4core_3rpc_4feed_6BtFeed_3fetch(PyObject *__pyx_v_self, 
+static PyObject *__pyx_pw_8rpc_feed_4core_3rpc_4feed_6BtFeed_3fetch(PyObject *__pyx_v_self, 
 #if CYTHON_METH_FASTCALL
 PyObject *const *__pyx_args, Py_ssize_t __pyx_nargs, PyObject *__pyx_kwds
 #else
 PyObject *__pyx_args, PyObject *__pyx_kwds
 #endif
 ); /*proto*/
-static PyMethodDef __pyx_mdef_4core_3rpc_4feed_6BtFeed_3fetch = {"fetch", (PyCFunction)(void(*)(void))(__Pyx_PyCFunction_FastCallWithKeywords)__pyx_pw_4core_3rpc_4feed_6BtFeed_3fetch, __Pyx_METH_FASTCALL|METH_KEYWORDS, 0};
-static PyObject *__pyx_pw_4core_3rpc_4feed_6BtFeed_3fetch(PyObject *__pyx_v_self, 
+static PyMethodDef __pyx_mdef_8rpc_feed_4core_3rpc_4feed_6BtFeed_3fetch = {"fetch", (PyCFunction)(void(*)(void))(__Pyx_PyCFunction_FastCallWithKeywords)__pyx_pw_8rpc_feed_4core_3rpc_4feed_6BtFeed_3fetch, __Pyx_METH_FASTCALL|METH_KEYWORDS, 0};
+static PyObject *__pyx_pw_8rpc_feed_4core_3rpc_4feed_6BtFeed_3fetch(PyObject *__pyx_v_self, 
 #if CYTHON_METH_FASTCALL
 PyObject *const *__pyx_args, Py_ssize_t __pyx_nargs, PyObject *__pyx_kwds
 #else
@@ -3202,13 +3202,13 @@ PyObject *__pyx_args, PyObject *__pyx_kwds
   for (Py_ssize_t __pyx_temp=0; __pyx_temp < (Py_ssize_t)(sizeof(values)/sizeof(values[0])); ++__pyx_temp) {
     Py_XDECREF(values[__pyx_temp]);
   }
-  __Pyx_AddTraceback("core.rpc.feed.BtFeed.fetch", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __Pyx_AddTraceback("rpc_feed.core.rpc.feed.BtFeed.fetch", __pyx_clineno, __pyx_lineno, __pyx_filename);
   __Pyx_RefNannyFinishContext();
   return NULL;
   __pyx_L4_argument_unpacking_done:;
   if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_topic), (&PyUnicode_Type), 1, "topic", 1))) __PYX_ERR(0, 34, __pyx_L1_error)
   if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_sids), (&PyList_Type), 1, "sids", 1))) __PYX_ERR(0, 34, __pyx_L1_error)
-  __pyx_r = __pyx_pf_4core_3rpc_4feed_6BtFeed_2fetch(((struct __pyx_obj_4core_3rpc_4feed_BtFeed *)__pyx_v_self), __pyx_v_topic, __pyx_v_start_date, __pyx_v_end_date, __pyx_v_sids);
+  __pyx_r = __pyx_pf_8rpc_feed_4core_3rpc_4feed_6BtFeed_2fetch(((struct __pyx_obj_8rpc_feed_4core_3rpc_4feed_BtFeed *)__pyx_v_self), __pyx_v_topic, __pyx_v_start_date, __pyx_v_end_date, __pyx_v_sids);
 
   /* function exit code */
   goto __pyx_L0;
@@ -3227,17 +3227,17 @@ PyObject *__pyx_args, PyObject *__pyx_kwds
   return __pyx_r;
 }
 
-static PyObject *__pyx_pf_4core_3rpc_4feed_6BtFeed_2fetch(struct __pyx_obj_4core_3rpc_4feed_BtFeed *__pyx_v_self, PyObject *__pyx_v_topic, int __pyx_v_start_date, int __pyx_v_end_date, PyObject *__pyx_v_sids) {
-  struct __pyx_obj_4core_3rpc_4feed___pyx_scope_struct__fetch *__pyx_cur_scope;
+static PyObject *__pyx_pf_8rpc_feed_4core_3rpc_4feed_6BtFeed_2fetch(struct __pyx_obj_8rpc_feed_4core_3rpc_4feed_BtFeed *__pyx_v_self, PyObject *__pyx_v_topic, int __pyx_v_start_date, int __pyx_v_end_date, PyObject *__pyx_v_sids) {
+  struct __pyx_obj_8rpc_feed_4core_3rpc_4feed___pyx_scope_struct__fetch *__pyx_cur_scope;
   PyObject *__pyx_r = NULL;
   __Pyx_RefNannyDeclarations
   int __pyx_lineno = 0;
   const char *__pyx_filename = NULL;
   int __pyx_clineno = 0;
   __Pyx_RefNannySetupContext("fetch", 0);
-  __pyx_cur_scope = (struct __pyx_obj_4core_3rpc_4feed___pyx_scope_struct__fetch *)__pyx_tp_new_4core_3rpc_4feed___pyx_scope_struct__fetch(__pyx_mstate_global->__pyx_ptype_4core_3rpc_4feed___pyx_scope_struct__fetch, __pyx_mstate_global->__pyx_empty_tuple, NULL);
+  __pyx_cur_scope = (struct __pyx_obj_8rpc_feed_4core_3rpc_4feed___pyx_scope_struct__fetch *)__pyx_tp_new_8rpc_feed_4core_3rpc_4feed___pyx_scope_struct__fetch(__pyx_mstate_global->__pyx_ptype_8rpc_feed_4core_3rpc_4feed___pyx_scope_struct__fetch, __pyx_mstate_global->__pyx_empty_tuple, NULL);
   if (unlikely(!__pyx_cur_scope)) {
-    __pyx_cur_scope = ((struct __pyx_obj_4core_3rpc_4feed___pyx_scope_struct__fetch *)Py_None);
+    __pyx_cur_scope = ((struct __pyx_obj_8rpc_feed_4core_3rpc_4feed___pyx_scope_struct__fetch *)Py_None);
     __Pyx_INCREF(Py_None);
     __PYX_ERR(0, 34, __pyx_L1_error)
   } else {
@@ -3255,7 +3255,7 @@ static PyObject *__pyx_pf_4core_3rpc_4feed_6BtFeed_2fetch(struct __pyx_obj_4core
   __Pyx_INCREF(__pyx_cur_scope->__pyx_v_sids);
   __Pyx_GIVEREF(__pyx_cur_scope->__pyx_v_sids);
   {
-    __pyx_CoroutineObject *gen = __Pyx_AsyncGen_New((__pyx_coroutine_body_t) __pyx_gb_4core_3rpc_4feed_6BtFeed_4generator, ((PyObject *)__pyx_mstate_global->__pyx_codeobj_tab[0]), (PyObject *) __pyx_cur_scope, __pyx_mstate_global->__pyx_n_u_fetch, __pyx_mstate_global->__pyx_n_u_BtFeed_fetch, __pyx_mstate_global->__pyx_n_u_core_rpc_feed); if (unlikely(!gen)) __PYX_ERR(0, 34, __pyx_L1_error)
+    __pyx_CoroutineObject *gen = __Pyx_AsyncGen_New((__pyx_coroutine_body_t) __pyx_gb_8rpc_feed_4core_3rpc_4feed_6BtFeed_4generator, ((PyObject *)__pyx_mstate_global->__pyx_codeobj_tab[0]), (PyObject *) __pyx_cur_scope, __pyx_mstate_global->__pyx_n_u_fetch, __pyx_mstate_global->__pyx_n_u_BtFeed_fetch, __pyx_mstate_global->__pyx_n_u_rpc_feed_core_rpc_feed); if (unlikely(!gen)) __PYX_ERR(0, 34, __pyx_L1_error)
     __Pyx_DECREF(__pyx_cur_scope);
     __Pyx_RefNannyFinishContext();
     return (PyObject *) gen;
@@ -3263,7 +3263,7 @@ static PyObject *__pyx_pf_4core_3rpc_4feed_6BtFeed_2fetch(struct __pyx_obj_4core
 
   /* function exit code */
   __pyx_L1_error:;
-  __Pyx_AddTraceback("core.rpc.feed.BtFeed.fetch", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __Pyx_AddTraceback("rpc_feed.core.rpc.feed.BtFeed.fetch", __pyx_clineno, __pyx_lineno, __pyx_filename);
   __pyx_r = NULL;
   __Pyx_DECREF((PyObject *)__pyx_cur_scope);
   __Pyx_XGIVEREF(__pyx_r);
@@ -3271,9 +3271,9 @@ static PyObject *__pyx_pf_4core_3rpc_4feed_6BtFeed_2fetch(struct __pyx_obj_4core
   return __pyx_r;
 }
 
-static PyObject *__pyx_gb_4core_3rpc_4feed_6BtFeed_4generator(__pyx_CoroutineObject *__pyx_generator, CYTHON_UNUSED PyThreadState *__pyx_tstate, PyObject *__pyx_sent_value) /* generator body */
+static PyObject *__pyx_gb_8rpc_feed_4core_3rpc_4feed_6BtFeed_4generator(__pyx_CoroutineObject *__pyx_generator, CYTHON_UNUSED PyThreadState *__pyx_tstate, PyObject *__pyx_sent_value) /* generator body */
 {
-  struct __pyx_obj_4core_3rpc_4feed___pyx_scope_struct__fetch *__pyx_cur_scope = ((struct __pyx_obj_4core_3rpc_4feed___pyx_scope_struct__fetch *)__pyx_generator->closure);
+  struct __pyx_obj_8rpc_feed_4core_3rpc_4feed___pyx_scope_struct__fetch *__pyx_cur_scope = ((struct __pyx_obj_8rpc_feed_4core_3rpc_4feed___pyx_scope_struct__fetch *)__pyx_generator->closure);
   PyObject *__pyx_r = NULL;
   PyObject *__pyx_t_1 = NULL;
   PyObject *__pyx_t_2 = NULL;
@@ -3301,7 +3301,7 @@ static PyObject *__pyx_gb_4core_3rpc_4feed_6BtFeed_4generator(__pyx_CoroutineObj
     __PYX_ERR(0, 34, __pyx_L1_error)
   }
 
-  /* "core/rpc/feed.pyx":35
+  /* "rpc_feed/core/rpc/feed.pyx":35
  * 
  *     async def fetch(self, str topic, int start_date, int end_date, list sids=[]):
  *         cdef object iterator = self._providers[topic]             # <<<<<<<<<<<<<<
@@ -3314,7 +3314,7 @@ static PyObject *__pyx_gb_4core_3rpc_4feed_6BtFeed_4generator(__pyx_CoroutineObj
   __pyx_cur_scope->__pyx_v_iterator = __pyx_t_1;
   __pyx_t_1 = 0;
 
-  /* "core/rpc/feed.pyx":38
+  /* "rpc_feed/core/rpc/feed.pyx":38
  *         cdef object c_obj
  * 
  *         async for pb_obj in iterator(start_date, end_date, sids):             # <<<<<<<<<<<<<<
@@ -3398,7 +3398,7 @@ static PyObject *__pyx_gb_4core_3rpc_4feed_6BtFeed_4generator(__pyx_CoroutineObj
     __Pyx_GIVEREF(__pyx_t_1);
     __pyx_t_1 = 0;
 
-    /* "core/rpc/feed.pyx":39
+    /* "rpc_feed/core/rpc/feed.pyx":39
  * 
  *         async for pb_obj in iterator(start_date, end_date, sids):
  *             yield pb_obj # protobuf object             # <<<<<<<<<<<<<<
@@ -3421,7 +3421,7 @@ static PyObject *__pyx_gb_4core_3rpc_4feed_6BtFeed_4generator(__pyx_CoroutineObj
     __Pyx_XGOTREF(__pyx_t_3);
     if (unlikely(!__pyx_sent_value)) __PYX_ERR(0, 39, __pyx_L1_error)
 
-    /* "core/rpc/feed.pyx":38
+    /* "rpc_feed/core/rpc/feed.pyx":38
  *         cdef object c_obj
  * 
  *         async for pb_obj in iterator(start_date, end_date, sids):             # <<<<<<<<<<<<<<
@@ -3432,7 +3432,7 @@ static PyObject *__pyx_gb_4core_3rpc_4feed_6BtFeed_4generator(__pyx_CoroutineObj
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
   CYTHON_MAYBE_UNUSED_VAR(__pyx_cur_scope);
 
-  /* "core/rpc/feed.pyx":34
+  /* "rpc_feed/core/rpc/feed.pyx":34
  *         self.pipeline = Graph()
  * 
  *     async def fetch(self, str topic, int start_date, int end_date, list sids=[]):             # <<<<<<<<<<<<<<
@@ -3464,7 +3464,7 @@ static PyObject *__pyx_gb_4core_3rpc_4feed_6BtFeed_4generator(__pyx_CoroutineObj
   return __pyx_r;
 }
 
-/* "core/rpc/feed.pyx":41
+/* "rpc_feed/core/rpc/feed.pyx":41
  *             yield pb_obj # protobuf object
  * 
  *     cpdef void load(self, str graph_xml, str dataset_path, str prefix, bint parallel=True):             # <<<<<<<<<<<<<<
@@ -3472,14 +3472,14 @@ static PyObject *__pyx_gb_4core_3rpc_4feed_6BtFeed_4generator(__pyx_CoroutineObj
  *         Adds a ``Data Feed`` instance to the mix.
 */
 
-static PyObject *__pyx_pw_4core_3rpc_4feed_6BtFeed_6load(PyObject *__pyx_v_self, 
+static PyObject *__pyx_pw_8rpc_feed_4core_3rpc_4feed_6BtFeed_6load(PyObject *__pyx_v_self, 
 #if CYTHON_METH_FASTCALL
 PyObject *const *__pyx_args, Py_ssize_t __pyx_nargs, PyObject *__pyx_kwds
 #else
 PyObject *__pyx_args, PyObject *__pyx_kwds
 #endif
 ); /*proto*/
-static void __pyx_f_4core_3rpc_4feed_6BtFeed_load(struct __pyx_obj_4core_3rpc_4feed_BtFeed *__pyx_v_self, PyObject *__pyx_v_graph_xml, PyObject *__pyx_v_dataset_path, PyObject *__pyx_v_prefix, int __pyx_skip_dispatch, struct __pyx_opt_args_4core_3rpc_4feed_6BtFeed_load *__pyx_optional_args) {
+static void __pyx_f_8rpc_feed_4core_3rpc_4feed_6BtFeed_load(struct __pyx_obj_8rpc_feed_4core_3rpc_4feed_BtFeed *__pyx_v_self, PyObject *__pyx_v_graph_xml, PyObject *__pyx_v_dataset_path, PyObject *__pyx_v_prefix, int __pyx_skip_dispatch, struct __pyx_opt_args_8rpc_feed_4core_3rpc_4feed_6BtFeed_load *__pyx_optional_args) {
   int __pyx_v_parallel = ((int)1);
   PyObject *__pyx_v_iterables = 0;
   PyObject *__pyx_v_suffix = 0;
@@ -3505,7 +3505,7 @@ static void __pyx_f_4core_3rpc_4feed_6BtFeed_load(struct __pyx_obj_4core_3rpc_4f
   /* Check if overridden in Python */
   else if (
   #if !CYTHON_USE_TYPE_SLOTS
-  unlikely(Py_TYPE(((PyObject *)__pyx_v_self)) != __pyx_mstate_global->__pyx_ptype_4core_3rpc_4feed_BtFeed &&
+  unlikely(Py_TYPE(((PyObject *)__pyx_v_self)) != __pyx_mstate_global->__pyx_ptype_8rpc_feed_4core_3rpc_4feed_BtFeed &&
   __Pyx_PyType_HasFeature(Py_TYPE(((PyObject *)__pyx_v_self)), Py_TPFLAGS_HAVE_GC))
   #else
   unlikely(Py_TYPE(((PyObject *)__pyx_v_self))->tp_dictoffset != 0 || __Pyx_PyType_HasFeature(Py_TYPE(((PyObject *)__pyx_v_self)), (Py_TPFLAGS_IS_ABSTRACT | Py_TPFLAGS_HEAPTYPE)))
@@ -3518,7 +3518,7 @@ static void __pyx_f_4core_3rpc_4feed_6BtFeed_load(struct __pyx_obj_4core_3rpc_4f
       #endif
       __pyx_t_1 = __Pyx_PyObject_GetAttrStr(((PyObject *)__pyx_v_self), __pyx_mstate_global->__pyx_n_u_load); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 41, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_1);
-      if (!__Pyx_IsSameCFunction(__pyx_t_1, (void(*)(void)) __pyx_pw_4core_3rpc_4feed_6BtFeed_6load)) {
+      if (!__Pyx_IsSameCFunction(__pyx_t_1, (void(*)(void)) __pyx_pw_8rpc_feed_4core_3rpc_4feed_6BtFeed_6load)) {
         __pyx_t_3 = NULL;
         __Pyx_INCREF(__pyx_t_1);
         __pyx_t_4 = __pyx_t_1; 
@@ -3562,12 +3562,12 @@ static void __pyx_f_4core_3rpc_4feed_6BtFeed_load(struct __pyx_obj_4core_3rpc_4f
     #endif
   }
 
-  /* "core/rpc/feed.pyx":50
+  /* "rpc_feed/core/rpc/feed.pyx":50
  *         cdef str suffix, sub_suffix
  * 
  *         suffix, sub_suffix = prefix.split("_") # struct_fund             # <<<<<<<<<<<<<<
  * 
- *         iterables = recursive_glob(dataset_path, suffix=prefix, filter=self._pattern[suffix][sub_suffix])
+ *         iterables = recursive_glob(dataset_path, suffix=suffix, pattern=self._pattern[suffix][sub_suffix])
 */
   if (unlikely(__pyx_v_prefix == Py_None)) {
     PyErr_Format(PyExc_AttributeError, "'NoneType' object has no attribute '%.30s'", "split");
@@ -3605,10 +3605,10 @@ static void __pyx_f_4core_3rpc_4feed_6BtFeed_load(struct __pyx_obj_4core_3rpc_4f
   __pyx_v_sub_suffix = ((PyObject*)__pyx_t_4);
   __pyx_t_4 = 0;
 
-  /* "core/rpc/feed.pyx":52
+  /* "rpc_feed/core/rpc/feed.pyx":52
  *         suffix, sub_suffix = prefix.split("_") # struct_fund
  * 
- *         iterables = recursive_glob(dataset_path, suffix=prefix, filter=self._pattern[suffix][sub_suffix])             # <<<<<<<<<<<<<<
+ *         iterables = recursive_glob(dataset_path, suffix=suffix, pattern=self._pattern[suffix][sub_suffix])             # <<<<<<<<<<<<<<
  *         self.pipeline.to_execute(graph_xml, iterables, parallel)
  * 
 */
@@ -3636,8 +3636,8 @@ static void __pyx_f_4core_3rpc_4feed_6BtFeed_load(struct __pyx_obj_4core_3rpc_4f
     PyObject *__pyx_callargs[2 + ((CYTHON_VECTORCALL) ? 2 : 0)] = {__pyx_t_4, __pyx_v_dataset_path};
     __pyx_t_5 = __Pyx_MakeVectorcallBuilderKwds(2); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 52, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_5);
-    if (__Pyx_VectorcallBuilder_AddArg(__pyx_mstate_global->__pyx_n_u_suffix, __pyx_v_prefix, __pyx_t_5, __pyx_callargs+2, 0) < (0)) __PYX_ERR(0, 52, __pyx_L1_error)
-    if (__Pyx_VectorcallBuilder_AddArg(__pyx_mstate_global->__pyx_n_u_filter, __pyx_t_3, __pyx_t_5, __pyx_callargs+2, 1) < (0)) __PYX_ERR(0, 52, __pyx_L1_error)
+    if (__Pyx_VectorcallBuilder_AddArg(__pyx_mstate_global->__pyx_n_u_suffix, __pyx_v_suffix, __pyx_t_5, __pyx_callargs+2, 0) < (0)) __PYX_ERR(0, 52, __pyx_L1_error)
+    if (__Pyx_VectorcallBuilder_AddArg(__pyx_mstate_global->__pyx_n_u_pattern, __pyx_t_3, __pyx_t_5, __pyx_callargs+2, 1) < (0)) __PYX_ERR(0, 52, __pyx_L1_error)
     __pyx_t_1 = __Pyx_Object_Vectorcall_CallFromBuilder((PyObject*)__pyx_t_2, __pyx_callargs+__pyx_t_6, (2-__pyx_t_6) | (__pyx_t_6*__Pyx_PY_VECTORCALL_ARGUMENTS_OFFSET), __pyx_t_5);
     __Pyx_XDECREF(__pyx_t_4); __pyx_t_4 = 0;
     __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
@@ -3649,9 +3649,9 @@ static void __pyx_f_4core_3rpc_4feed_6BtFeed_load(struct __pyx_obj_4core_3rpc_4f
   __pyx_v_iterables = __pyx_t_1;
   __pyx_t_1 = 0;
 
-  /* "core/rpc/feed.pyx":53
+  /* "rpc_feed/core/rpc/feed.pyx":53
  * 
- *         iterables = recursive_glob(dataset_path, suffix=prefix, filter=self._pattern[suffix][sub_suffix])
+ *         iterables = recursive_glob(dataset_path, suffix=suffix, pattern=self._pattern[suffix][sub_suffix])
  *         self.pipeline.to_execute(graph_xml, iterables, parallel)             # <<<<<<<<<<<<<<
  * 
  * 
@@ -3671,7 +3671,7 @@ static void __pyx_f_4core_3rpc_4feed_6BtFeed_load(struct __pyx_obj_4core_3rpc_4f
   }
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
 
-  /* "core/rpc/feed.pyx":41
+  /* "rpc_feed/core/rpc/feed.pyx":41
  *             yield pb_obj # protobuf object
  * 
  *     cpdef void load(self, str graph_xml, str dataset_path, str prefix, bint parallel=True):             # <<<<<<<<<<<<<<
@@ -3687,7 +3687,7 @@ static void __pyx_f_4core_3rpc_4feed_6BtFeed_load(struct __pyx_obj_4core_3rpc_4f
   __Pyx_XDECREF(__pyx_t_3);
   __Pyx_XDECREF(__pyx_t_4);
   __Pyx_XDECREF(__pyx_t_5);
-  __Pyx_AddTraceback("core.rpc.feed.BtFeed.load", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __Pyx_AddTraceback("rpc_feed.core.rpc.feed.BtFeed.load", __pyx_clineno, __pyx_lineno, __pyx_filename);
   __pyx_L0:;
   __Pyx_XDECREF(__pyx_v_iterables);
   __Pyx_XDECREF(__pyx_v_suffix);
@@ -3696,16 +3696,16 @@ static void __pyx_f_4core_3rpc_4feed_6BtFeed_load(struct __pyx_obj_4core_3rpc_4f
 }
 
 /* Python wrapper */
-static PyObject *__pyx_pw_4core_3rpc_4feed_6BtFeed_6load(PyObject *__pyx_v_self, 
+static PyObject *__pyx_pw_8rpc_feed_4core_3rpc_4feed_6BtFeed_6load(PyObject *__pyx_v_self, 
 #if CYTHON_METH_FASTCALL
 PyObject *const *__pyx_args, Py_ssize_t __pyx_nargs, PyObject *__pyx_kwds
 #else
 PyObject *__pyx_args, PyObject *__pyx_kwds
 #endif
 ); /*proto*/
-PyDoc_STRVAR(__pyx_doc_4core_3rpc_4feed_6BtFeed_5load, "\n        Adds a ``Data Feed`` instance to the mix.\n        If ``name`` is not None it will be put into ``data._name`` which is\n        meant for decoration/plotting purposes.\n        ");
-static PyMethodDef __pyx_mdef_4core_3rpc_4feed_6BtFeed_6load = {"load", (PyCFunction)(void(*)(void))(__Pyx_PyCFunction_FastCallWithKeywords)__pyx_pw_4core_3rpc_4feed_6BtFeed_6load, __Pyx_METH_FASTCALL|METH_KEYWORDS, __pyx_doc_4core_3rpc_4feed_6BtFeed_5load};
-static PyObject *__pyx_pw_4core_3rpc_4feed_6BtFeed_6load(PyObject *__pyx_v_self, 
+PyDoc_STRVAR(__pyx_doc_8rpc_feed_4core_3rpc_4feed_6BtFeed_5load, "\n        Adds a ``Data Feed`` instance to the mix.\n        If ``name`` is not None it will be put into ``data._name`` which is\n        meant for decoration/plotting purposes.\n        ");
+static PyMethodDef __pyx_mdef_8rpc_feed_4core_3rpc_4feed_6BtFeed_6load = {"load", (PyCFunction)(void(*)(void))(__Pyx_PyCFunction_FastCallWithKeywords)__pyx_pw_8rpc_feed_4core_3rpc_4feed_6BtFeed_6load, __Pyx_METH_FASTCALL|METH_KEYWORDS, __pyx_doc_8rpc_feed_4core_3rpc_4feed_6BtFeed_5load};
+static PyObject *__pyx_pw_8rpc_feed_4core_3rpc_4feed_6BtFeed_6load(PyObject *__pyx_v_self, 
 #if CYTHON_METH_FASTCALL
 PyObject *const *__pyx_args, Py_ssize_t __pyx_nargs, PyObject *__pyx_kwds
 #else
@@ -3800,14 +3800,14 @@ PyObject *__pyx_args, PyObject *__pyx_kwds
   for (Py_ssize_t __pyx_temp=0; __pyx_temp < (Py_ssize_t)(sizeof(values)/sizeof(values[0])); ++__pyx_temp) {
     Py_XDECREF(values[__pyx_temp]);
   }
-  __Pyx_AddTraceback("core.rpc.feed.BtFeed.load", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __Pyx_AddTraceback("rpc_feed.core.rpc.feed.BtFeed.load", __pyx_clineno, __pyx_lineno, __pyx_filename);
   __Pyx_RefNannyFinishContext();
   return NULL;
   __pyx_L4_argument_unpacking_done:;
   if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_graph_xml), (&PyUnicode_Type), 1, "graph_xml", 1))) __PYX_ERR(0, 41, __pyx_L1_error)
   if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_dataset_path), (&PyUnicode_Type), 1, "dataset_path", 1))) __PYX_ERR(0, 41, __pyx_L1_error)
   if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_prefix), (&PyUnicode_Type), 1, "prefix", 1))) __PYX_ERR(0, 41, __pyx_L1_error)
-  __pyx_r = __pyx_pf_4core_3rpc_4feed_6BtFeed_5load(((struct __pyx_obj_4core_3rpc_4feed_BtFeed *)__pyx_v_self), __pyx_v_graph_xml, __pyx_v_dataset_path, __pyx_v_prefix, __pyx_v_parallel);
+  __pyx_r = __pyx_pf_8rpc_feed_4core_3rpc_4feed_6BtFeed_5load(((struct __pyx_obj_8rpc_feed_4core_3rpc_4feed_BtFeed *)__pyx_v_self), __pyx_v_graph_xml, __pyx_v_dataset_path, __pyx_v_prefix, __pyx_v_parallel);
 
   /* function exit code */
   goto __pyx_L0;
@@ -3826,10 +3826,10 @@ PyObject *__pyx_args, PyObject *__pyx_kwds
   return __pyx_r;
 }
 
-static PyObject *__pyx_pf_4core_3rpc_4feed_6BtFeed_5load(struct __pyx_obj_4core_3rpc_4feed_BtFeed *__pyx_v_self, PyObject *__pyx_v_graph_xml, PyObject *__pyx_v_dataset_path, PyObject *__pyx_v_prefix, int __pyx_v_parallel) {
+static PyObject *__pyx_pf_8rpc_feed_4core_3rpc_4feed_6BtFeed_5load(struct __pyx_obj_8rpc_feed_4core_3rpc_4feed_BtFeed *__pyx_v_self, PyObject *__pyx_v_graph_xml, PyObject *__pyx_v_dataset_path, PyObject *__pyx_v_prefix, int __pyx_v_parallel) {
   PyObject *__pyx_r = NULL;
   __Pyx_RefNannyDeclarations
-  struct __pyx_opt_args_4core_3rpc_4feed_6BtFeed_load __pyx_t_1;
+  struct __pyx_opt_args_8rpc_feed_4core_3rpc_4feed_6BtFeed_load __pyx_t_1;
   PyObject *__pyx_t_2 = NULL;
   int __pyx_lineno = 0;
   const char *__pyx_filename = NULL;
@@ -3838,7 +3838,7 @@ static PyObject *__pyx_pf_4core_3rpc_4feed_6BtFeed_5load(struct __pyx_obj_4core_
   __Pyx_XDECREF(__pyx_r);
   __pyx_t_1.__pyx_n = 1;
   __pyx_t_1.parallel = __pyx_v_parallel;
-  __pyx_vtabptr_4core_3rpc_4feed_BtFeed->load(__pyx_v_self, __pyx_v_graph_xml, __pyx_v_dataset_path, __pyx_v_prefix, 1, &__pyx_t_1); if (unlikely(PyErr_Occurred())) __PYX_ERR(0, 41, __pyx_L1_error)
+  __pyx_vtabptr_8rpc_feed_4core_3rpc_4feed_BtFeed->load(__pyx_v_self, __pyx_v_graph_xml, __pyx_v_dataset_path, __pyx_v_prefix, 1, &__pyx_t_1); if (unlikely(PyErr_Occurred())) __PYX_ERR(0, 41, __pyx_L1_error)
   __pyx_t_2 = __Pyx_void_to_None(NULL); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 41, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
   __pyx_r = __pyx_t_2;
@@ -3848,7 +3848,7 @@ static PyObject *__pyx_pf_4core_3rpc_4feed_6BtFeed_5load(struct __pyx_obj_4core_
   /* function exit code */
   __pyx_L1_error:;
   __Pyx_XDECREF(__pyx_t_2);
-  __Pyx_AddTraceback("core.rpc.feed.BtFeed.load", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __Pyx_AddTraceback("rpc_feed.core.rpc.feed.BtFeed.load", __pyx_clineno, __pyx_lineno, __pyx_filename);
   __pyx_r = NULL;
   __pyx_L0:;
   __Pyx_XGIVEREF(__pyx_r);
@@ -3863,15 +3863,15 @@ static PyObject *__pyx_pf_4core_3rpc_4feed_6BtFeed_5load(struct __pyx_obj_4core_
 */
 
 /* Python wrapper */
-static PyObject *__pyx_pw_4core_3rpc_4feed_6BtFeed_8__reduce_cython__(PyObject *__pyx_v_self, 
+static PyObject *__pyx_pw_8rpc_feed_4core_3rpc_4feed_6BtFeed_8__reduce_cython__(PyObject *__pyx_v_self, 
 #if CYTHON_METH_FASTCALL
 PyObject *const *__pyx_args, Py_ssize_t __pyx_nargs, PyObject *__pyx_kwds
 #else
 PyObject *__pyx_args, PyObject *__pyx_kwds
 #endif
 ); /*proto*/
-static PyMethodDef __pyx_mdef_4core_3rpc_4feed_6BtFeed_8__reduce_cython__ = {"__reduce_cython__", (PyCFunction)(void(*)(void))(__Pyx_PyCFunction_FastCallWithKeywords)__pyx_pw_4core_3rpc_4feed_6BtFeed_8__reduce_cython__, __Pyx_METH_FASTCALL|METH_KEYWORDS, 0};
-static PyObject *__pyx_pw_4core_3rpc_4feed_6BtFeed_8__reduce_cython__(PyObject *__pyx_v_self, 
+static PyMethodDef __pyx_mdef_8rpc_feed_4core_3rpc_4feed_6BtFeed_8__reduce_cython__ = {"__reduce_cython__", (PyCFunction)(void(*)(void))(__Pyx_PyCFunction_FastCallWithKeywords)__pyx_pw_8rpc_feed_4core_3rpc_4feed_6BtFeed_8__reduce_cython__, __Pyx_METH_FASTCALL|METH_KEYWORDS, 0};
+static PyObject *__pyx_pw_8rpc_feed_4core_3rpc_4feed_6BtFeed_8__reduce_cython__(PyObject *__pyx_v_self, 
 #if CYTHON_METH_FASTCALL
 PyObject *const *__pyx_args, Py_ssize_t __pyx_nargs, PyObject *__pyx_kwds
 #else
@@ -3897,14 +3897,14 @@ PyObject *__pyx_args, PyObject *__pyx_kwds
   const Py_ssize_t __pyx_kwds_len = unlikely(__pyx_kwds) ? __Pyx_NumKwargs_FASTCALL(__pyx_kwds) : 0;
   if (unlikely(__pyx_kwds_len < 0)) return NULL;
   if (unlikely(__pyx_kwds_len > 0)) {__Pyx_RejectKeywords("__reduce_cython__", __pyx_kwds); return NULL;}
-  __pyx_r = __pyx_pf_4core_3rpc_4feed_6BtFeed_7__reduce_cython__(((struct __pyx_obj_4core_3rpc_4feed_BtFeed *)__pyx_v_self));
+  __pyx_r = __pyx_pf_8rpc_feed_4core_3rpc_4feed_6BtFeed_7__reduce_cython__(((struct __pyx_obj_8rpc_feed_4core_3rpc_4feed_BtFeed *)__pyx_v_self));
 
   /* function exit code */
   __Pyx_RefNannyFinishContext();
   return __pyx_r;
 }
 
-static PyObject *__pyx_pf_4core_3rpc_4feed_6BtFeed_7__reduce_cython__(struct __pyx_obj_4core_3rpc_4feed_BtFeed *__pyx_v_self) {
+static PyObject *__pyx_pf_8rpc_feed_4core_3rpc_4feed_6BtFeed_7__reduce_cython__(struct __pyx_obj_8rpc_feed_4core_3rpc_4feed_BtFeed *__pyx_v_self) {
   PyObject *__pyx_v_state = 0;
   PyObject *__pyx_v__dict = 0;
   int __pyx_v_use_setstate;
@@ -4121,7 +4121,7 @@ static PyObject *__pyx_pf_4core_3rpc_4feed_6BtFeed_7__reduce_cython__(struct __p
   __Pyx_XDECREF(__pyx_t_1);
   __Pyx_XDECREF(__pyx_t_4);
   __Pyx_XDECREF(__pyx_t_5);
-  __Pyx_AddTraceback("core.rpc.feed.BtFeed.__reduce_cython__", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __Pyx_AddTraceback("rpc_feed.core.rpc.feed.BtFeed.__reduce_cython__", __pyx_clineno, __pyx_lineno, __pyx_filename);
   __pyx_r = NULL;
   __pyx_L0:;
   __Pyx_XDECREF(__pyx_v_state);
@@ -4139,15 +4139,15 @@ static PyObject *__pyx_pf_4core_3rpc_4feed_6BtFeed_7__reduce_cython__(struct __p
 */
 
 /* Python wrapper */
-static PyObject *__pyx_pw_4core_3rpc_4feed_6BtFeed_10__setstate_cython__(PyObject *__pyx_v_self, 
+static PyObject *__pyx_pw_8rpc_feed_4core_3rpc_4feed_6BtFeed_10__setstate_cython__(PyObject *__pyx_v_self, 
 #if CYTHON_METH_FASTCALL
 PyObject *const *__pyx_args, Py_ssize_t __pyx_nargs, PyObject *__pyx_kwds
 #else
 PyObject *__pyx_args, PyObject *__pyx_kwds
 #endif
 ); /*proto*/
-static PyMethodDef __pyx_mdef_4core_3rpc_4feed_6BtFeed_10__setstate_cython__ = {"__setstate_cython__", (PyCFunction)(void(*)(void))(__Pyx_PyCFunction_FastCallWithKeywords)__pyx_pw_4core_3rpc_4feed_6BtFeed_10__setstate_cython__, __Pyx_METH_FASTCALL|METH_KEYWORDS, 0};
-static PyObject *__pyx_pw_4core_3rpc_4feed_6BtFeed_10__setstate_cython__(PyObject *__pyx_v_self, 
+static PyMethodDef __pyx_mdef_8rpc_feed_4core_3rpc_4feed_6BtFeed_10__setstate_cython__ = {"__setstate_cython__", (PyCFunction)(void(*)(void))(__Pyx_PyCFunction_FastCallWithKeywords)__pyx_pw_8rpc_feed_4core_3rpc_4feed_6BtFeed_10__setstate_cython__, __Pyx_METH_FASTCALL|METH_KEYWORDS, 0};
+static PyObject *__pyx_pw_8rpc_feed_4core_3rpc_4feed_6BtFeed_10__setstate_cython__(PyObject *__pyx_v_self, 
 #if CYTHON_METH_FASTCALL
 PyObject *const *__pyx_args, Py_ssize_t __pyx_nargs, PyObject *__pyx_kwds
 #else
@@ -4209,11 +4209,11 @@ PyObject *__pyx_args, PyObject *__pyx_kwds
   for (Py_ssize_t __pyx_temp=0; __pyx_temp < (Py_ssize_t)(sizeof(values)/sizeof(values[0])); ++__pyx_temp) {
     Py_XDECREF(values[__pyx_temp]);
   }
-  __Pyx_AddTraceback("core.rpc.feed.BtFeed.__setstate_cython__", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __Pyx_AddTraceback("rpc_feed.core.rpc.feed.BtFeed.__setstate_cython__", __pyx_clineno, __pyx_lineno, __pyx_filename);
   __Pyx_RefNannyFinishContext();
   return NULL;
   __pyx_L4_argument_unpacking_done:;
-  __pyx_r = __pyx_pf_4core_3rpc_4feed_6BtFeed_9__setstate_cython__(((struct __pyx_obj_4core_3rpc_4feed_BtFeed *)__pyx_v_self), __pyx_v___pyx_state);
+  __pyx_r = __pyx_pf_8rpc_feed_4core_3rpc_4feed_6BtFeed_9__setstate_cython__(((struct __pyx_obj_8rpc_feed_4core_3rpc_4feed_BtFeed *)__pyx_v_self), __pyx_v___pyx_state);
 
   /* function exit code */
   for (Py_ssize_t __pyx_temp=0; __pyx_temp < (Py_ssize_t)(sizeof(values)/sizeof(values[0])); ++__pyx_temp) {
@@ -4223,7 +4223,7 @@ PyObject *__pyx_args, PyObject *__pyx_kwds
   return __pyx_r;
 }
 
-static PyObject *__pyx_pf_4core_3rpc_4feed_6BtFeed_9__setstate_cython__(struct __pyx_obj_4core_3rpc_4feed_BtFeed *__pyx_v_self, PyObject *__pyx_v___pyx_state) {
+static PyObject *__pyx_pf_8rpc_feed_4core_3rpc_4feed_6BtFeed_9__setstate_cython__(struct __pyx_obj_8rpc_feed_4core_3rpc_4feed_BtFeed *__pyx_v_self, PyObject *__pyx_v___pyx_state) {
   PyObject *__pyx_r = NULL;
   __Pyx_RefNannyDeclarations
   PyObject *__pyx_t_1 = NULL;
@@ -4245,7 +4245,7 @@ static PyObject *__pyx_pf_4core_3rpc_4feed_6BtFeed_9__setstate_cython__(struct _
     PyErr_SetString(PyExc_TypeError, "cannot pass None into a C function argument that is declared 'not None'");
     __PYX_ERR(1, 17, __pyx_L1_error)
   }
-  __pyx_t_2 = __pyx_f_4core_3rpc_4feed___pyx_unpickle_BtFeed__set_state(__pyx_v_self, ((PyObject*)__pyx_t_1)); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 17, __pyx_L1_error)
+  __pyx_t_2 = __pyx_f_8rpc_feed_4core_3rpc_4feed___pyx_unpickle_BtFeed__set_state(__pyx_v_self, ((PyObject*)__pyx_t_1)); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 17, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
@@ -4263,7 +4263,7 @@ static PyObject *__pyx_pf_4core_3rpc_4feed_6BtFeed_9__setstate_cython__(struct _
   __pyx_L1_error:;
   __Pyx_XDECREF(__pyx_t_1);
   __Pyx_XDECREF(__pyx_t_2);
-  __Pyx_AddTraceback("core.rpc.feed.BtFeed.__setstate_cython__", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __Pyx_AddTraceback("rpc_feed.core.rpc.feed.BtFeed.__setstate_cython__", __pyx_clineno, __pyx_lineno, __pyx_filename);
   __pyx_r = NULL;
   __pyx_L0:;
   __Pyx_XGIVEREF(__pyx_r);
@@ -4280,15 +4280,15 @@ static PyObject *__pyx_pf_4core_3rpc_4feed_6BtFeed_9__setstate_cython__(struct _
 */
 
 /* Python wrapper */
-static PyObject *__pyx_pw_4core_3rpc_4feed_1__pyx_unpickle_BtFeed(PyObject *__pyx_self, 
+static PyObject *__pyx_pw_8rpc_feed_4core_3rpc_4feed_1__pyx_unpickle_BtFeed(PyObject *__pyx_self, 
 #if CYTHON_METH_FASTCALL
 PyObject *const *__pyx_args, Py_ssize_t __pyx_nargs, PyObject *__pyx_kwds
 #else
 PyObject *__pyx_args, PyObject *__pyx_kwds
 #endif
 ); /*proto*/
-static PyMethodDef __pyx_mdef_4core_3rpc_4feed_1__pyx_unpickle_BtFeed = {"__pyx_unpickle_BtFeed", (PyCFunction)(void(*)(void))(__Pyx_PyCFunction_FastCallWithKeywords)__pyx_pw_4core_3rpc_4feed_1__pyx_unpickle_BtFeed, __Pyx_METH_FASTCALL|METH_KEYWORDS, 0};
-static PyObject *__pyx_pw_4core_3rpc_4feed_1__pyx_unpickle_BtFeed(PyObject *__pyx_self, 
+static PyMethodDef __pyx_mdef_8rpc_feed_4core_3rpc_4feed_1__pyx_unpickle_BtFeed = {"__pyx_unpickle_BtFeed", (PyCFunction)(void(*)(void))(__Pyx_PyCFunction_FastCallWithKeywords)__pyx_pw_8rpc_feed_4core_3rpc_4feed_1__pyx_unpickle_BtFeed, __Pyx_METH_FASTCALL|METH_KEYWORDS, 0};
+static PyObject *__pyx_pw_8rpc_feed_4core_3rpc_4feed_1__pyx_unpickle_BtFeed(PyObject *__pyx_self, 
 #if CYTHON_METH_FASTCALL
 PyObject *const *__pyx_args, Py_ssize_t __pyx_nargs, PyObject *__pyx_kwds
 #else
@@ -4366,12 +4366,12 @@ PyObject *__pyx_args, PyObject *__pyx_kwds
   for (Py_ssize_t __pyx_temp=0; __pyx_temp < (Py_ssize_t)(sizeof(values)/sizeof(values[0])); ++__pyx_temp) {
     Py_XDECREF(values[__pyx_temp]);
   }
-  __Pyx_AddTraceback("core.rpc.feed.__pyx_unpickle_BtFeed", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __Pyx_AddTraceback("rpc_feed.core.rpc.feed.__pyx_unpickle_BtFeed", __pyx_clineno, __pyx_lineno, __pyx_filename);
   __Pyx_RefNannyFinishContext();
   return NULL;
   __pyx_L4_argument_unpacking_done:;
   if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v___pyx_state), (&PyTuple_Type), 1, "__pyx_state", 1))) __PYX_ERR(1, 4, __pyx_L1_error)
-  __pyx_r = __pyx_pf_4core_3rpc_4feed___pyx_unpickle_BtFeed(__pyx_self, __pyx_v___pyx_type, __pyx_v___pyx_checksum, __pyx_v___pyx_state);
+  __pyx_r = __pyx_pf_8rpc_feed_4core_3rpc_4feed___pyx_unpickle_BtFeed(__pyx_self, __pyx_v___pyx_type, __pyx_v___pyx_checksum, __pyx_v___pyx_state);
 
   /* function exit code */
   goto __pyx_L0;
@@ -4390,7 +4390,7 @@ PyObject *__pyx_args, PyObject *__pyx_kwds
   return __pyx_r;
 }
 
-static PyObject *__pyx_pf_4core_3rpc_4feed___pyx_unpickle_BtFeed(CYTHON_UNUSED PyObject *__pyx_self, PyObject *__pyx_v___pyx_type, long __pyx_v___pyx_checksum, PyObject *__pyx_v___pyx_state) {
+static PyObject *__pyx_pf_8rpc_feed_4core_3rpc_4feed___pyx_unpickle_BtFeed(CYTHON_UNUSED PyObject *__pyx_self, PyObject *__pyx_v___pyx_type, long __pyx_v___pyx_checksum, PyObject *__pyx_v___pyx_state) {
   PyObject *__pyx_v___pyx_result = 0;
   PyObject *__pyx_r = NULL;
   __Pyx_RefNannyDeclarations
@@ -4420,7 +4420,7 @@ static PyObject *__pyx_pf_4core_3rpc_4feed___pyx_unpickle_BtFeed(CYTHON_UNUSED P
  *     if __pyx_state is not None:
  *         __pyx_unpickle_BtFeed__set_state(<BtFeed> __pyx_result, __pyx_state)
 */
-  __pyx_t_3 = ((PyObject *)__pyx_mstate_global->__pyx_ptype_4core_3rpc_4feed_BtFeed);
+  __pyx_t_3 = ((PyObject *)__pyx_mstate_global->__pyx_ptype_8rpc_feed_4core_3rpc_4feed_BtFeed);
   __Pyx_INCREF(__pyx_t_3);
   __pyx_t_4 = 0;
   {
@@ -4454,7 +4454,7 @@ static PyObject *__pyx_pf_4core_3rpc_4feed___pyx_unpickle_BtFeed(CYTHON_UNUSED P
       PyErr_SetString(PyExc_TypeError, "cannot pass None into a C function argument that is declared 'not None'");
       __PYX_ERR(1, 9, __pyx_L1_error)
     }
-    __pyx_t_2 = __pyx_f_4core_3rpc_4feed___pyx_unpickle_BtFeed__set_state(((struct __pyx_obj_4core_3rpc_4feed_BtFeed *)__pyx_v___pyx_result), __pyx_v___pyx_state); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 9, __pyx_L1_error)
+    __pyx_t_2 = __pyx_f_8rpc_feed_4core_3rpc_4feed___pyx_unpickle_BtFeed__set_state(((struct __pyx_obj_8rpc_feed_4core_3rpc_4feed_BtFeed *)__pyx_v___pyx_result), __pyx_v___pyx_state); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 9, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_2);
     __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
 
@@ -4491,7 +4491,7 @@ static PyObject *__pyx_pf_4core_3rpc_4feed___pyx_unpickle_BtFeed(CYTHON_UNUSED P
   __pyx_L1_error:;
   __Pyx_XDECREF(__pyx_t_2);
   __Pyx_XDECREF(__pyx_t_3);
-  __Pyx_AddTraceback("core.rpc.feed.__pyx_unpickle_BtFeed", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __Pyx_AddTraceback("rpc_feed.core.rpc.feed.__pyx_unpickle_BtFeed", __pyx_clineno, __pyx_lineno, __pyx_filename);
   __pyx_r = NULL;
   __pyx_L0:;
   __Pyx_XDECREF(__pyx_v___pyx_result);
@@ -4508,7 +4508,7 @@ static PyObject *__pyx_pf_4core_3rpc_4feed___pyx_unpickle_BtFeed(CYTHON_UNUSED P
  *     __Pyx_UpdateUnpickledDict(__pyx_result, __pyx_state, 3)
 */
 
-static PyObject *__pyx_f_4core_3rpc_4feed___pyx_unpickle_BtFeed__set_state(struct __pyx_obj_4core_3rpc_4feed_BtFeed *__pyx_v___pyx_result, PyObject *__pyx_v___pyx_state) {
+static PyObject *__pyx_f_8rpc_feed_4core_3rpc_4feed___pyx_unpickle_BtFeed__set_state(struct __pyx_obj_8rpc_feed_4core_3rpc_4feed_BtFeed *__pyx_v___pyx_result, PyObject *__pyx_v___pyx_state) {
   PyObject *__pyx_r = NULL;
   __Pyx_RefNannyDeclarations
   PyObject *__pyx_t_1 = NULL;
@@ -4566,7 +4566,7 @@ static PyObject *__pyx_f_4core_3rpc_4feed___pyx_unpickle_BtFeed__set_state(struc
   goto __pyx_L0;
   __pyx_L1_error:;
   __Pyx_XDECREF(__pyx_t_1);
-  __Pyx_AddTraceback("core.rpc.feed.__pyx_unpickle_BtFeed__set_state", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __Pyx_AddTraceback("rpc_feed.core.rpc.feed.__pyx_unpickle_BtFeed__set_state", __pyx_clineno, __pyx_lineno, __pyx_filename);
   __pyx_r = 0;
   __pyx_L0:;
   __Pyx_XGIVEREF(__pyx_r);
@@ -4574,26 +4574,26 @@ static PyObject *__pyx_f_4core_3rpc_4feed___pyx_unpickle_BtFeed__set_state(struc
   return __pyx_r;
 }
 /* #### Code section: module_exttypes ### */
-static struct __pyx_vtabstruct_4core_3rpc_4feed_BtFeed __pyx_vtable_4core_3rpc_4feed_BtFeed;
+static struct __pyx_vtabstruct_8rpc_feed_4core_3rpc_4feed_BtFeed __pyx_vtable_8rpc_feed_4core_3rpc_4feed_BtFeed;
 
-static PyObject *__pyx_tp_new_4core_3rpc_4feed_BtFeed(PyTypeObject *t, CYTHON_UNUSED PyObject *a, CYTHON_UNUSED PyObject *k) {
-  struct __pyx_obj_4core_3rpc_4feed_BtFeed *p;
+static PyObject *__pyx_tp_new_8rpc_feed_4core_3rpc_4feed_BtFeed(PyTypeObject *t, CYTHON_UNUSED PyObject *a, CYTHON_UNUSED PyObject *k) {
+  struct __pyx_obj_8rpc_feed_4core_3rpc_4feed_BtFeed *p;
   PyObject *o;
   o = __Pyx_AllocateExtensionType(t, 0);
   if (unlikely(!o)) return 0;
-  p = ((struct __pyx_obj_4core_3rpc_4feed_BtFeed *)o);
-  p->__pyx_vtab = __pyx_vtabptr_4core_3rpc_4feed_BtFeed;
+  p = ((struct __pyx_obj_8rpc_feed_4core_3rpc_4feed_BtFeed *)o);
+  p->__pyx_vtab = __pyx_vtabptr_8rpc_feed_4core_3rpc_4feed_BtFeed;
   p->_providers = Py_None; Py_INCREF(Py_None);
   p->_pattern = Py_None; Py_INCREF(Py_None);
   p->pipeline = Py_None; Py_INCREF(Py_None);
   return o;
 }
 
-static void __pyx_tp_dealloc_4core_3rpc_4feed_BtFeed(PyObject *o) {
-  struct __pyx_obj_4core_3rpc_4feed_BtFeed *p = (struct __pyx_obj_4core_3rpc_4feed_BtFeed *)o;
+static void __pyx_tp_dealloc_8rpc_feed_4core_3rpc_4feed_BtFeed(PyObject *o) {
+  struct __pyx_obj_8rpc_feed_4core_3rpc_4feed_BtFeed *p = (struct __pyx_obj_8rpc_feed_4core_3rpc_4feed_BtFeed *)o;
   #if CYTHON_USE_TP_FINALIZE
   if (unlikely(__Pyx_PyObject_GetSlot(o, tp_finalize, destructor)) && !__Pyx_PyObject_GC_IsFinalized(o)) {
-    if (__Pyx_PyObject_GetSlot(o, tp_dealloc, destructor) == __pyx_tp_dealloc_4core_3rpc_4feed_BtFeed) {
+    if (__Pyx_PyObject_GetSlot(o, tp_dealloc, destructor) == __pyx_tp_dealloc_8rpc_feed_4core_3rpc_4feed_BtFeed) {
       if (PyObject_CallFinalizerFromDealloc(o)) return;
     }
   }
@@ -4616,9 +4616,9 @@ static void __pyx_tp_dealloc_4core_3rpc_4feed_BtFeed(PyObject *o) {
   #endif
 }
 
-static int __pyx_tp_traverse_4core_3rpc_4feed_BtFeed(PyObject *o, visitproc v, void *a) {
+static int __pyx_tp_traverse_8rpc_feed_4core_3rpc_4feed_BtFeed(PyObject *o, visitproc v, void *a) {
   int e;
-  struct __pyx_obj_4core_3rpc_4feed_BtFeed *p = (struct __pyx_obj_4core_3rpc_4feed_BtFeed *)o;
+  struct __pyx_obj_8rpc_feed_4core_3rpc_4feed_BtFeed *p = (struct __pyx_obj_8rpc_feed_4core_3rpc_4feed_BtFeed *)o;
   {
     e = __Pyx_call_type_traverse(o, 1, v, a);
     if (e) return e;
@@ -4635,9 +4635,9 @@ static int __pyx_tp_traverse_4core_3rpc_4feed_BtFeed(PyObject *o, visitproc v, v
   return 0;
 }
 
-static int __pyx_tp_clear_4core_3rpc_4feed_BtFeed(PyObject *o) {
+static int __pyx_tp_clear_8rpc_feed_4core_3rpc_4feed_BtFeed(PyObject *o) {
   PyObject* tmp;
-  struct __pyx_obj_4core_3rpc_4feed_BtFeed *p = (struct __pyx_obj_4core_3rpc_4feed_BtFeed *)o;
+  struct __pyx_obj_8rpc_feed_4core_3rpc_4feed_BtFeed *p = (struct __pyx_obj_8rpc_feed_4core_3rpc_4feed_BtFeed *)o;
   tmp = ((PyObject*)p->_providers);
   p->_providers = Py_None; Py_INCREF(Py_None);
   Py_XDECREF(tmp);
@@ -4650,37 +4650,37 @@ static int __pyx_tp_clear_4core_3rpc_4feed_BtFeed(PyObject *o) {
   return 0;
 }
 
-static PyMethodDef __pyx_methods_4core_3rpc_4feed_BtFeed[] = {
-  {"fetch", (PyCFunction)(void(*)(void))(__Pyx_PyCFunction_FastCallWithKeywords)__pyx_pw_4core_3rpc_4feed_6BtFeed_3fetch, __Pyx_METH_FASTCALL|METH_KEYWORDS, 0},
-  {"__reduce_cython__", (PyCFunction)(void(*)(void))(__Pyx_PyCFunction_FastCallWithKeywords)__pyx_pw_4core_3rpc_4feed_6BtFeed_8__reduce_cython__, __Pyx_METH_FASTCALL|METH_KEYWORDS, 0},
-  {"__setstate_cython__", (PyCFunction)(void(*)(void))(__Pyx_PyCFunction_FastCallWithKeywords)__pyx_pw_4core_3rpc_4feed_6BtFeed_10__setstate_cython__, __Pyx_METH_FASTCALL|METH_KEYWORDS, 0},
+static PyMethodDef __pyx_methods_8rpc_feed_4core_3rpc_4feed_BtFeed[] = {
+  {"fetch", (PyCFunction)(void(*)(void))(__Pyx_PyCFunction_FastCallWithKeywords)__pyx_pw_8rpc_feed_4core_3rpc_4feed_6BtFeed_3fetch, __Pyx_METH_FASTCALL|METH_KEYWORDS, 0},
+  {"__reduce_cython__", (PyCFunction)(void(*)(void))(__Pyx_PyCFunction_FastCallWithKeywords)__pyx_pw_8rpc_feed_4core_3rpc_4feed_6BtFeed_8__reduce_cython__, __Pyx_METH_FASTCALL|METH_KEYWORDS, 0},
+  {"__setstate_cython__", (PyCFunction)(void(*)(void))(__Pyx_PyCFunction_FastCallWithKeywords)__pyx_pw_8rpc_feed_4core_3rpc_4feed_6BtFeed_10__setstate_cython__, __Pyx_METH_FASTCALL|METH_KEYWORDS, 0},
   {0, 0, 0, 0}
 };
 #if CYTHON_USE_TYPE_SPECS
-static PyType_Slot __pyx_type_4core_3rpc_4feed_BtFeed_slots[] = {
-  {Py_tp_dealloc, (void *)__pyx_tp_dealloc_4core_3rpc_4feed_BtFeed},
-  {Py_tp_traverse, (void *)__pyx_tp_traverse_4core_3rpc_4feed_BtFeed},
-  {Py_tp_clear, (void *)__pyx_tp_clear_4core_3rpc_4feed_BtFeed},
-  {Py_tp_methods, (void *)__pyx_methods_4core_3rpc_4feed_BtFeed},
-  {Py_tp_init, (void *)__pyx_pw_4core_3rpc_4feed_6BtFeed_1__init__},
-  {Py_tp_new, (void *)__pyx_tp_new_4core_3rpc_4feed_BtFeed},
+static PyType_Slot __pyx_type_8rpc_feed_4core_3rpc_4feed_BtFeed_slots[] = {
+  {Py_tp_dealloc, (void *)__pyx_tp_dealloc_8rpc_feed_4core_3rpc_4feed_BtFeed},
+  {Py_tp_traverse, (void *)__pyx_tp_traverse_8rpc_feed_4core_3rpc_4feed_BtFeed},
+  {Py_tp_clear, (void *)__pyx_tp_clear_8rpc_feed_4core_3rpc_4feed_BtFeed},
+  {Py_tp_methods, (void *)__pyx_methods_8rpc_feed_4core_3rpc_4feed_BtFeed},
+  {Py_tp_init, (void *)__pyx_pw_8rpc_feed_4core_3rpc_4feed_6BtFeed_1__init__},
+  {Py_tp_new, (void *)__pyx_tp_new_8rpc_feed_4core_3rpc_4feed_BtFeed},
   {0, 0},
 };
-static PyType_Spec __pyx_type_4core_3rpc_4feed_BtFeed_spec = {
-  "core.rpc.feed.BtFeed",
-  sizeof(struct __pyx_obj_4core_3rpc_4feed_BtFeed),
+static PyType_Spec __pyx_type_8rpc_feed_4core_3rpc_4feed_BtFeed_spec = {
+  "rpc_feed.core.rpc.feed.BtFeed",
+  sizeof(struct __pyx_obj_8rpc_feed_4core_3rpc_4feed_BtFeed),
   0,
   Py_TPFLAGS_DEFAULT|Py_TPFLAGS_HAVE_VERSION_TAG|Py_TPFLAGS_CHECKTYPES|Py_TPFLAGS_HAVE_NEWBUFFER|Py_TPFLAGS_BASETYPE|Py_TPFLAGS_HAVE_GC,
-  __pyx_type_4core_3rpc_4feed_BtFeed_slots,
+  __pyx_type_8rpc_feed_4core_3rpc_4feed_BtFeed_slots,
 };
 #else
 
-static PyTypeObject __pyx_type_4core_3rpc_4feed_BtFeed = {
+static PyTypeObject __pyx_type_8rpc_feed_4core_3rpc_4feed_BtFeed = {
   PyVarObject_HEAD_INIT(0, 0)
-  "core.rpc.feed.""BtFeed", /*tp_name*/
-  sizeof(struct __pyx_obj_4core_3rpc_4feed_BtFeed), /*tp_basicsize*/
+  "rpc_feed.core.rpc.feed.""BtFeed", /*tp_name*/
+  sizeof(struct __pyx_obj_8rpc_feed_4core_3rpc_4feed_BtFeed), /*tp_basicsize*/
   0, /*tp_itemsize*/
-  __pyx_tp_dealloc_4core_3rpc_4feed_BtFeed, /*tp_dealloc*/
+  __pyx_tp_dealloc_8rpc_feed_4core_3rpc_4feed_BtFeed, /*tp_dealloc*/
   0, /*tp_vectorcall_offset*/
   0, /*tp_getattr*/
   0, /*tp_setattr*/
@@ -4697,13 +4697,13 @@ static PyTypeObject __pyx_type_4core_3rpc_4feed_BtFeed = {
   0, /*tp_as_buffer*/
   Py_TPFLAGS_DEFAULT|Py_TPFLAGS_HAVE_VERSION_TAG|Py_TPFLAGS_CHECKTYPES|Py_TPFLAGS_HAVE_NEWBUFFER|Py_TPFLAGS_BASETYPE|Py_TPFLAGS_HAVE_GC, /*tp_flags*/
   0, /*tp_doc*/
-  __pyx_tp_traverse_4core_3rpc_4feed_BtFeed, /*tp_traverse*/
-  __pyx_tp_clear_4core_3rpc_4feed_BtFeed, /*tp_clear*/
+  __pyx_tp_traverse_8rpc_feed_4core_3rpc_4feed_BtFeed, /*tp_traverse*/
+  __pyx_tp_clear_8rpc_feed_4core_3rpc_4feed_BtFeed, /*tp_clear*/
   0, /*tp_richcompare*/
   0, /*tp_weaklistoffset*/
   0, /*tp_iter*/
   0, /*tp_iternext*/
-  __pyx_methods_4core_3rpc_4feed_BtFeed, /*tp_methods*/
+  __pyx_methods_8rpc_feed_4core_3rpc_4feed_BtFeed, /*tp_methods*/
   0, /*tp_members*/
   0, /*tp_getset*/
   0, /*tp_base*/
@@ -4713,9 +4713,9 @@ static PyTypeObject __pyx_type_4core_3rpc_4feed_BtFeed = {
   #if !CYTHON_USE_TYPE_SPECS
   0, /*tp_dictoffset*/
   #endif
-  __pyx_pw_4core_3rpc_4feed_6BtFeed_1__init__, /*tp_init*/
+  __pyx_pw_8rpc_feed_4core_3rpc_4feed_6BtFeed_1__init__, /*tp_init*/
   0, /*tp_alloc*/
-  __pyx_tp_new_4core_3rpc_4feed_BtFeed, /*tp_new*/
+  __pyx_tp_new_8rpc_feed_4core_3rpc_4feed_BtFeed, /*tp_new*/
   0, /*tp_free*/
   0, /*tp_is_gc*/
   0, /*tp_bases*/
@@ -4748,16 +4748,16 @@ static PyTypeObject __pyx_type_4core_3rpc_4feed_BtFeed = {
 };
 #endif
 
-static PyObject *__pyx_tp_new_4core_3rpc_4feed___pyx_scope_struct__fetch(PyTypeObject *t, CYTHON_UNUSED PyObject *a, CYTHON_UNUSED PyObject *k) {
+static PyObject *__pyx_tp_new_8rpc_feed_4core_3rpc_4feed___pyx_scope_struct__fetch(PyTypeObject *t, CYTHON_UNUSED PyObject *a, CYTHON_UNUSED PyObject *k) {
   PyObject *o;
   #if CYTHON_USE_FREELISTS
-  if (likely((int)(__pyx_mstate_global->__pyx_freecount_4core_3rpc_4feed___pyx_scope_struct__fetch > 0) & __PYX_CHECK_FINAL_TYPE_FOR_FREELISTS(t, __pyx_mstate_global->__pyx_ptype_4core_3rpc_4feed___pyx_scope_struct__fetch, sizeof(struct __pyx_obj_4core_3rpc_4feed___pyx_scope_struct__fetch))))
+  if (likely((int)(__pyx_mstate_global->__pyx_freecount_8rpc_feed_4core_3rpc_4feed___pyx_scope_struct__fetch > 0) & __PYX_CHECK_FINAL_TYPE_FOR_FREELISTS(t, __pyx_mstate_global->__pyx_ptype_8rpc_feed_4core_3rpc_4feed___pyx_scope_struct__fetch, sizeof(struct __pyx_obj_8rpc_feed_4core_3rpc_4feed___pyx_scope_struct__fetch))))
   {
-    o = (PyObject*)__pyx_mstate_global->__pyx_freelist_4core_3rpc_4feed___pyx_scope_struct__fetch[--__pyx_mstate_global->__pyx_freecount_4core_3rpc_4feed___pyx_scope_struct__fetch];
+    o = (PyObject*)__pyx_mstate_global->__pyx_freelist_8rpc_feed_4core_3rpc_4feed___pyx_scope_struct__fetch[--__pyx_mstate_global->__pyx_freecount_8rpc_feed_4core_3rpc_4feed___pyx_scope_struct__fetch];
     #if CYTHON_USE_TYPE_SPECS
     Py_DECREF(Py_TYPE(o));
     #endif
-    memset(o, 0, sizeof(struct __pyx_obj_4core_3rpc_4feed___pyx_scope_struct__fetch));
+    memset(o, 0, sizeof(struct __pyx_obj_8rpc_feed_4core_3rpc_4feed___pyx_scope_struct__fetch));
     #if CYTHON_COMPILING_IN_LIMITED_API
     (void) PyObject_Init(o, t);
     #else
@@ -4773,11 +4773,11 @@ static PyObject *__pyx_tp_new_4core_3rpc_4feed___pyx_scope_struct__fetch(PyTypeO
   return o;
 }
 
-static void __pyx_tp_dealloc_4core_3rpc_4feed___pyx_scope_struct__fetch(PyObject *o) {
-  struct __pyx_obj_4core_3rpc_4feed___pyx_scope_struct__fetch *p = (struct __pyx_obj_4core_3rpc_4feed___pyx_scope_struct__fetch *)o;
+static void __pyx_tp_dealloc_8rpc_feed_4core_3rpc_4feed___pyx_scope_struct__fetch(PyObject *o) {
+  struct __pyx_obj_8rpc_feed_4core_3rpc_4feed___pyx_scope_struct__fetch *p = (struct __pyx_obj_8rpc_feed_4core_3rpc_4feed___pyx_scope_struct__fetch *)o;
   #if CYTHON_USE_TP_FINALIZE
   if (unlikely(__Pyx_PyObject_GetSlot(o, tp_finalize, destructor)) && !__Pyx_PyObject_GC_IsFinalized(o)) {
-    if (__Pyx_PyObject_GetSlot(o, tp_dealloc, destructor) == __pyx_tp_dealloc_4core_3rpc_4feed___pyx_scope_struct__fetch) {
+    if (__Pyx_PyObject_GetSlot(o, tp_dealloc, destructor) == __pyx_tp_dealloc_8rpc_feed_4core_3rpc_4feed___pyx_scope_struct__fetch) {
       if (PyObject_CallFinalizerFromDealloc(o)) return;
     }
   }
@@ -4791,9 +4791,9 @@ static void __pyx_tp_dealloc_4core_3rpc_4feed___pyx_scope_struct__fetch(PyObject
   Py_CLEAR(p->__pyx_v_topic);
   Py_CLEAR(p->__pyx_t_0);
   #if CYTHON_USE_FREELISTS
-  if (likely((int)(__pyx_mstate_global->__pyx_freecount_4core_3rpc_4feed___pyx_scope_struct__fetch < 8) & __PYX_CHECK_FINAL_TYPE_FOR_FREELISTS(Py_TYPE(o), __pyx_mstate_global->__pyx_ptype_4core_3rpc_4feed___pyx_scope_struct__fetch, sizeof(struct __pyx_obj_4core_3rpc_4feed___pyx_scope_struct__fetch))))
+  if (likely((int)(__pyx_mstate_global->__pyx_freecount_8rpc_feed_4core_3rpc_4feed___pyx_scope_struct__fetch < 8) & __PYX_CHECK_FINAL_TYPE_FOR_FREELISTS(Py_TYPE(o), __pyx_mstate_global->__pyx_ptype_8rpc_feed_4core_3rpc_4feed___pyx_scope_struct__fetch, sizeof(struct __pyx_obj_8rpc_feed_4core_3rpc_4feed___pyx_scope_struct__fetch))))
   {
-    __pyx_mstate_global->__pyx_freelist_4core_3rpc_4feed___pyx_scope_struct__fetch[__pyx_mstate_global->__pyx_freecount_4core_3rpc_4feed___pyx_scope_struct__fetch++] = ((struct __pyx_obj_4core_3rpc_4feed___pyx_scope_struct__fetch *)o);
+    __pyx_mstate_global->__pyx_freelist_8rpc_feed_4core_3rpc_4feed___pyx_scope_struct__fetch[__pyx_mstate_global->__pyx_freecount_8rpc_feed_4core_3rpc_4feed___pyx_scope_struct__fetch++] = ((struct __pyx_obj_8rpc_feed_4core_3rpc_4feed___pyx_scope_struct__fetch *)o);
   } else
   #endif
   {
@@ -4812,9 +4812,9 @@ static void __pyx_tp_dealloc_4core_3rpc_4feed___pyx_scope_struct__fetch(PyObject
   }
 }
 
-static int __pyx_tp_traverse_4core_3rpc_4feed___pyx_scope_struct__fetch(PyObject *o, visitproc v, void *a) {
+static int __pyx_tp_traverse_8rpc_feed_4core_3rpc_4feed___pyx_scope_struct__fetch(PyObject *o, visitproc v, void *a) {
   int e;
-  struct __pyx_obj_4core_3rpc_4feed___pyx_scope_struct__fetch *p = (struct __pyx_obj_4core_3rpc_4feed___pyx_scope_struct__fetch *)o;
+  struct __pyx_obj_8rpc_feed_4core_3rpc_4feed___pyx_scope_struct__fetch *p = (struct __pyx_obj_8rpc_feed_4core_3rpc_4feed___pyx_scope_struct__fetch *)o;
   {
     e = __Pyx_call_type_traverse(o, 1, v, a);
     if (e) return e;
@@ -4840,27 +4840,27 @@ static int __pyx_tp_traverse_4core_3rpc_4feed___pyx_scope_struct__fetch(PyObject
   return 0;
 }
 #if CYTHON_USE_TYPE_SPECS
-static PyType_Slot __pyx_type_4core_3rpc_4feed___pyx_scope_struct__fetch_slots[] = {
-  {Py_tp_dealloc, (void *)__pyx_tp_dealloc_4core_3rpc_4feed___pyx_scope_struct__fetch},
-  {Py_tp_traverse, (void *)__pyx_tp_traverse_4core_3rpc_4feed___pyx_scope_struct__fetch},
-  {Py_tp_new, (void *)__pyx_tp_new_4core_3rpc_4feed___pyx_scope_struct__fetch},
+static PyType_Slot __pyx_type_8rpc_feed_4core_3rpc_4feed___pyx_scope_struct__fetch_slots[] = {
+  {Py_tp_dealloc, (void *)__pyx_tp_dealloc_8rpc_feed_4core_3rpc_4feed___pyx_scope_struct__fetch},
+  {Py_tp_traverse, (void *)__pyx_tp_traverse_8rpc_feed_4core_3rpc_4feed___pyx_scope_struct__fetch},
+  {Py_tp_new, (void *)__pyx_tp_new_8rpc_feed_4core_3rpc_4feed___pyx_scope_struct__fetch},
   {0, 0},
 };
-static PyType_Spec __pyx_type_4core_3rpc_4feed___pyx_scope_struct__fetch_spec = {
-  "core.rpc.feed.__pyx_scope_struct__fetch",
-  sizeof(struct __pyx_obj_4core_3rpc_4feed___pyx_scope_struct__fetch),
+static PyType_Spec __pyx_type_8rpc_feed_4core_3rpc_4feed___pyx_scope_struct__fetch_spec = {
+  "rpc_feed.core.rpc.feed.__pyx_scope_struct__fetch",
+  sizeof(struct __pyx_obj_8rpc_feed_4core_3rpc_4feed___pyx_scope_struct__fetch),
   0,
   Py_TPFLAGS_DEFAULT|Py_TPFLAGS_HAVE_VERSION_TAG|Py_TPFLAGS_CHECKTYPES|Py_TPFLAGS_HAVE_NEWBUFFER|Py_TPFLAGS_HAVE_GC,
-  __pyx_type_4core_3rpc_4feed___pyx_scope_struct__fetch_slots,
+  __pyx_type_8rpc_feed_4core_3rpc_4feed___pyx_scope_struct__fetch_slots,
 };
 #else
 
-static PyTypeObject __pyx_type_4core_3rpc_4feed___pyx_scope_struct__fetch = {
+static PyTypeObject __pyx_type_8rpc_feed_4core_3rpc_4feed___pyx_scope_struct__fetch = {
   PyVarObject_HEAD_INIT(0, 0)
-  "core.rpc.feed.""__pyx_scope_struct__fetch", /*tp_name*/
-  sizeof(struct __pyx_obj_4core_3rpc_4feed___pyx_scope_struct__fetch), /*tp_basicsize*/
+  "rpc_feed.core.rpc.feed.""__pyx_scope_struct__fetch", /*tp_name*/
+  sizeof(struct __pyx_obj_8rpc_feed_4core_3rpc_4feed___pyx_scope_struct__fetch), /*tp_basicsize*/
   0, /*tp_itemsize*/
-  __pyx_tp_dealloc_4core_3rpc_4feed___pyx_scope_struct__fetch, /*tp_dealloc*/
+  __pyx_tp_dealloc_8rpc_feed_4core_3rpc_4feed___pyx_scope_struct__fetch, /*tp_dealloc*/
   0, /*tp_vectorcall_offset*/
   0, /*tp_getattr*/
   0, /*tp_setattr*/
@@ -4877,7 +4877,7 @@ static PyTypeObject __pyx_type_4core_3rpc_4feed___pyx_scope_struct__fetch = {
   0, /*tp_as_buffer*/
   Py_TPFLAGS_DEFAULT|Py_TPFLAGS_HAVE_VERSION_TAG|Py_TPFLAGS_CHECKTYPES|Py_TPFLAGS_HAVE_NEWBUFFER|Py_TPFLAGS_HAVE_GC, /*tp_flags*/
   0, /*tp_doc*/
-  __pyx_tp_traverse_4core_3rpc_4feed___pyx_scope_struct__fetch, /*tp_traverse*/
+  __pyx_tp_traverse_8rpc_feed_4core_3rpc_4feed___pyx_scope_struct__fetch, /*tp_traverse*/
   0, /*tp_clear*/
   0, /*tp_richcompare*/
   0, /*tp_weaklistoffset*/
@@ -4895,7 +4895,7 @@ static PyTypeObject __pyx_type_4core_3rpc_4feed___pyx_scope_struct__fetch = {
   #endif
   0, /*tp_init*/
   0, /*tp_alloc*/
-  __pyx_tp_new_4core_3rpc_4feed___pyx_scope_struct__fetch, /*tp_new*/
+  __pyx_tp_new_8rpc_feed_4core_3rpc_4feed___pyx_scope_struct__fetch, /*tp_new*/
   0, /*tp_free*/
   0, /*tp_is_gc*/
   0, /*tp_bases*/
@@ -4981,48 +4981,48 @@ static int __Pyx_modinit_type_init_code(__pyx_mstatetype *__pyx_mstate) {
   int __pyx_clineno = 0;
   __Pyx_RefNannySetupContext("__Pyx_modinit_type_init_code", 0);
   /*--- Type init code ---*/
-  __pyx_vtabptr_4core_3rpc_4feed_BtFeed = &__pyx_vtable_4core_3rpc_4feed_BtFeed;
-  __pyx_vtable_4core_3rpc_4feed_BtFeed.load = (void (*)(struct __pyx_obj_4core_3rpc_4feed_BtFeed *, PyObject *, PyObject *, PyObject *, int __pyx_skip_dispatch, struct __pyx_opt_args_4core_3rpc_4feed_6BtFeed_load *__pyx_optional_args))__pyx_f_4core_3rpc_4feed_6BtFeed_load;
+  __pyx_vtabptr_8rpc_feed_4core_3rpc_4feed_BtFeed = &__pyx_vtable_8rpc_feed_4core_3rpc_4feed_BtFeed;
+  __pyx_vtable_8rpc_feed_4core_3rpc_4feed_BtFeed.load = (void (*)(struct __pyx_obj_8rpc_feed_4core_3rpc_4feed_BtFeed *, PyObject *, PyObject *, PyObject *, int __pyx_skip_dispatch, struct __pyx_opt_args_8rpc_feed_4core_3rpc_4feed_6BtFeed_load *__pyx_optional_args))__pyx_f_8rpc_feed_4core_3rpc_4feed_6BtFeed_load;
   #if CYTHON_USE_TYPE_SPECS
-  __pyx_mstate->__pyx_ptype_4core_3rpc_4feed_BtFeed = (PyTypeObject *) __Pyx_PyType_FromModuleAndSpec(__pyx_m, &__pyx_type_4core_3rpc_4feed_BtFeed_spec, NULL); if (unlikely(!__pyx_mstate->__pyx_ptype_4core_3rpc_4feed_BtFeed)) __PYX_ERR(0, 16, __pyx_L1_error)
-  if (__Pyx_fix_up_extension_type_from_spec(&__pyx_type_4core_3rpc_4feed_BtFeed_spec, __pyx_mstate->__pyx_ptype_4core_3rpc_4feed_BtFeed) < (0)) __PYX_ERR(0, 16, __pyx_L1_error)
+  __pyx_mstate->__pyx_ptype_8rpc_feed_4core_3rpc_4feed_BtFeed = (PyTypeObject *) __Pyx_PyType_FromModuleAndSpec(__pyx_m, &__pyx_type_8rpc_feed_4core_3rpc_4feed_BtFeed_spec, NULL); if (unlikely(!__pyx_mstate->__pyx_ptype_8rpc_feed_4core_3rpc_4feed_BtFeed)) __PYX_ERR(0, 16, __pyx_L1_error)
+  if (__Pyx_fix_up_extension_type_from_spec(&__pyx_type_8rpc_feed_4core_3rpc_4feed_BtFeed_spec, __pyx_mstate->__pyx_ptype_8rpc_feed_4core_3rpc_4feed_BtFeed) < (0)) __PYX_ERR(0, 16, __pyx_L1_error)
   #else
-  __pyx_mstate->__pyx_ptype_4core_3rpc_4feed_BtFeed = &__pyx_type_4core_3rpc_4feed_BtFeed;
+  __pyx_mstate->__pyx_ptype_8rpc_feed_4core_3rpc_4feed_BtFeed = &__pyx_type_8rpc_feed_4core_3rpc_4feed_BtFeed;
   #endif
   #if !CYTHON_COMPILING_IN_LIMITED_API
   #endif
   #if !CYTHON_USE_TYPE_SPECS
-  if (__Pyx_PyType_Ready(__pyx_mstate->__pyx_ptype_4core_3rpc_4feed_BtFeed) < (0)) __PYX_ERR(0, 16, __pyx_L1_error)
+  if (__Pyx_PyType_Ready(__pyx_mstate->__pyx_ptype_8rpc_feed_4core_3rpc_4feed_BtFeed) < (0)) __PYX_ERR(0, 16, __pyx_L1_error)
   #endif
   #if CYTHON_COMPILING_IN_CPYTHON && PY_VERSION_HEX >= 0x030E0000
-  PyUnstable_Object_EnableDeferredRefcount((PyObject*)__pyx_mstate->__pyx_ptype_4core_3rpc_4feed_BtFeed);
+  PyUnstable_Object_EnableDeferredRefcount((PyObject*)__pyx_mstate->__pyx_ptype_8rpc_feed_4core_3rpc_4feed_BtFeed);
   #endif
   #if !CYTHON_COMPILING_IN_LIMITED_API
-  if ((CYTHON_USE_TYPE_SLOTS && CYTHON_USE_PYTYPE_LOOKUP) && likely(!__pyx_mstate->__pyx_ptype_4core_3rpc_4feed_BtFeed->tp_dictoffset && __pyx_mstate->__pyx_ptype_4core_3rpc_4feed_BtFeed->tp_getattro == PyObject_GenericGetAttr)) {
-    __pyx_mstate->__pyx_ptype_4core_3rpc_4feed_BtFeed->tp_getattro = PyObject_GenericGetAttr;
+  if ((CYTHON_USE_TYPE_SLOTS && CYTHON_USE_PYTYPE_LOOKUP) && likely(!__pyx_mstate->__pyx_ptype_8rpc_feed_4core_3rpc_4feed_BtFeed->tp_dictoffset && __pyx_mstate->__pyx_ptype_8rpc_feed_4core_3rpc_4feed_BtFeed->tp_getattro == PyObject_GenericGetAttr)) {
+    __pyx_mstate->__pyx_ptype_8rpc_feed_4core_3rpc_4feed_BtFeed->tp_getattro = PyObject_GenericGetAttr;
   }
   #endif
-  if (__Pyx_SetVtable(__pyx_mstate->__pyx_ptype_4core_3rpc_4feed_BtFeed, __pyx_vtabptr_4core_3rpc_4feed_BtFeed) < (0)) __PYX_ERR(0, 16, __pyx_L1_error)
-  if (__Pyx_MergeVtables(__pyx_mstate->__pyx_ptype_4core_3rpc_4feed_BtFeed) < (0)) __PYX_ERR(0, 16, __pyx_L1_error)
-  if (PyObject_SetAttr(__pyx_m, __pyx_mstate_global->__pyx_n_u_BtFeed, (PyObject *) __pyx_mstate->__pyx_ptype_4core_3rpc_4feed_BtFeed) < (0)) __PYX_ERR(0, 16, __pyx_L1_error)
-  if (__Pyx_setup_reduce((PyObject *) __pyx_mstate->__pyx_ptype_4core_3rpc_4feed_BtFeed) < (0)) __PYX_ERR(0, 16, __pyx_L1_error)
+  if (__Pyx_SetVtable(__pyx_mstate->__pyx_ptype_8rpc_feed_4core_3rpc_4feed_BtFeed, __pyx_vtabptr_8rpc_feed_4core_3rpc_4feed_BtFeed) < (0)) __PYX_ERR(0, 16, __pyx_L1_error)
+  if (__Pyx_MergeVtables(__pyx_mstate->__pyx_ptype_8rpc_feed_4core_3rpc_4feed_BtFeed) < (0)) __PYX_ERR(0, 16, __pyx_L1_error)
+  if (PyObject_SetAttr(__pyx_m, __pyx_mstate_global->__pyx_n_u_BtFeed, (PyObject *) __pyx_mstate->__pyx_ptype_8rpc_feed_4core_3rpc_4feed_BtFeed) < (0)) __PYX_ERR(0, 16, __pyx_L1_error)
+  if (__Pyx_setup_reduce((PyObject *) __pyx_mstate->__pyx_ptype_8rpc_feed_4core_3rpc_4feed_BtFeed) < (0)) __PYX_ERR(0, 16, __pyx_L1_error)
   #if CYTHON_USE_TYPE_SPECS
-  __pyx_mstate->__pyx_ptype_4core_3rpc_4feed___pyx_scope_struct__fetch = (PyTypeObject *) __Pyx_PyType_FromModuleAndSpec(__pyx_m, &__pyx_type_4core_3rpc_4feed___pyx_scope_struct__fetch_spec, NULL); if (unlikely(!__pyx_mstate->__pyx_ptype_4core_3rpc_4feed___pyx_scope_struct__fetch)) __PYX_ERR(0, 34, __pyx_L1_error)
-  if (__Pyx_fix_up_extension_type_from_spec(&__pyx_type_4core_3rpc_4feed___pyx_scope_struct__fetch_spec, __pyx_mstate->__pyx_ptype_4core_3rpc_4feed___pyx_scope_struct__fetch) < (0)) __PYX_ERR(0, 34, __pyx_L1_error)
+  __pyx_mstate->__pyx_ptype_8rpc_feed_4core_3rpc_4feed___pyx_scope_struct__fetch = (PyTypeObject *) __Pyx_PyType_FromModuleAndSpec(__pyx_m, &__pyx_type_8rpc_feed_4core_3rpc_4feed___pyx_scope_struct__fetch_spec, NULL); if (unlikely(!__pyx_mstate->__pyx_ptype_8rpc_feed_4core_3rpc_4feed___pyx_scope_struct__fetch)) __PYX_ERR(0, 34, __pyx_L1_error)
+  if (__Pyx_fix_up_extension_type_from_spec(&__pyx_type_8rpc_feed_4core_3rpc_4feed___pyx_scope_struct__fetch_spec, __pyx_mstate->__pyx_ptype_8rpc_feed_4core_3rpc_4feed___pyx_scope_struct__fetch) < (0)) __PYX_ERR(0, 34, __pyx_L1_error)
   #else
-  __pyx_mstate->__pyx_ptype_4core_3rpc_4feed___pyx_scope_struct__fetch = &__pyx_type_4core_3rpc_4feed___pyx_scope_struct__fetch;
+  __pyx_mstate->__pyx_ptype_8rpc_feed_4core_3rpc_4feed___pyx_scope_struct__fetch = &__pyx_type_8rpc_feed_4core_3rpc_4feed___pyx_scope_struct__fetch;
   #endif
   #if !CYTHON_COMPILING_IN_LIMITED_API
   #endif
   #if !CYTHON_USE_TYPE_SPECS
-  if (__Pyx_PyType_Ready(__pyx_mstate->__pyx_ptype_4core_3rpc_4feed___pyx_scope_struct__fetch) < (0)) __PYX_ERR(0, 34, __pyx_L1_error)
+  if (__Pyx_PyType_Ready(__pyx_mstate->__pyx_ptype_8rpc_feed_4core_3rpc_4feed___pyx_scope_struct__fetch) < (0)) __PYX_ERR(0, 34, __pyx_L1_error)
   #endif
   #if CYTHON_COMPILING_IN_CPYTHON && PY_VERSION_HEX >= 0x030E0000
-  PyUnstable_Object_EnableDeferredRefcount((PyObject*)__pyx_mstate->__pyx_ptype_4core_3rpc_4feed___pyx_scope_struct__fetch);
+  PyUnstable_Object_EnableDeferredRefcount((PyObject*)__pyx_mstate->__pyx_ptype_8rpc_feed_4core_3rpc_4feed___pyx_scope_struct__fetch);
   #endif
   #if !CYTHON_COMPILING_IN_LIMITED_API
-  if ((CYTHON_USE_TYPE_SLOTS && CYTHON_USE_PYTYPE_LOOKUP) && likely(!__pyx_mstate->__pyx_ptype_4core_3rpc_4feed___pyx_scope_struct__fetch->tp_dictoffset && __pyx_mstate->__pyx_ptype_4core_3rpc_4feed___pyx_scope_struct__fetch->tp_getattro == PyObject_GenericGetAttr)) {
-    __pyx_mstate->__pyx_ptype_4core_3rpc_4feed___pyx_scope_struct__fetch->tp_getattro = PyObject_GenericGetAttr;
+  if ((CYTHON_USE_TYPE_SLOTS && CYTHON_USE_PYTYPE_LOOKUP) && likely(!__pyx_mstate->__pyx_ptype_8rpc_feed_4core_3rpc_4feed___pyx_scope_struct__fetch->tp_dictoffset && __pyx_mstate->__pyx_ptype_8rpc_feed_4core_3rpc_4feed___pyx_scope_struct__fetch->tp_getattro == PyObject_GenericGetAttr)) {
+    __pyx_mstate->__pyx_ptype_8rpc_feed_4core_3rpc_4feed___pyx_scope_struct__fetch->tp_getattro = PyObject_GenericGetAttr;
   }
   #endif
   __Pyx_RefNannyFinishContext();
@@ -5304,13 +5304,13 @@ __Pyx_RefNannySetupContext("PyInit_feed", 0);
   if (__Pyx_InitConstants(__pyx_mstate) < (0)) __PYX_ERR(0, 1, __pyx_L1_error)
   stringtab_initialized = 1;
   if (__Pyx_InitGlobals() < (0)) __PYX_ERR(0, 1, __pyx_L1_error)
-  if (__pyx_module_is_main_core__rpc__feed) {
+  if (__pyx_module_is_main_rpc_feed__core__rpc__feed) {
     if (PyObject_SetAttr(__pyx_m, __pyx_mstate_global->__pyx_n_u_name, __pyx_mstate_global->__pyx_n_u_main) < (0)) __PYX_ERR(0, 1, __pyx_L1_error)
   }
   {
     PyObject *modules = PyImport_GetModuleDict(); if (unlikely(!modules)) __PYX_ERR(0, 1, __pyx_L1_error)
-    if (!PyDict_GetItemString(modules, "core.rpc.feed")) {
-      if (unlikely((PyDict_SetItemString(modules, "core.rpc.feed", __pyx_m) < 0))) __PYX_ERR(0, 1, __pyx_L1_error)
+    if (!PyDict_GetItemString(modules, "rpc_feed.core.rpc.feed")) {
+      if (unlikely((PyDict_SetItemString(modules, "rpc_feed.core.rpc.feed", __pyx_m) < 0))) __PYX_ERR(0, 1, __pyx_L1_error)
     }
   }
   /*--- Builtin init code ---*/
@@ -5328,12 +5328,12 @@ __Pyx_RefNannySetupContext("PyInit_feed", 0);
   (void)__Pyx_modinit_function_import_code(__pyx_mstate);
   /*--- Execution code ---*/
 
-  /* "core/rpc/feed.pyx":8
+  /* "rpc_feed/core/rpc/feed.pyx":8
  * # cython: cdivision=True
  * 
  * import os             # <<<<<<<<<<<<<<
  * 
- * from core.graph import Graph
+ * from rpc_feed.core.graph import Graph
 */
   __pyx_t_1 = __Pyx_Import(__pyx_mstate_global->__pyx_n_u_os, 0, 0, NULL, 0); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 8, __pyx_L1_error)
   __pyx_t_2 = __pyx_t_1;
@@ -5341,16 +5341,16 @@ __Pyx_RefNannySetupContext("PyInit_feed", 0);
   if (PyDict_SetItem(__pyx_mstate_global->__pyx_d, __pyx_mstate_global->__pyx_n_u_os, __pyx_t_2) < (0)) __PYX_ERR(0, 8, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
 
-  /* "core/rpc/feed.pyx":10
+  /* "rpc_feed/core/rpc/feed.pyx":10
  * import os
  * 
- * from core.graph import Graph             # <<<<<<<<<<<<<<
- * from utils.io import recursive_glob
+ * from rpc_feed.core.graph import Graph             # <<<<<<<<<<<<<<
+ * from rpc_feed.utils.io import recursive_glob
  * 
 */
   {
     PyObject* const __pyx_imported_names[] = {__pyx_mstate_global->__pyx_n_u_Graph};
-    __pyx_t_1 = __Pyx_Import(__pyx_mstate_global->__pyx_n_u_core_graph, __pyx_imported_names, 1, NULL, 0); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 10, __pyx_L1_error)
+    __pyx_t_1 = __Pyx_Import(__pyx_mstate_global->__pyx_n_u_rpc_feed_core_graph, __pyx_imported_names, 1, NULL, 0); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 10, __pyx_L1_error)
   }
   __pyx_t_2 = __pyx_t_1;
   __Pyx_GOTREF(__pyx_t_2);
@@ -5365,16 +5365,16 @@ __Pyx_RefNannySetupContext("PyInit_feed", 0);
   }
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
 
-  /* "core/rpc/feed.pyx":11
+  /* "rpc_feed/core/rpc/feed.pyx":11
  * 
- * from core.graph import Graph
- * from utils.io import recursive_glob             # <<<<<<<<<<<<<<
+ * from rpc_feed.core.graph import Graph
+ * from rpc_feed.utils.io import recursive_glob             # <<<<<<<<<<<<<<
  * 
- * from core.datasets import _providers
+ * from rpc_feed.core.datasets import _providers
 */
   {
     PyObject* const __pyx_imported_names[] = {__pyx_mstate_global->__pyx_n_u_recursive_glob};
-    __pyx_t_1 = __Pyx_Import(__pyx_mstate_global->__pyx_n_u_utils_io, __pyx_imported_names, 1, NULL, 0); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 11, __pyx_L1_error)
+    __pyx_t_1 = __Pyx_Import(__pyx_mstate_global->__pyx_n_u_rpc_feed_utils_io, __pyx_imported_names, 1, NULL, 0); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 11, __pyx_L1_error)
   }
   __pyx_t_2 = __pyx_t_1;
   __Pyx_GOTREF(__pyx_t_2);
@@ -5389,16 +5389,16 @@ __Pyx_RefNannySetupContext("PyInit_feed", 0);
   }
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
 
-  /* "core/rpc/feed.pyx":13
- * from utils.io import recursive_glob
+  /* "rpc_feed/core/rpc/feed.pyx":13
+ * from rpc_feed.utils.io import recursive_glob
  * 
- * from core.datasets import _providers             # <<<<<<<<<<<<<<
+ * from rpc_feed.core.datasets import _providers             # <<<<<<<<<<<<<<
  * 
  * 
 */
   {
     PyObject* const __pyx_imported_names[] = {__pyx_mstate_global->__pyx_n_u_providers};
-    __pyx_t_1 = __Pyx_Import(__pyx_mstate_global->__pyx_n_u_core_datasets, __pyx_imported_names, 1, NULL, 0); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 13, __pyx_L1_error)
+    __pyx_t_1 = __Pyx_Import(__pyx_mstate_global->__pyx_n_u_rpc_feed_core_datasets, __pyx_imported_names, 1, NULL, 0); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 13, __pyx_L1_error)
   }
   __pyx_t_2 = __pyx_t_1;
   __Pyx_GOTREF(__pyx_t_2);
@@ -5413,7 +5413,7 @@ __Pyx_RefNannySetupContext("PyInit_feed", 0);
   }
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
 
-  /* "core/rpc/feed.pyx":34
+  /* "rpc_feed/core/rpc/feed.pyx":34
  *         self.pipeline = Graph()
  * 
  *     async def fetch(self, str topic, int start_date, int end_date, list sids=[]):             # <<<<<<<<<<<<<<
@@ -5430,30 +5430,30 @@ __Pyx_RefNannySetupContext("PyInit_feed", 0);
   __pyx_t_4 = PyTuple_Pack(1, __pyx_t_2); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 34, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_4);
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-  __pyx_t_2 = __Pyx_CyFunction_New(&__pyx_mdef_4core_3rpc_4feed_6BtFeed_3fetch, __Pyx_CYFUNCTION_CCLASS | __Pyx_CYFUNCTION_COROUTINE, __pyx_mstate_global->__pyx_n_u_BtFeed_fetch, NULL, __pyx_mstate_global->__pyx_n_u_core_rpc_feed, __pyx_mstate_global->__pyx_d, ((PyObject *)__pyx_mstate_global->__pyx_codeobj_tab[0])); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 34, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_CyFunction_New(&__pyx_mdef_8rpc_feed_4core_3rpc_4feed_6BtFeed_3fetch, __Pyx_CYFUNCTION_CCLASS | __Pyx_CYFUNCTION_COROUTINE, __pyx_mstate_global->__pyx_n_u_BtFeed_fetch, NULL, __pyx_mstate_global->__pyx_n_u_rpc_feed_core_rpc_feed, __pyx_mstate_global->__pyx_d, ((PyObject *)__pyx_mstate_global->__pyx_codeobj_tab[0])); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 34, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
   #if CYTHON_COMPILING_IN_CPYTHON && PY_VERSION_HEX >= 0x030E0000
   PyUnstable_Object_EnableDeferredRefcount(__pyx_t_2);
   #endif
   __Pyx_CyFunction_SetDefaultsTuple(__pyx_t_2, __pyx_t_4);
   __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-  if (__Pyx_SetItemOnTypeDict(__pyx_mstate_global->__pyx_ptype_4core_3rpc_4feed_BtFeed, __pyx_mstate_global->__pyx_n_u_fetch, __pyx_t_2) < (0)) __PYX_ERR(0, 34, __pyx_L1_error)
+  if (__Pyx_SetItemOnTypeDict(__pyx_mstate_global->__pyx_ptype_8rpc_feed_4core_3rpc_4feed_BtFeed, __pyx_mstate_global->__pyx_n_u_fetch, __pyx_t_2) < (0)) __PYX_ERR(0, 34, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
 
-  /* "core/rpc/feed.pyx":41
+  /* "rpc_feed/core/rpc/feed.pyx":41
  *             yield pb_obj # protobuf object
  * 
  *     cpdef void load(self, str graph_xml, str dataset_path, str prefix, bint parallel=True):             # <<<<<<<<<<<<<<
  *         '''
  *         Adds a ``Data Feed`` instance to the mix.
 */
-  __pyx_t_2 = __Pyx_CyFunction_New(&__pyx_mdef_4core_3rpc_4feed_6BtFeed_6load, __Pyx_CYFUNCTION_CCLASS, __pyx_mstate_global->__pyx_n_u_BtFeed_load, NULL, __pyx_mstate_global->__pyx_n_u_core_rpc_feed, __pyx_mstate_global->__pyx_d, ((PyObject *)__pyx_mstate_global->__pyx_codeobj_tab[1])); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 41, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_CyFunction_New(&__pyx_mdef_8rpc_feed_4core_3rpc_4feed_6BtFeed_6load, __Pyx_CYFUNCTION_CCLASS, __pyx_mstate_global->__pyx_n_u_BtFeed_load, NULL, __pyx_mstate_global->__pyx_n_u_rpc_feed_core_rpc_feed, __pyx_mstate_global->__pyx_d, ((PyObject *)__pyx_mstate_global->__pyx_codeobj_tab[1])); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 41, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
   #if CYTHON_COMPILING_IN_CPYTHON && PY_VERSION_HEX >= 0x030E0000
   PyUnstable_Object_EnableDeferredRefcount(__pyx_t_2);
   #endif
   __Pyx_CyFunction_SetDefaultsTuple(__pyx_t_2, __pyx_mstate_global->__pyx_tuple[1]);
-  if (__Pyx_SetItemOnTypeDict(__pyx_mstate_global->__pyx_ptype_4core_3rpc_4feed_BtFeed, __pyx_mstate_global->__pyx_n_u_load, __pyx_t_2) < (0)) __PYX_ERR(0, 41, __pyx_L1_error)
+  if (__Pyx_SetItemOnTypeDict(__pyx_mstate_global->__pyx_ptype_8rpc_feed_4core_3rpc_4feed_BtFeed, __pyx_mstate_global->__pyx_n_u_load, __pyx_t_2) < (0)) __PYX_ERR(0, 41, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
 
   /* "(tree fragment)":1
@@ -5461,12 +5461,12 @@ __Pyx_RefNannySetupContext("PyInit_feed", 0);
  *     cdef tuple state
  *     cdef object _dict
 */
-  __pyx_t_2 = __Pyx_CyFunction_New(&__pyx_mdef_4core_3rpc_4feed_6BtFeed_8__reduce_cython__, __Pyx_CYFUNCTION_CCLASS, __pyx_mstate_global->__pyx_n_u_BtFeed___reduce_cython, NULL, __pyx_mstate_global->__pyx_n_u_core_rpc_feed, __pyx_mstate_global->__pyx_d, ((PyObject *)__pyx_mstate_global->__pyx_codeobj_tab[2])); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 1, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_CyFunction_New(&__pyx_mdef_8rpc_feed_4core_3rpc_4feed_6BtFeed_8__reduce_cython__, __Pyx_CYFUNCTION_CCLASS, __pyx_mstate_global->__pyx_n_u_BtFeed___reduce_cython, NULL, __pyx_mstate_global->__pyx_n_u_rpc_feed_core_rpc_feed, __pyx_mstate_global->__pyx_d, ((PyObject *)__pyx_mstate_global->__pyx_codeobj_tab[2])); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 1, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
   #if CYTHON_COMPILING_IN_CPYTHON && PY_VERSION_HEX >= 0x030E0000
   PyUnstable_Object_EnableDeferredRefcount(__pyx_t_2);
   #endif
-  if (__Pyx_SetItemOnTypeDict(__pyx_mstate_global->__pyx_ptype_4core_3rpc_4feed_BtFeed, __pyx_mstate_global->__pyx_n_u_reduce_cython, __pyx_t_2) < (0)) __PYX_ERR(1, 1, __pyx_L1_error)
+  if (__Pyx_SetItemOnTypeDict(__pyx_mstate_global->__pyx_ptype_8rpc_feed_4core_3rpc_4feed_BtFeed, __pyx_mstate_global->__pyx_n_u_reduce_cython, __pyx_t_2) < (0)) __PYX_ERR(1, 1, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
 
   /* "(tree fragment)":16
@@ -5475,15 +5475,15 @@ __Pyx_RefNannySetupContext("PyInit_feed", 0);
  * def __setstate_cython__(self, __pyx_state):             # <<<<<<<<<<<<<<
  *     __pyx_unpickle_BtFeed__set_state(self, __pyx_state)
 */
-  __pyx_t_2 = __Pyx_CyFunction_New(&__pyx_mdef_4core_3rpc_4feed_6BtFeed_10__setstate_cython__, __Pyx_CYFUNCTION_CCLASS, __pyx_mstate_global->__pyx_n_u_BtFeed___setstate_cython, NULL, __pyx_mstate_global->__pyx_n_u_core_rpc_feed, __pyx_mstate_global->__pyx_d, ((PyObject *)__pyx_mstate_global->__pyx_codeobj_tab[3])); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 16, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_CyFunction_New(&__pyx_mdef_8rpc_feed_4core_3rpc_4feed_6BtFeed_10__setstate_cython__, __Pyx_CYFUNCTION_CCLASS, __pyx_mstate_global->__pyx_n_u_BtFeed___setstate_cython, NULL, __pyx_mstate_global->__pyx_n_u_rpc_feed_core_rpc_feed, __pyx_mstate_global->__pyx_d, ((PyObject *)__pyx_mstate_global->__pyx_codeobj_tab[3])); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 16, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
   #if CYTHON_COMPILING_IN_CPYTHON && PY_VERSION_HEX >= 0x030E0000
   PyUnstable_Object_EnableDeferredRefcount(__pyx_t_2);
   #endif
-  if (__Pyx_SetItemOnTypeDict(__pyx_mstate_global->__pyx_ptype_4core_3rpc_4feed_BtFeed, __pyx_mstate_global->__pyx_n_u_setstate_cython, __pyx_t_2) < (0)) __PYX_ERR(1, 16, __pyx_L1_error)
+  if (__Pyx_SetItemOnTypeDict(__pyx_mstate_global->__pyx_ptype_8rpc_feed_4core_3rpc_4feed_BtFeed, __pyx_mstate_global->__pyx_n_u_setstate_cython, __pyx_t_2) < (0)) __PYX_ERR(1, 16, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
 
-  /* "core/rpc/feed.pyx":56
+  /* "rpc_feed/core/rpc/feed.pyx":56
  * 
  * 
  * bt_feed = BtFeed()             # <<<<<<<<<<<<<<
@@ -5492,7 +5492,7 @@ __Pyx_RefNannySetupContext("PyInit_feed", 0);
   __pyx_t_5 = 1;
   {
     PyObject *__pyx_callargs[2] = {__pyx_t_4, NULL};
-    __pyx_t_2 = __Pyx_PyObject_FastCall((PyObject*)__pyx_mstate_global->__pyx_ptype_4core_3rpc_4feed_BtFeed, __pyx_callargs+__pyx_t_5, (1-__pyx_t_5) | (__pyx_t_5*__Pyx_PY_VECTORCALL_ARGUMENTS_OFFSET));
+    __pyx_t_2 = __Pyx_PyObject_FastCall((PyObject*)__pyx_mstate_global->__pyx_ptype_8rpc_feed_4core_3rpc_4feed_BtFeed, __pyx_callargs+__pyx_t_5, (1-__pyx_t_5) | (__pyx_t_5*__Pyx_PY_VECTORCALL_ARGUMENTS_OFFSET));
     __Pyx_XDECREF(__pyx_t_4); __pyx_t_4 = 0;
     if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 56, __pyx_L1_error)
     __Pyx_GOTREF((PyObject *)__pyx_t_2);
@@ -5507,7 +5507,7 @@ __Pyx_RefNannySetupContext("PyInit_feed", 0);
  *     cdef object __pyx_result
  *     __Pyx_CheckUnpickleChecksum(__pyx_checksum, 0x2350ad2, 0xab127ed, 0x2d6b43d, b'_pattern, _providers, pipeline')
 */
-  __pyx_t_2 = __Pyx_CyFunction_New(&__pyx_mdef_4core_3rpc_4feed_1__pyx_unpickle_BtFeed, 0, __pyx_mstate_global->__pyx_n_u_pyx_unpickle_BtFeed, NULL, __pyx_mstate_global->__pyx_n_u_core_rpc_feed, __pyx_mstate_global->__pyx_d, ((PyObject *)__pyx_mstate_global->__pyx_codeobj_tab[4])); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 4, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_CyFunction_New(&__pyx_mdef_8rpc_feed_4core_3rpc_4feed_1__pyx_unpickle_BtFeed, 0, __pyx_mstate_global->__pyx_n_u_pyx_unpickle_BtFeed, NULL, __pyx_mstate_global->__pyx_n_u_rpc_feed_core_rpc_feed, __pyx_mstate_global->__pyx_d, ((PyObject *)__pyx_mstate_global->__pyx_codeobj_tab[4])); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 4, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
   #if CYTHON_COMPILING_IN_CPYTHON && PY_VERSION_HEX >= 0x030E0000
   PyUnstable_Object_EnableDeferredRefcount(__pyx_t_2);
@@ -5515,7 +5515,7 @@ __Pyx_RefNannySetupContext("PyInit_feed", 0);
   if (PyDict_SetItem(__pyx_mstate_global->__pyx_d, __pyx_mstate_global->__pyx_n_u_pyx_unpickle_BtFeed, __pyx_t_2) < (0)) __PYX_ERR(1, 4, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
 
-  /* "core/rpc/feed.pyx":1
+  /* "rpc_feed/core/rpc/feed.pyx":1
  * #!/usr/bin/env python3             # <<<<<<<<<<<<<<
  * # -*- coding: utf-8 -*-
  * # cython: language_level=3
@@ -5533,7 +5533,7 @@ __Pyx_RefNannySetupContext("PyInit_feed", 0);
   __Pyx_XDECREF(__pyx_t_4);
   if (__pyx_m) {
     if (__pyx_mstate->__pyx_d && stringtab_initialized) {
-      __Pyx_AddTraceback("init core.rpc.feed", __pyx_clineno, __pyx_lineno, __pyx_filename);
+      __Pyx_AddTraceback("init rpc_feed.core.rpc.feed", __pyx_clineno, __pyx_lineno, __pyx_filename);
     }
     #if !CYTHON_USE_MODULE_STATE
     Py_CLEAR(__pyx_m);
@@ -5547,7 +5547,7 @@ __Pyx_RefNannySetupContext("PyInit_feed", 0);
     }
     #endif
   } else if (!PyErr_Occurred()) {
-    PyErr_SetString(PyExc_ImportError, "init core.rpc.feed");
+    PyErr_SetString(PyExc_ImportError, "init rpc_feed.core.rpc.feed");
   }
   __pyx_L0:;
   __Pyx_RefNannyFinishContext();
@@ -5590,7 +5590,7 @@ static int __Pyx_InitCachedConstants(__pyx_mstatetype *__pyx_mstate) {
   __Pyx_GOTREF(__pyx_mstate_global->__pyx_tuple[0]);
   __Pyx_GIVEREF(__pyx_mstate_global->__pyx_tuple[0]);
 
-  /* "core/rpc/feed.pyx":41
+  /* "rpc_feed/core/rpc/feed.pyx":41
  *             yield pb_obj # protobuf object
  * 
  *     cpdef void load(self, str graph_xml, str dataset_path, str prefix, bint parallel=True):             # <<<<<<<<<<<<<<
@@ -5623,25 +5623,25 @@ static int __Pyx_InitCachedConstants(__pyx_mstatetype *__pyx_mstate) {
 static int __Pyx_InitConstants(__pyx_mstatetype *__pyx_mstate) {
   CYTHON_UNUSED_VAR(__pyx_mstate);
   {
-    const struct { const unsigned int length: 8; } index[] = {{179},{32},{29},{1},{1},{8},{17},{7},{6},{2},{9},{85},{26},{23},{14},{6},{24},{26},{12},{11},{5},{20},{1},{18},{9},{7},{5},{18},{5},{13},{10},{13},{3},{12},{8},{5},{8},{5},{6},{8},{4},{12},{9},{13},{5},{8},{4},{8},{10},{8},{7},{4},{2},{8},{6},{3},{6},{10},{14},{12},{11},{10},{21},{14},{12},{14},{10},{17},{13},{4},{4},{12},{10},{12},{19},{4},{10},{5},{5},{6},{6},{8},{5},{10},{5},{6},{12},{8},{5},{6},{11},{5},{99},{67},{55}};
-    #if (CYTHON_COMPRESS_STRINGS) == 2 /* compression: bz2 (988 bytes) */
-const char* const cstring = "BZh91AY&SY%\263\001l\000\000|\377\377\346\377\274\350\344\347\357\375\277\353\177\237\277\377\377\376@@@@@@@@@@@@@\000@\000P\003-\036\320\000\030\032\202\004jz\023\364\204\364F\231\032\003!\220\000\032\031\036\240\032\000\006#@\311\204\336\2248\000i\246\200\003 \000\001\240\000\001\240\000\006@\00044\000\212zhAM\251\240\323L\214\215\r\003L\324b\006 4\014@b`A\241\243i\001\350C\200\006\232h\0002\000\000\032\000\000\032\000\000d\000\003C@\004\241\000\200\024\303Q\251\342\236\205\000=C@\000\000\000\000\0004\001\223&\324V\003\244%\237\337\333\226Ix\021%K-\021g\225X\240\245)R\262\353\244\260S\001\013\005\0045!0\322\253\216 \234L\206\025Mv\033\266\321\224\267\263\342\333G\003/t\300\006\005\374\356\202\177\022\004\234\"2R\303\261\t\010G\276~X\274\005`\034\2427E\000`\317kuA6\242D\020\304c\327P\313\231R\236R\246\223v\031\214R\247\200G\216EUv\215\340\247\337\0208(9\330\224\\\227\251\200\2019\306\330t\006M\027L5L\330\023d\311B\223\001\014\373\0068\252\0269\366YP\2161\334u\006|h\032\320*E\017\000\274\030&\023\375\252\317\364\226\200\313\366\017\300\253pI\274\035\317\336\277\306\264\007i\351p\036Q\312\310\215\000U\207@\241\033\255g\2528\026qt\002\007\355\333':\016\312\nC L*\000\262P\005$\211B\021p\3040\272\307\330U\024\005T&\254\245\214\252a\027X\270R\323\243\014a\350u\372J%\235\367\247$\356^\213\250\312Z\210 \261VU\212\271\265\307\255\315\305\rx\235\267\235\260\236\0221\272\332\004\256\232\307\326}u\331\231\377w\035\263CY\267\n\201\345\354\304\002\346D\265\225\230\216s\211\224Ic\305Q\021\266\305\352\031p\013\356J[\206\220\337\016Cr\272I\213\3079Ug\031\272\215\nj[\356\020\261\301M\241\324QG\366\265\325'\311\253\010a\010\226\302\265rr)!\304\250\364\247\034\022\301^\246\305F\037\034\316\323k\354\340\227\235ym\035L\256t\242T\346I;\253q\236X*\212\254\252\242Q\335\215\006\207r\023\225\3306\373\353\034N\226:\367\331\274&\321\2466\321m3z\304<\215\314p\306\001\214\204\205f\030\354|8F\203\0149\330\2717\3740v\332\2357\n\242\253\020\262t\363\350\321'4]JRlI\351\261\363\324EkG\215\305.\242""\021\336\220\344\201\2209J5a\025\303\217\"\245F\245\245\036])-\351L]\247\225\330V\003\370\275\036\267\311\342\314\314\323wg`\363(\206W%\245\372]Y\031\251\003\217\036x\025\335;5*A\331\261\232\302\004\037+8^_.\025\217}\212\252b\276`\273\256\321d\222\314+\300\242\216U\263\373\345a\357wV\236h=\253F\354\t\315\023F\242\354y\346wo\254TJ\336\212\344\025I\320\243]\214\014\3251\016d\036\371)\t\304\360\354\262\030Q\351(\010\260|\227\240\357o\351\241\230h\274v\207\265k\264\256\332\226\345V\025a\240b\034\360\233\364:,\252#EK\355\367\310\212K\215\000\2561\010\260\020\200\347\243\313d\3479\3330\342\013\271K\314\236\236\242\254\272\316\324\320\366\230\226\353\356||\365F\265K\361\217\273\017p\277\260\354W\255[\275w\244Rm\373\351\301\373\201\264L\223V\354\240\231\031\t\034\2668\3176\375\352\010\266'\362=Pyza>\226i\036f\266\316\252\301C\030\347\225\376.\344\212p\241 Kf\002\330";
-    PyObject *data = __Pyx_DecompressString(cstring, 988, 2);
+    const struct { const unsigned int length: 8; } index[] = {{179},{32},{29},{1},{1},{8},{7},{6},{2},{9},{26},{85},{26},{23},{14},{6},{24},{26},{12},{11},{5},{20},{1},{18},{9},{7},{5},{18},{5},{3},{12},{8},{5},{8},{5},{8},{4},{12},{9},{13},{5},{8},{4},{8},{10},{8},{7},{4},{2},{8},{7},{6},{3},{6},{10},{14},{12},{11},{10},{21},{14},{12},{14},{10},{17},{13},{22},{19},{22},{17},{4},{4},{12},{10},{12},{19},{4},{10},{5},{5},{6},{6},{8},{5},{10},{5},{6},{12},{5},{6},{11},{5},{99},{67},{55}};
+    #if (CYTHON_COMPRESS_STRINGS) == 2 /* compression: bz2 (1007 bytes) */
+const char* const cstring = "BZh91AY&SY1\377'\213\000\000\177\377\377\346\377\274\350\344\347\357\335\277\353\177\237\277\377\377\376@@@@@@@@@@@@@\000@\000P\003N\366^\354\025@s\rB\t\212z\236\22350#\010\3202\r4\032\000\007\251\352d\032\000\032z\231\000mG\251\236T8\000\000\032\000\000242\000\000\000\000\001\221\220\000\006ASSe\032\rF\0010\0010\000L\000\t\200L\000\000\000\000\023\006\246$\323\025=\t\352h\000h\000\006\200\001\240\000\000\000\000hd\000\tD\001OF\246 i#\305O\324\312\001\240\332\214\200\321\352=@\000\3201\0312h\r4\311\351\024i\322\022\343\357\301p\227\201\016S\235\226\210\205\025()JT.\252\320\220\\\004CmP\230\214\234E\232\201\305\031,\216\007\302\316\207\320\2374\325?\033\262\204\325\203u\023\000\303\273\250\206|\260#)\020\330\307\345.\303\014?^?8\346\016\340c\312{\307 \302\237~o\320N\256\215\006qS[{\315dX\365j\317*\211N\273\202c\024\250tK\226E\024\254\341\302\177U\302@\241$\226\236\\\233\000E\024\344E\205\304\003\006\215\246\031\260h\364\246\315\210\235\020C/.P\363\n\245U=\206T$\225\373\022LTY\252\255=\034 \010p\346zk=]\322\031\202\377\330?3`O\275\261\273U\337\306\224\007g\361\264\017X\336\304F<\002\021\272\010\306\027+\214\207\321\257\005\014\003\017O\223\302\020\304xd\275,\004\2344\000\024d`%\361d\000B!d_f\204\310\"\\A\354P\004J\r#!\021\221\tY0\256Af\276H\300\216\232\t\336?\302io\233\311\024\346\312\213\250\315\035C\320X+\025`\255a\2148\370\263?\033\317\023\217\020J\350\227\252\025\266a\032\222\217+\251K1?\356m\251\334\243! R\3260pX\300J1X\303.2\201|#v\031\010\014z5B\356@\325jJ\315\272\003{\370\r\252\330\245\316\032\325U\224$\331\262zW}DI\255\216\t\3556\"\212\212(\357\016\251E\321e\001\367>\005\257\242\264\347*Di\031\271'\255\351`\256S\236\250\307,1<,\325\340\2712\220M\212\253\000\217\220l\2009\rLK)\002\2569Ff\243%(\334^\362\304\264\255\r\206QL\222\360\2022\243j\352n\t2\023\272\311\255\346\247,\003\251\265\206\373\336\027\304G\320\272\376\007?|&\014\302$h\251\233\320%{\321\250\010\201\021\210\"k\2478\330\032\325\025I\0074\304+Us\251=$V\304x\314\322\334\2047#\370\036`\rRpm\201\025""\277]PY\332N\017D\254r.T}\355\321\320m\324\001\331\275\337W\255\307#\035\025\360s\207\030@0\252Ze\320\332\020\220\243\315w\361G\027o$[u+\212\243\333&\032\325\357\033\032\354\270c\367\314ulUS\005\366E\335n\212]$\276\373\034MF\252\331\375\364\0309\315\337?h\034\312#?\3013\300\317\244\255\374R<\247PTJ9\025\250*\222\230\265/q\212\245\341\302\203\235U\037(\036\225\226>\351\271\"\361\025\343\242\276\211_\034\215A\232\243s9\231\027\236d\263\"\332\273\2324\206q\2448_7gl\030\252\203 \306\026\362\317\r)\376\324\037\302\211\000\274>\257\203\350\357\265\255kf\025\304)\\6I\344\360\265B\335\353U=i\035\277}\277\217\236\271P9qo\267\320\353\017\273\037\247\366\013\327z\003\215\260\2750\304\220\334ZS\255\335\236\0173 \343e\372\311\033\321\033\261 \0258\350\373Hy\3546(\032e\2238\316\242\241fh\217\377\027rE8P\2201\377'\213";
+    PyObject *data = __Pyx_DecompressString(cstring, 1007, 2);
     if (unlikely(!data)) __PYX_ERR(0, 1, __pyx_L1_error)
     const char* const bytes = __Pyx_PyBytes_AsString(data);
     #if !CYTHON_ASSUME_SAFE_MACROS
     if (likely(bytes)); else { Py_DECREF(data); __PYX_ERR(0, 1, __pyx_L1_error) }
     #endif
-    #elif (CYTHON_COMPRESS_STRINGS) != 0 /* compression: zlib (881 bytes) */
-const char* const cstring = "x\332mSMo\333F\020\215\000\025Q\233\244\201\323\000I\221C\327@\001;@\313X\250\255~\244H\3206\261\033\0245\354\304q\200V\361b\265;\2246^q\251\335\245,\265)\340\243\216<\352\310#\217:\372\250c\216:\352\350\237\220\237\320YRU\035$\0048\034\316\354p\336\2747\334\325\016\210\3530G~\031\272\216\216\210\264D\200\222-0\314\201\032\022\353\214\344\016\214?\024\221\275\307{_o~\267IX$\210\201W\300\235%6iq\305\254\005KtHZ\211TNF\304\rc\260\001y\022\222\241NH\004 \210\323$\306s\027\013\\\007\"b\301y\207\254\261(\322\2169\251#\212\3452j\257\021!\r6\221}\360\325\333LY\010\216\326\237\375\332\014\266\352\257\237\375\321\014\352[\345\243q\267)\376\336\374g\375\341\017w\313|\243\210o\024\366\033\237\334*\222\301C&\004\3056\300\265\201{&\346\367B\304\026\304\303\201\220\226\265\024@\344m\233K[z\302\202\n\003\0323\207,\024\374`5\331\325\021\020m\310\"it_\n0\366\203\351X\306\310(\006.$\217\326m\007G\260\177\341\000h\336\201o;\r\214m\340}\001\370\217^\210\250mub8<\370\331m#\352\322\006\224\032\020\t\007\312\013\t)]\306\221Y\213\204\276\227\t\301\361\316\302W\232\211\035\303\342\016\245{\303\001\336\217Po\272\013\003\367\024B\312\3540\342R\007\310\226NPW\260\224\262\023&\035\245-G=u\234\352\326+\356\347\243\022u3\214C\213\361c\256\264-8\016\004s\314\003)^\332\276S\341!\365AQo\373\213\023\236cD!|\377\362\001\221\240\230\204\002o\210\213\005\206\3220\211xa\005\245\355\377\006\244\305\207\351\240\253\250\264t\211V:\350Z4\270\314\332\370I)\3552\204\211WW\213D\201\367\"\326-\237p\342\315\300i\0333\303\224\002\025\267\374t\261\216c\003\241\034\374/4\245\2701\224w\200\037\333\244[\276\031\260\211r\245\277@\345]\377'\224^\022\305\222\037c\323\222\3722\330w~\313|\377^\302T\211\005w>1\026\267\236\266\225n-\365\245\357)\275\014\300\300\253\255B\353)\363\272/\246BO@\310\n\\\313m\240\037\330\014+\205\305\210q\005\341E\316:\215\3239\223\340_\236\204~|\352\203h;F\2378\215M\021\247\003\247q\254$\366u\211\205\345\247Q\000e\003\251\373L%P\030{Z\231W\277\314~\312\016\363\372\354\223\337\337\354\237V\336""\326.}\364\351\350 \2753~\224]\313\017&+\363\352\325\321NZO\267\307_el^\275|\332\037\275H\037\217o\216\367\347\265\033\351\352\274v+\355\235\327n\217+>\327\233\327\256\317\256\257e.\257\347;\223\373g\355\351\376\371\273\0216\253>\237=?|{\343\322\307+\351\265\361a\326\310W\362\325\363\332\315t7[\315\036Ln\235\325\246\227\247\356\315\367\263\003<\327\2345_\316^\036\315kWGO\322?\263Jv'\377m\322;\255\234W\277\030\367fdcr\345\354\376\364x\266\377t^\375,m\214og+\331\252\307\361:\375v\214\320\326\363J\376\371$\230\"\266+\243\372\277D\275\022\355";
-    PyObject *data = __Pyx_DecompressString(cstring, 881, 1);
+    #elif (CYTHON_COMPRESS_STRINGS) != 0 /* compression: zlib (889 bytes) */
+const char* const cstring = "x\332mTMo\0337\020\215\000\025U\233\244\201\323\000I\221Ch\240\200\035\240][\250\255\026M\220 ib\327(j\330\371p\200\3261A\221\263Z\306\324rEre\251M\001\037u\334\243\216{\324QG\037}\364QG\035\375\023\362\023:\334UU\033\211\200\035\016\337,\227o\336\033h[; .b\216\374\322w\221\216\211\264D\200\222M0\314\201\352\023\353\214\344\016\214\177)&;\317w\276_\373i\215\260X\020\003\357\200;Kl\332\344\212Y\013\226\350\2204S\251\234\214\211\353'`\003\262\025\222\276NI\014 \210\323$\301\367.\036p\021\304\304\202\363\tYbq\254\035sR\307\024\217\313\270\265D\2044x\211\354\202?\275\301\224\205\340`\371\345\257\373\301z\375\375\313?\366\203\372z\2714\356\357\213\277\327\376Y~\374\363\375\262\336(\360\325\"\376\340\213\353E1x\314\204\240x\r\010iYS\001\304>\266\270\264e&L\302i\210tW\2706\260\202\273\025\277\013\222~\317\202\n\003\2320\207r\024B\341g\310\266\216\201hCfE\243\273R\200\261\237,'2Ai\021\270P<X\266\021\366b\377\302N0\\\352\303F\r\304V\361\271\320\301C\357H\334\262:5\034\036=u\033\310\256\214\001\245\006D\312\201\362\302KJ\3478JlQ\331\217*!8\036\315r\245\231\3304,\211(\335\351\367\360y\206\306\323m\350\271\027\020Rf\3731\227:@Ut\212\006\203\245\224\0351\351(m\272B0Nu\363\035\367\375Q\211\006\032\306\241\311\370!W\332\002\267]\301\034C\032^?\274A\370o\227\013\304\202b\021\n.\224\206i\314\213((m\375G\233\266\nb\275\266\242\322\3229\007\351\240m1\340\254j\343\371S\332fx9\376\332Z\244\n|\026\263v\271\302\221\017=\247m\302\014S\n\324\314\313\244\351\251':I\014\204\262\367\277\213\224\242\355\224G\300\017m\332.w\006l\252\\\231\317\310\371\324\317{\231\245q\"\371!\336]\352Z\202]\347\207\313\323\350\244L\225\224p\262Scq\266iK\351\346\334<\372\221\215s\000z\230\316\346\323;\001\301LU{\031-\324\272\014\341.\360\2739\212\002*\033H\355'\323z\017\374\220\314\304\302L@\310\212>\347\243C?1FV\n\213\210q\205\203E\315:\215j9\223\342\177C\032z9\251\0071FF\0379\215M`\337\016\234F\231\322\304\237K-\314?\335e*-\203=\256L\253\337\346O\362\275Q}\362\345\357g\273\307\225\017\265+\237}5x\225\335\035>""\313\257\217^\215\027\246\325k\203\315\254\236m\014\277\313\331\264\372\371qw\360&{>\2745\334\235\326nf\213\323\332\355\254s^\2733\254\370ZgZ\2731\271\261\224\273Q}\2649~p\322:\335=\277\214\260I\365\365\344\365\336\207\233W\276X\310\256\017\367\362\306ha\264x^\273\225m\347\213\371\243\361\355\223\332i\355\254z\266\205/M\366\336N\336\036L\016\350\264vm\260\225\375\231W\362\273\243\337\306\235\343\312y\365\336\2603!\253\343\253'\017N\017'\273/\246\325\257\263\306\360N\276\220/z\036\357\263\037\207HmyT\031}3\016N\221\333\325A\375_\036\265$\025";
+    PyObject *data = __Pyx_DecompressString(cstring, 889, 1);
     if (unlikely(!data)) __PYX_ERR(0, 1, __pyx_L1_error)
     const char* const bytes = __Pyx_PyBytes_AsString(data);
     #if !CYTHON_ASSUME_SAFE_MACROS
     if (likely(bytes)); else { Py_DECREF(data); __PYX_ERR(0, 1, __pyx_L1_error) }
     #endif
-    #else /* compression: none (1371 bytes) */
-const char* const bytes = "Note that Cython is deliberately stricter than PEP-484 and rejects subclasses of builtin types. If you need to pass subclasses then set the 'annotation_typing' directive to False.^(SH\\.51|SZ\\.15|SZ\\.16)\\d{4}(?:)^(SH\\.6|SZ\\.0|SZ\\.3)\\d{5}(?:).?add_notecore/rpc/feed.pyxdisableenablegcisenabledself._pattern is not None or self._providers is not None or self.pipeline is not None^(sh51|sz15|sz16)\\d{4}(?:)^(sh6|sz0|sz3)\\d{5}(?:)<stringsource>BtFeedBtFeed.__reduce_cython__BtFeed.__setstate_cython__BtFeed.fetchBtFeed.loadGraph__Pyx_PyDict_NextRef_asyncio.coroutines__await__bt_feedc_objcline_in_tracebackclosecore.datasetscore.graphcore.rpc.feedcsvdataset_path__dict___dictend_datefetchfilter__func__fund__getstate__graph_xml_is_coroutineitemsiteratorload__main____module____name____new__nextosparallelpb_objpopprefix_providers__pyx_checksum__pyx_result__pyx_state__pyx_type__pyx_unpickle_BtFeed__pyx_vtable____qualname__recursive_glob__reduce____reduce_cython____reduce_ex__selfsend__set_name__setdefault__setstate____setstate_cython__sidsstart_datestatestockstructsuffix__test__throwto_executetopicupdateuse_setstateutils.iovaluevalues\200\001\330\004$\240A\240V\2501\320\nM\310Q\200\001\360\010\000\005\016\210T\220\033\230D\240\r\250T\260\021\330\004\014\210G\2201\220F\230,\240a\330\004\007\200v\210W\220E\230\024\230Q\330\010\022\220!\330\010\027\220q\340\010\030\230\001\330\004\007\200q\330\010\017\320\017'\240t\2501\250G\260;\270g\300Q\340\010\017\320\017'\240t\2501\250G\260;\270a\320\004U\320UV\360\022\000\t\021\220\r\230V\2406\250\021\250!\340\010\024\220N\240!\240>\260\027\270\010\300\007\300t\3109\320TU\320U\\\320\\]\320]^\330\010\014\210I\220[\240\001\240\033\250K\260q\200\001\340\004\037\230q\320 0\260\013\270;\300k\320QR\330\004\023\2206\230\030\240\021\240!\330\004\007\200|\2207\230!\330\010(\250\001\250\031\260.\300\001\330\004\013\2101";
+    #else /* compression: none (1417 bytes) */
+const char* const bytes = "Note that Cython is deliberately stricter than PEP-484 and rejects subclasses of builtin types. If you need to pass subclasses then set the 'annotation_typing' directive to False.^(SH\\.51|SZ\\.15|SZ\\.16)\\d{4}(?:)^(SH\\.6|SZ\\.0|SZ\\.3)\\d{5}(?:).?add_notedisableenablegcisenabledrpc_feed/core/rpc/feed.pyxself._pattern is not None or self._providers is not None or self.pipeline is not None^(sh51|sz15|sz16)\\d{4}(?:)^(sh6|sz0|sz3)\\d{5}(?:)<stringsource>BtFeedBtFeed.__reduce_cython__BtFeed.__setstate_cython__BtFeed.fetchBtFeed.loadGraph__Pyx_PyDict_NextRef_asyncio.coroutines__await__bt_feedc_objcline_in_tracebackclosecsvdataset_path__dict___dictend_datefetch__func__fund__getstate__graph_xml_is_coroutineitemsiteratorload__main____module____name____new__nextosparallelpatternpb_objpopprefix_providers__pyx_checksum__pyx_result__pyx_state__pyx_type__pyx_unpickle_BtFeed__pyx_vtable____qualname__recursive_glob__reduce____reduce_cython____reduce_ex__rpc_feed.core.datasetsrpc_feed.core.graphrpc_feed.core.rpc.feedrpc_feed.utils.ioselfsend__set_name__setdefault__setstate____setstate_cython__sidsstart_datestatestockstructsuffix__test__throwto_executetopicupdateuse_setstatevaluevalues\200\001\330\004$\240A\240V\2501\320\nM\310Q\200\001\360\010\000\005\016\210T\220\033\230D\240\r\250T\260\021\330\004\014\210G\2201\220F\230,\240a\330\004\007\200v\210W\220E\230\024\230Q\330\010\022\220!\330\010\027\220q\340\010\030\230\001\330\004\007\200q\330\010\017\320\017'\240t\2501\250G\260;\270g\300Q\340\010\017\320\017'\240t\2501\250G\260;\270a\320\004U\320UV\360\022\000\t\021\220\r\230V\2406\250\021\250!\340\010\024\220N\240!\240>\260\027\270\010\300\010\310\004\310I\320UV\320V]\320]^\320^_\330\010\014\210I\220[\240\001\240\033\250K\260q\200\001\340\004\037\230q\320 0\260\013\270;\300k\320QR\330\004\023\2206\230\030\240\021\240!\330\004\007\200|\2207\230!\330\010(\250\001\250\031\260.\300\001\330\004\013\2101";
     PyObject *data = NULL;
     CYTHON_UNUSED_VAR(__Pyx_DecompressString);
     #endif
@@ -5737,12 +5737,12 @@ static int __Pyx_CreateCodeObjects(__pyx_mstatetype *__pyx_mstate) {
   {
     const __Pyx_PyCode_New_function_description descr = {5, 0, 0, 8, (unsigned int)(CO_OPTIMIZED|CO_NEWLOCALS|CO_ASYNC_GENERATOR), 34};
     PyObject* const varnames[] = {__pyx_mstate->__pyx_n_u_self, __pyx_mstate->__pyx_n_u_topic, __pyx_mstate->__pyx_n_u_start_date, __pyx_mstate->__pyx_n_u_end_date, __pyx_mstate->__pyx_n_u_sids, __pyx_mstate->__pyx_n_u_iterator, __pyx_mstate->__pyx_n_u_c_obj, __pyx_mstate->__pyx_n_u_pb_obj};
-    __pyx_mstate_global->__pyx_codeobj_tab[0] = __Pyx_PyCode_New(descr, varnames, __pyx_mstate->__pyx_kp_u_core_rpc_feed_pyx, __pyx_mstate->__pyx_n_u_fetch, __pyx_mstate->__pyx_kp_b_iso88591_MQ, tuple_dedup_map); if (unlikely(!__pyx_mstate_global->__pyx_codeobj_tab[0])) goto bad;
+    __pyx_mstate_global->__pyx_codeobj_tab[0] = __Pyx_PyCode_New(descr, varnames, __pyx_mstate->__pyx_kp_u_rpc_feed_core_rpc_feed_pyx, __pyx_mstate->__pyx_n_u_fetch, __pyx_mstate->__pyx_kp_b_iso88591_MQ, tuple_dedup_map); if (unlikely(!__pyx_mstate_global->__pyx_codeobj_tab[0])) goto bad;
   }
   {
     const __Pyx_PyCode_New_function_description descr = {5, 0, 0, 5, (unsigned int)(CO_OPTIMIZED|CO_NEWLOCALS), 41};
     PyObject* const varnames[] = {__pyx_mstate->__pyx_n_u_self, __pyx_mstate->__pyx_n_u_graph_xml, __pyx_mstate->__pyx_n_u_dataset_path, __pyx_mstate->__pyx_n_u_prefix, __pyx_mstate->__pyx_n_u_parallel};
-    __pyx_mstate_global->__pyx_codeobj_tab[1] = __Pyx_PyCode_New(descr, varnames, __pyx_mstate->__pyx_kp_u_core_rpc_feed_pyx, __pyx_mstate->__pyx_n_u_load, __pyx_mstate->__pyx_kp_b_iso88591_UUV_V6_N_t9TUU_I_Kq, tuple_dedup_map); if (unlikely(!__pyx_mstate_global->__pyx_codeobj_tab[1])) goto bad;
+    __pyx_mstate_global->__pyx_codeobj_tab[1] = __Pyx_PyCode_New(descr, varnames, __pyx_mstate->__pyx_kp_u_rpc_feed_core_rpc_feed_pyx, __pyx_mstate->__pyx_n_u_load, __pyx_mstate->__pyx_kp_b_iso88591_UUV_V6_N_IUVV___I_Kq, tuple_dedup_map); if (unlikely(!__pyx_mstate_global->__pyx_codeobj_tab[1])) goto bad;
   }
   {
     const __Pyx_PyCode_New_function_description descr = {1, 0, 0, 4, (unsigned int)(CO_OPTIMIZED|CO_NEWLOCALS), 1};

@@ -28,14 +28,14 @@ cdef class Tick:
     cdef cnp.ndarray _buf_sid # used for pa.BatchArray to_numpy
     cdef Py_ssize_t[:] c_indices # int64_t / cnp.long_t
 
-    cdef object _process_batch(self, batch)
+    cdef _flush(self, bytes sid, object batch)
 
 
 cdef class Close:
     cdef cnp.ndarray _buf_sid # used for pa.BatchArray to_numpy
     cdef Py_ssize_t[:] c_indices # int64_t / cnp.long_t
     
-    cdef object _process_batch(self, batch)
+    cdef object _flush(self, bytes sid, object batch)
 
 
 cdef class Adjust:

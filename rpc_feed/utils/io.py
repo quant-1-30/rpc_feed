@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 import os
+import re
 import sys
 import shutil
 import configparser
@@ -112,10 +113,9 @@ def read_bin(file_path: Union[str, Path], start_index, end_index):
         series = pd.Series(data, index=pd.RangeIndex(si, si + len(data)))
     return series
 
-def recursive_glob(root_path: str, suffix: str, filter: Callable[[str], bool]) -> Generator[str, None, None]:
+def recursive_glob(root_path: str, suffix: str, pattern: str) -> Generator[str, None, None]:
     """Recursively find all files under `root_path` ending with `suffix` and matching `filter` condition."""
     expand_root_path = os.path.expanduser(root_path)
-
     if not os.path.exists(expand_root_path):
         # asyncio need to exit
         # raise ValueError(f'{expand_root_path} not found')
@@ -125,11 +125,11 @@ def recursive_glob(root_path: str, suffix: str, filter: Callable[[str], bool]) -
     if os.path.isfile(expand_root_path) and filter(expand_root_path.split(os.sep)[-1]):
         yield expand_root_path
     else:
+        print("expand_root_path ", expand_root_path)
         for root, _, files in os.walk(expand_root_path):
-            # 递归每个层级files
             for file in files:
                 file_path = os.path.join(root, file)
-                if file.endswith(suffix) and filter(file):
+                if file.endswith(suffix) and re.match(pattern, file):
                     print("recursive_glob ", file_path)
                     yield file_path
 

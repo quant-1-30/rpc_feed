@@ -15,9 +15,9 @@ from pyvis.network import Network
 from .node import *
 from .util import fix_macos_mp, signal_handler
 from .mp_mem import init_worker, convert_node_to_serializable, run_sync_pipeline_global, GraphMemoryManager
-from utils.loader import get_module_by_module_path
-from utils.io import build_from_cfg
-from utils.wrapper import singleton
+from rpc_feed.utils.loader import get_module_by_module_path
+from rpc_feed.utils.io import build_from_cfg
+from rpc_feed.utils.wrapper import singleton
 
 NamedNode = namedtuple("Node", ["instance", "params"])
 

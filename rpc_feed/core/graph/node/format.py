@@ -5,7 +5,7 @@ import datetime
 import pandas as pd
 import numpy as np
 
-from utils.wrapper import registry
+from rpc_feed.utils.wrapper import registry
 from .node import Node
 
 
