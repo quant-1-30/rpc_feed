@@ -95,7 +95,6 @@ class DuckDBManager: # 非线程安全
         self.view_cache_file = cache_path / os.getenv("DUCKVIEW")
         self.dataset_root = Path(os.getenv("DUCKDATASET")).expanduser()
         self.batch_size = int(os.getenv("DUCKBATCHSIZE"))
-        self.max_connections = int(os.getenv("DUCKCONNECTION"))
 
         self.regex = r"^(6|0|3)\d{5}"  # stock/fund 
         self._bin_regex = re.compile(self.regex.encode('ascii'))
@@ -105,6 +104,7 @@ class DuckDBManager: # 非线程安全
 
         self._thread_local = threading.local()
         self.db_query_lock = threading.Lock()
+        max_connections = int(os.getenv("DUCKCONNECTION"))
         self.connection_pool = ConnectionPool(self.db_path, max_connections=max_connections)
 
     def _load_cache(self):

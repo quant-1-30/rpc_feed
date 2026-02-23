@@ -74,3 +74,4 @@ to_numpy(zero_copy_only=False) not suitable for string
 # s_indices = np.insert(c_indices, 0, 0)
 # e_indices = np.append(c_indices, num_rows)
 
+git rm --cached -r rpc_feed/core/gateway/duckdb/cache/duckdb_macro.db # undo track
