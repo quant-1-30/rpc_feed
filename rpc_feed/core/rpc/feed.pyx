@@ -19,7 +19,7 @@ cdef class BtFeed:
         self._providers = _providers
 
         self._pattern = {
-            "struct":{
+            ".01":{
                 "stock": "^(sh6|sz0|sz3)\d{5}(?:)",
                 "fund": "^(sh51|sz15|sz16)\d{4}(?:)"
             },

@@ -75,3 +75,20 @@ to_numpy(zero_copy_only=False) not suitable for string
 # e_indices = np.append(c_indices, num_rows)
 
 git rm --cached -r rpc_feed/core/gateway/duckdb/cache/duckdb_macro.db # undo track
+
+# window install  msys2
+msys2 
+pacman -Syu # update database
+pacman -S rsync openssh
+
+UCRT：全称 Universal C Runtime（通用 C 运行时），是 Windows 10/11 内置的底层 C 库（替代老旧的 msvcrt.dll），微软官方维护，适配最新系统特性；
+64：64 位架构（对应 Windows 64 位系统）；
+
+# delete means dst == src on msys2 ucrt64
+# export MSYSTEM=UCRT64  # 指定环境为 UCRT64
+# exec bash               # 重启 shell 生效
+rsync -avzP --delete src dst
+
+# smb sever message block \\电脑IP\共享文件夹名
+
+# rsync -avzP minute/ hengxinliu@192.168.64.1:/Users/hengxinliu/Downloads/rsync/

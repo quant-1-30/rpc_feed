@@ -45,20 +45,20 @@ if __name__ == "__main__":
    # xml = "../xml/asset.graphml"
    # bt_feed.load(xml, dataset_path, prefix="csv", parallel=False)
 
-   # # struct
-   # dataset_path = Path("~/Downloads/raw_data/struct/202511").expanduser()
-   # xml = "../xml/tick.graphml"
-   # bt_feed.load(xml, dataset_path, prefix=".01", _filter="asset")
+   # struct
+#    dataset_path = Path("~/Downloads/raw_data/struct/202512").expanduser()
+#    xml = "../xml/tick.graphml"
+#    bt_feed.load(xml, str(dataset_path), prefix=".01_stock")
    
-   # dataset_path = Path("~/Downloads/raw_data/struct/202511").expanduser() 
-   # xml = "../xml/fund.graphml"
-   # bt_feed.load(xml, dataset_path, prefix=".01", _filter="fund")
+   dataset_path = Path("~/Downloads/raw_data/struct/202512").expanduser() 
+   xml = "../xml/fund.graphml"
+   bt_feed.load(xml, dataset_path, prefix=".01_fund")
 
-   # # dataset csv
-   dataset_path = Path("~/Downloads/raw_data/csv/stock/2019").expanduser()
-   xml = "../xml/tick_csv.graphml"
-   bt_feed.load(xml, str(dataset_path), prefix="csv_stock")
+#    # # dataset csv
+#    dataset_path = Path("~/Downloads/raw_data/csv/stock/2019").expanduser()
+#    xml = "../xml/tick_csv.graphml"
+#    bt_feed.load(xml, str(dataset_path), prefix="csv_stock")
 
 #    dataset_path = Path("~/Downloads/raw_data/csv/fund/2022").expanduser()
 #    xml = "../xml/fund_csv.graphml"
-#    bt_feed.load(xml, dataset_path, prefix=".csv", _filter="fund")
+#    bt_feed.load(xml, dataset_path, prefix=".csv_fund")

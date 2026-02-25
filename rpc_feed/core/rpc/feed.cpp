@@ -2739,87 +2739,87 @@ static __pyx_mstatetype __pyx_mstate_global_static =
 static __pyx_mstatetype * const __pyx_mstate_global = &__pyx_mstate_global_static;
 #endif
 /* #### Code section: constant_name_defines ### */
-#define __pyx_kp_u_Note_that_Cython_is_deliberately __pyx_string_tab[0]
-#define __pyx_kp_u_SH_51_SZ_15_SZ_16_d_4 __pyx_string_tab[1]
-#define __pyx_kp_u_SH_6_SZ_0_SZ_3_d_5 __pyx_string_tab[2]
-#define __pyx_kp_u__3 __pyx_string_tab[3]
-#define __pyx_kp_u__4 __pyx_string_tab[4]
-#define __pyx_kp_u_add_note __pyx_string_tab[5]
-#define __pyx_kp_u_disable __pyx_string_tab[6]
-#define __pyx_kp_u_enable __pyx_string_tab[7]
-#define __pyx_kp_u_gc __pyx_string_tab[8]
-#define __pyx_kp_u_isenabled __pyx_string_tab[9]
-#define __pyx_kp_u_rpc_feed_core_rpc_feed_pyx __pyx_string_tab[10]
-#define __pyx_kp_u_self__pattern_is_not_None_or_sel __pyx_string_tab[11]
-#define __pyx_kp_u_sh51_sz15_sz16_d_4 __pyx_string_tab[12]
-#define __pyx_kp_u_sh6_sz0_sz3_d_5 __pyx_string_tab[13]
-#define __pyx_kp_u_stringsource __pyx_string_tab[14]
-#define __pyx_n_u_BtFeed __pyx_string_tab[15]
-#define __pyx_n_u_BtFeed___reduce_cython __pyx_string_tab[16]
-#define __pyx_n_u_BtFeed___setstate_cython __pyx_string_tab[17]
-#define __pyx_n_u_BtFeed_fetch __pyx_string_tab[18]
-#define __pyx_n_u_BtFeed_load __pyx_string_tab[19]
-#define __pyx_n_u_Graph __pyx_string_tab[20]
-#define __pyx_n_u_Pyx_PyDict_NextRef __pyx_string_tab[21]
-#define __pyx_n_u__2 __pyx_string_tab[22]
-#define __pyx_n_u_asyncio_coroutines __pyx_string_tab[23]
-#define __pyx_n_u_await __pyx_string_tab[24]
-#define __pyx_n_u_bt_feed __pyx_string_tab[25]
-#define __pyx_n_u_c_obj __pyx_string_tab[26]
-#define __pyx_n_u_cline_in_traceback __pyx_string_tab[27]
-#define __pyx_n_u_close __pyx_string_tab[28]
-#define __pyx_n_u_csv __pyx_string_tab[29]
-#define __pyx_n_u_dataset_path __pyx_string_tab[30]
-#define __pyx_n_u_dict __pyx_string_tab[31]
-#define __pyx_n_u_dict_2 __pyx_string_tab[32]
-#define __pyx_n_u_end_date __pyx_string_tab[33]
-#define __pyx_n_u_fetch __pyx_string_tab[34]
-#define __pyx_n_u_func __pyx_string_tab[35]
-#define __pyx_n_u_fund __pyx_string_tab[36]
-#define __pyx_n_u_getstate __pyx_string_tab[37]
-#define __pyx_n_u_graph_xml __pyx_string_tab[38]
-#define __pyx_n_u_is_coroutine __pyx_string_tab[39]
-#define __pyx_n_u_items __pyx_string_tab[40]
-#define __pyx_n_u_iterator __pyx_string_tab[41]
-#define __pyx_n_u_load __pyx_string_tab[42]
-#define __pyx_n_u_main __pyx_string_tab[43]
-#define __pyx_n_u_module __pyx_string_tab[44]
-#define __pyx_n_u_name __pyx_string_tab[45]
-#define __pyx_n_u_new __pyx_string_tab[46]
-#define __pyx_n_u_next __pyx_string_tab[47]
-#define __pyx_n_u_os __pyx_string_tab[48]
-#define __pyx_n_u_parallel __pyx_string_tab[49]
-#define __pyx_n_u_pattern __pyx_string_tab[50]
-#define __pyx_n_u_pb_obj __pyx_string_tab[51]
-#define __pyx_n_u_pop __pyx_string_tab[52]
-#define __pyx_n_u_prefix __pyx_string_tab[53]
-#define __pyx_n_u_providers __pyx_string_tab[54]
-#define __pyx_n_u_pyx_checksum __pyx_string_tab[55]
-#define __pyx_n_u_pyx_result __pyx_string_tab[56]
-#define __pyx_n_u_pyx_state __pyx_string_tab[57]
-#define __pyx_n_u_pyx_type __pyx_string_tab[58]
-#define __pyx_n_u_pyx_unpickle_BtFeed __pyx_string_tab[59]
-#define __pyx_n_u_pyx_vtable __pyx_string_tab[60]
-#define __pyx_n_u_qualname __pyx_string_tab[61]
-#define __pyx_n_u_recursive_glob __pyx_string_tab[62]
-#define __pyx_n_u_reduce __pyx_string_tab[63]
-#define __pyx_n_u_reduce_cython __pyx_string_tab[64]
-#define __pyx_n_u_reduce_ex __pyx_string_tab[65]
-#define __pyx_n_u_rpc_feed_core_datasets __pyx_string_tab[66]
-#define __pyx_n_u_rpc_feed_core_graph __pyx_string_tab[67]
-#define __pyx_n_u_rpc_feed_core_rpc_feed __pyx_string_tab[68]
-#define __pyx_n_u_rpc_feed_utils_io __pyx_string_tab[69]
-#define __pyx_n_u_self __pyx_string_tab[70]
-#define __pyx_n_u_send __pyx_string_tab[71]
-#define __pyx_n_u_set_name __pyx_string_tab[72]
-#define __pyx_n_u_setdefault __pyx_string_tab[73]
-#define __pyx_n_u_setstate __pyx_string_tab[74]
-#define __pyx_n_u_setstate_cython __pyx_string_tab[75]
-#define __pyx_n_u_sids __pyx_string_tab[76]
-#define __pyx_n_u_start_date __pyx_string_tab[77]
-#define __pyx_n_u_state __pyx_string_tab[78]
-#define __pyx_n_u_stock __pyx_string_tab[79]
-#define __pyx_n_u_struct __pyx_string_tab[80]
+#define __pyx_kp_u_01 __pyx_string_tab[0]
+#define __pyx_kp_u_Note_that_Cython_is_deliberately __pyx_string_tab[1]
+#define __pyx_kp_u_SH_51_SZ_15_SZ_16_d_4 __pyx_string_tab[2]
+#define __pyx_kp_u_SH_6_SZ_0_SZ_3_d_5 __pyx_string_tab[3]
+#define __pyx_kp_u__3 __pyx_string_tab[4]
+#define __pyx_kp_u__4 __pyx_string_tab[5]
+#define __pyx_kp_u_add_note __pyx_string_tab[6]
+#define __pyx_kp_u_disable __pyx_string_tab[7]
+#define __pyx_kp_u_enable __pyx_string_tab[8]
+#define __pyx_kp_u_gc __pyx_string_tab[9]
+#define __pyx_kp_u_isenabled __pyx_string_tab[10]
+#define __pyx_kp_u_rpc_feed_core_rpc_feed_pyx __pyx_string_tab[11]
+#define __pyx_kp_u_self__pattern_is_not_None_or_sel __pyx_string_tab[12]
+#define __pyx_kp_u_sh51_sz15_sz16_d_4 __pyx_string_tab[13]
+#define __pyx_kp_u_sh6_sz0_sz3_d_5 __pyx_string_tab[14]
+#define __pyx_kp_u_stringsource __pyx_string_tab[15]
+#define __pyx_n_u_BtFeed __pyx_string_tab[16]
+#define __pyx_n_u_BtFeed___reduce_cython __pyx_string_tab[17]
+#define __pyx_n_u_BtFeed___setstate_cython __pyx_string_tab[18]
+#define __pyx_n_u_BtFeed_fetch __pyx_string_tab[19]
+#define __pyx_n_u_BtFeed_load __pyx_string_tab[20]
+#define __pyx_n_u_Graph __pyx_string_tab[21]
+#define __pyx_n_u_Pyx_PyDict_NextRef __pyx_string_tab[22]
+#define __pyx_n_u__2 __pyx_string_tab[23]
+#define __pyx_n_u_asyncio_coroutines __pyx_string_tab[24]
+#define __pyx_n_u_await __pyx_string_tab[25]
+#define __pyx_n_u_bt_feed __pyx_string_tab[26]
+#define __pyx_n_u_c_obj __pyx_string_tab[27]
+#define __pyx_n_u_cline_in_traceback __pyx_string_tab[28]
+#define __pyx_n_u_close __pyx_string_tab[29]
+#define __pyx_n_u_csv __pyx_string_tab[30]
+#define __pyx_n_u_dataset_path __pyx_string_tab[31]
+#define __pyx_n_u_dict __pyx_string_tab[32]
+#define __pyx_n_u_dict_2 __pyx_string_tab[33]
+#define __pyx_n_u_end_date __pyx_string_tab[34]
+#define __pyx_n_u_fetch __pyx_string_tab[35]
+#define __pyx_n_u_func __pyx_string_tab[36]
+#define __pyx_n_u_fund __pyx_string_tab[37]
+#define __pyx_n_u_getstate __pyx_string_tab[38]
+#define __pyx_n_u_graph_xml __pyx_string_tab[39]
+#define __pyx_n_u_is_coroutine __pyx_string_tab[40]
+#define __pyx_n_u_items __pyx_string_tab[41]
+#define __pyx_n_u_iterator __pyx_string_tab[42]
+#define __pyx_n_u_load __pyx_string_tab[43]
+#define __pyx_n_u_main __pyx_string_tab[44]
+#define __pyx_n_u_module __pyx_string_tab[45]
+#define __pyx_n_u_name __pyx_string_tab[46]
+#define __pyx_n_u_new __pyx_string_tab[47]
+#define __pyx_n_u_next __pyx_string_tab[48]
+#define __pyx_n_u_os __pyx_string_tab[49]
+#define __pyx_n_u_parallel __pyx_string_tab[50]
+#define __pyx_n_u_pattern __pyx_string_tab[51]
+#define __pyx_n_u_pb_obj __pyx_string_tab[52]
+#define __pyx_n_u_pop __pyx_string_tab[53]
+#define __pyx_n_u_prefix __pyx_string_tab[54]
+#define __pyx_n_u_providers __pyx_string_tab[55]
+#define __pyx_n_u_pyx_checksum __pyx_string_tab[56]
+#define __pyx_n_u_pyx_result __pyx_string_tab[57]
+#define __pyx_n_u_pyx_state __pyx_string_tab[58]
+#define __pyx_n_u_pyx_type __pyx_string_tab[59]
+#define __pyx_n_u_pyx_unpickle_BtFeed __pyx_string_tab[60]
+#define __pyx_n_u_pyx_vtable __pyx_string_tab[61]
+#define __pyx_n_u_qualname __pyx_string_tab[62]
+#define __pyx_n_u_recursive_glob __pyx_string_tab[63]
+#define __pyx_n_u_reduce __pyx_string_tab[64]
+#define __pyx_n_u_reduce_cython __pyx_string_tab[65]
+#define __pyx_n_u_reduce_ex __pyx_string_tab[66]
+#define __pyx_n_u_rpc_feed_core_datasets __pyx_string_tab[67]
+#define __pyx_n_u_rpc_feed_core_graph __pyx_string_tab[68]
+#define __pyx_n_u_rpc_feed_core_rpc_feed __pyx_string_tab[69]
+#define __pyx_n_u_rpc_feed_utils_io __pyx_string_tab[70]
+#define __pyx_n_u_self __pyx_string_tab[71]
+#define __pyx_n_u_send __pyx_string_tab[72]
+#define __pyx_n_u_set_name __pyx_string_tab[73]
+#define __pyx_n_u_setdefault __pyx_string_tab[74]
+#define __pyx_n_u_setstate __pyx_string_tab[75]
+#define __pyx_n_u_setstate_cython __pyx_string_tab[76]
+#define __pyx_n_u_sids __pyx_string_tab[77]
+#define __pyx_n_u_start_date __pyx_string_tab[78]
+#define __pyx_n_u_state __pyx_string_tab[79]
+#define __pyx_n_u_stock __pyx_string_tab[80]
 #define __pyx_n_u_suffix __pyx_string_tab[81]
 #define __pyx_n_u_test __pyx_string_tab[82]
 #define __pyx_n_u_throw __pyx_string_tab[83]
@@ -2985,7 +2985,7 @@ static int __pyx_pf_8rpc_feed_4core_3rpc_4feed_6BtFeed___init__(struct __pyx_obj
   /* "rpc_feed/core/rpc/feed.pyx":22
  * 
  *         self._pattern = {
- *             "struct":{             # <<<<<<<<<<<<<<
+ *             ".01":{             # <<<<<<<<<<<<<<
  *                 "stock": "^(sh6|sz0|sz3)\d{5}(?:)",
  *                 "fund": "^(sh51|sz15|sz16)\d{4}(?:)"
 */
@@ -2994,7 +2994,7 @@ static int __pyx_pf_8rpc_feed_4core_3rpc_4feed_6BtFeed___init__(struct __pyx_obj
 
   /* "rpc_feed/core/rpc/feed.pyx":23
  *         self._pattern = {
- *             "struct":{
+ *             ".01":{
  *                 "stock": "^(sh6|sz0|sz3)\d{5}(?:)",             # <<<<<<<<<<<<<<
  *                 "fund": "^(sh51|sz15|sz16)\d{4}(?:)"
  *             },
@@ -3003,7 +3003,7 @@ static int __pyx_pf_8rpc_feed_4core_3rpc_4feed_6BtFeed___init__(struct __pyx_obj
   __Pyx_GOTREF(__pyx_t_2);
   if (PyDict_SetItem(__pyx_t_2, __pyx_mstate_global->__pyx_n_u_stock, __pyx_mstate_global->__pyx_kp_u_sh6_sz0_sz3_d_5) < (0)) __PYX_ERR(0, 23, __pyx_L1_error)
   if (PyDict_SetItem(__pyx_t_2, __pyx_mstate_global->__pyx_n_u_fund, __pyx_mstate_global->__pyx_kp_u_sh51_sz15_sz16_d_4) < (0)) __PYX_ERR(0, 23, __pyx_L1_error)
-  if (PyDict_SetItem(__pyx_t_1, __pyx_mstate_global->__pyx_n_u_struct, __pyx_t_2) < (0)) __PYX_ERR(0, 22, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_1, __pyx_mstate_global->__pyx_kp_u_01, __pyx_t_2) < (0)) __PYX_ERR(0, 22, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
 
   /* "rpc_feed/core/rpc/feed.pyx":27
@@ -3024,7 +3024,7 @@ static int __pyx_pf_8rpc_feed_4core_3rpc_4feed_6BtFeed___init__(struct __pyx_obj
  *         self._providers = _providers
  * 
  *         self._pattern = {             # <<<<<<<<<<<<<<
- *             "struct":{
+ *             ".01":{
  *                 "stock": "^(sh6|sz0|sz3)\d{5}(?:)",
 */
   __Pyx_GIVEREF(__pyx_t_1);
@@ -5623,25 +5623,25 @@ static int __Pyx_InitCachedConstants(__pyx_mstatetype *__pyx_mstate) {
 static int __Pyx_InitConstants(__pyx_mstatetype *__pyx_mstate) {
   CYTHON_UNUSED_VAR(__pyx_mstate);
   {
-    const struct { const unsigned int length: 8; } index[] = {{179},{32},{29},{1},{1},{8},{7},{6},{2},{9},{26},{85},{26},{23},{14},{6},{24},{26},{12},{11},{5},{20},{1},{18},{9},{7},{5},{18},{5},{3},{12},{8},{5},{8},{5},{8},{4},{12},{9},{13},{5},{8},{4},{8},{10},{8},{7},{4},{2},{8},{7},{6},{3},{6},{10},{14},{12},{11},{10},{21},{14},{12},{14},{10},{17},{13},{22},{19},{22},{17},{4},{4},{12},{10},{12},{19},{4},{10},{5},{5},{6},{6},{8},{5},{10},{5},{6},{12},{5},{6},{11},{5},{99},{67},{55}};
-    #if (CYTHON_COMPRESS_STRINGS) == 2 /* compression: bz2 (1007 bytes) */
-const char* const cstring = "BZh91AY&SY1\377'\213\000\000\177\377\377\346\377\274\350\344\347\357\335\277\353\177\237\277\377\377\376@@@@@@@@@@@@@\000@\000P\003N\366^\354\025@s\rB\t\212z\236\22350#\010\3202\r4\032\000\007\251\352d\032\000\032z\231\000mG\251\236T8\000\000\032\000\000242\000\000\000\000\001\221\220\000\006ASSe\032\rF\0010\0010\000L\000\t\200L\000\000\000\000\023\006\246$\323\025=\t\352h\000h\000\006\200\001\240\000\000\000\000hd\000\tD\001OF\246 i#\305O\324\312\001\240\332\214\200\321\352=@\000\3201\0312h\r4\311\351\024i\322\022\343\357\301p\227\201\016S\235\226\210\205\025()JT.\252\320\220\\\004CmP\230\214\234E\232\201\305\031,\216\007\302\316\207\320\2374\325?\033\262\204\325\203u\023\000\303\273\250\206|\260#)\020\330\307\345.\303\014?^?8\346\016\340c\312{\307 \302\237~o\320N\256\215\006qS[{\315dX\365j\317*\211N\273\202c\024\250tK\226E\024\254\341\302\177U\302@\241$\226\236\\\233\000E\024\344E\205\304\003\006\215\246\031\260h\364\246\315\210\235\020C/.P\363\n\245U=\206T$\225\373\022LTY\252\255=\034 \010p\346zk=]\322\031\202\377\330?3`O\275\261\273U\337\306\224\007g\361\264\017X\336\304F<\002\021\272\010\306\027+\214\207\321\257\005\014\003\017O\223\302\020\304xd\275,\004\2344\000\024d`%\361d\000B!d_f\204\310\"\\A\354P\004J\r#!\021\221\tY0\256Af\276H\300\216\232\t\336?\302io\233\311\024\346\312\213\250\315\035C\320X+\025`\255a\2148\370\263?\033\317\023\217\020J\350\227\252\025\266a\032\222\217+\251K1?\356m\251\334\243! R\3260pX\300J1X\303.2\201|#v\031\010\014z5B\356@\325jJ\315\272\003{\370\r\252\330\245\316\032\325U\224$\331\262zW}DI\255\216\t\3556\"\212\212(\357\016\251E\321e\001\367>\005\257\242\264\347*Di\031\271'\255\351`\256S\236\250\307,1<,\325\340\2712\220M\212\253\000\217\220l\2009\rLK)\002\2569Ff\243%(\334^\362\304\264\255\r\206QL\222\360\2022\243j\352n\t2\023\272\311\255\346\247,\003\251\265\206\373\336\027\304G\320\272\376\007?|&\014\302$h\251\233\320%{\321\250\010\201\021\210\"k\2478\330\032\325\025I\0074\304+Us\251=$V\304x\314\322\334\2047#\370\036`\rRpm\201\025""\277]PY\332N\017D\254r.T}\355\321\320m\324\001\331\275\337W\255\307#\035\025\360s\207\030@0\252Ze\320\332\020\220\243\315w\361G\027o$[u+\212\243\333&\032\325\357\033\032\354\270c\367\314ulUS\005\366E\335n\212]$\276\373\034MF\252\331\375\364\0309\315\337?h\034\312#?\3013\300\317\244\255\374R<\247PTJ9\025\250*\222\230\265/q\212\245\341\302\203\235U\037(\036\225\226>\351\271\"\361\025\343\242\276\211_\034\215A\232\243s9\231\027\236d\263\"\332\273\2324\206q\2448_7gl\030\252\203 \306\026\362\317\r)\376\324\037\302\211\000\274>\257\203\350\357\265\255kf\025\304)\\6I\344\360\265B\335\353U=i\035\277}\277\217\236\271P9qo\267\320\353\017\273\037\247\366\013\327z\003\215\260\2750\304\220\334ZS\255\335\236\0173 \343e\372\311\033\321\033\261 \0258\350\373Hy\3546(\032e\2238\316\242\241fh\217\377\027rE8P\2201\377'\213";
-    PyObject *data = __Pyx_DecompressString(cstring, 1007, 2);
+    const struct { const unsigned int length: 8; } index[] = {{3},{179},{32},{29},{1},{1},{8},{7},{6},{2},{9},{26},{85},{26},{23},{14},{6},{24},{26},{12},{11},{5},{20},{1},{18},{9},{7},{5},{18},{5},{3},{12},{8},{5},{8},{5},{8},{4},{12},{9},{13},{5},{8},{4},{8},{10},{8},{7},{4},{2},{8},{7},{6},{3},{6},{10},{14},{12},{11},{10},{21},{14},{12},{14},{10},{17},{13},{22},{19},{22},{17},{4},{4},{12},{10},{12},{19},{4},{10},{5},{5},{6},{8},{5},{10},{5},{6},{12},{5},{6},{11},{5},{99},{67},{55}};
+    #if (CYTHON_COMPRESS_STRINGS) == 2 /* compression: bz2 (999 bytes) */
+const char* const cstring = "BZh91AY&SY\034\365V\207\000\000F\377\377\346\377\274\350\344\347\357\335\277\353\177\237\277\377\377\376@@@@@@@@@@@@@\000@\000P\003M\354\262\017T\013\220\324L\211\212z\236\243OS\032FL@\032\003@\320h\006jh\032\000\032z\231\000mG\251\236T8\000\000\032\000\000242\000\000\000\000\001\221\220\000\006@\324\321\222\032\247\351M4\000\000\000\031\0004\000\000\000\000\000\320\310\032\030h*yO%\036\211\352z\200\032hh\000\000\001\240\000\006\200\000\000\000\000\224@\025?@$\306\246\246eO\324\236\220i\201\250\r\0064\000\020\003\021\200M\003L\236E[x\204\265\004\020\332%\300D\025\010i\262%U\212\nR\225,,\274D\226\3657\216,\016#\036*\355\244E$\214\226\216\201\275N\2356Z\3257#\272t\263\013\212z\300X\213\302xo\333C\033H\305\265\256\264\273\0140\363oq\316\000\362\006=3|\350\214)\371\344\337\361\211\317\315\230\312*ho\235\254\223\036\255,\342\252i\242\334d\230\305-G\204\251DUZ\257 \037\35200(1\227\234\\\232\30084\035r%P\031R>\250j\262\2222\346L\212y\340\2121\203$y\205\215D\364\232T\216\261\330c\215\025\333\242\333\361\302Am\2639\253<\376R\031\002\377@~\346\340O\317\270\335*\357Nd\007l\360\264\017\240\326\304F \004I(\221\013\n\325\245\377\005\010P!|\310y\232\033\321\230\221\206:\000!j\006b\306\240f\243\"\240\266\023Q\346\360\346\250\002%\010Id\036\262!\"d\007\031g\272\224J\223N\232\036n\022i_\303\277\024\340\265\0279\2229\307\240\260V*\301Z\303\030on\344~7\236\307\036\300\225\321/T,\256a\033\tG\250\352R\254O\377\203Jyh\310H\024U\032\024`&\303\025\214-\3060/\204m\303`\200\307\243T-\337\014\365\244\252\323\2245\277A\245[\024\271\303Z\252\262\204\2336O*\353\260D\232\324\340\236\223q\024TQGz\363\312.\213(\017\271\360+}\025\246\205H\215#7$\366\336\225\n\3456\325\030\345\206'\255\231\375W%\244\022a\224\300\260B\215`z\2415l!\025QKDBC\"G\237\274b5\254\016\223,\346\312\2004\214\250\333\035MA&BwU5\274\316\345\200|\332Xk\275\341|D}\013\257\320\347\353k\302 U\211Jm\006-t\n\345\006`\315\003(\334\371\357F\2078\216\240\303\334\202L\204\342:\223\314EjG\214\311-HCR?C\314\001\252N\r\250\"\267\355X\202\316""\262pz%\221\330[Q\367\267/\025\267P\007d\350|\237\216\364\214r\331\352\342\0160\200abV[\225\264!!G\233W\356\307\027k$Wu\230\252:\2710\332W\274ll\334\270c\365\314u\225*\251\202\375\"\352\257-.\222_}N&\243Uj\376\324\342\265u\317\352\0072\210\317\364M\230\0339\213/\335\221\357:\202\242Q\310\255AT\224\305\270\275\306*\227\207\272\203\235b\217\224\016]U>\351\270\213\304x\350\257(\263\206Fp\254f\rd\327l\235SZ\227SF\220\310(l\346>Dj\3243 \215D\020\350\276*r\371\224\003'\0214\010\200\241\245\265\266\252\253\032\016!\021\332\225\311\344\370\261\207f\345\212\036\263\320\347\276\337\307\317\\\230i\332_\356\004\274\314\017G\351\375\206\345\276\201M\306X\317\014\272\034\276\2372\315\271\241\022\361\320)AT\312z'v,\"\207\036W\264\207\337\224\316\"\222\353\251M\252+\003\250\212\260\177\213\271\"\234(H\016z\253C\200";
+    PyObject *data = __Pyx_DecompressString(cstring, 999, 2);
     if (unlikely(!data)) __PYX_ERR(0, 1, __pyx_L1_error)
     const char* const bytes = __Pyx_PyBytes_AsString(data);
     #if !CYTHON_ASSUME_SAFE_MACROS
     if (likely(bytes)); else { Py_DECREF(data); __PYX_ERR(0, 1, __pyx_L1_error) }
     #endif
-    #elif (CYTHON_COMPRESS_STRINGS) != 0 /* compression: zlib (889 bytes) */
-const char* const cstring = "x\332mTMo\0337\020\215\000\025U\233\244\201\323\000I\221Ch\240\200\035\240][\250\255\026M\220 ib\327(j\330\371p\200\3261A\221\263Z\306\324rEre\251M\001\037u\334\243\216{\324QG\037}\364QG\035\375\023\362\023:\334UU\033\211\200\035\016\337,\227o\336\033h[; .b\216\374\322w\221\216\211\264D\200\222M0\314\201\352\023\353\214\344\016\214\177)&;\317w\276_\373i\215\260X\020\003\357\200;Kl\332\344\212Y\013\226\350\2204S\251\234\214\211\353'`\003\262\025\222\276NI\014 \210\323$\301\367.\036p\021\304\304\202\363\tYbq\254\035sR\307\024\217\313\270\265D\2044x\211\354\202?\275\301\224\205\340`\371\345\257\373\301z\375\375\313?\366\203\372z\2714\356\357\213\277\327\376Y~\374\363\375\262\336(\360\325\"\376\340\213\353E1x\314\204\240x\r\010iYS\001\304>\266\270\264e&L\302i\210tW\2706\260\202\273\025\277\013\222~\317\202\n\003\2320\207r\024B\341g\310\266\216\201hCfE\243\273R\200\261\237,'2Ai\021\270P<X\266\021\366b\377\302N0\\\352\303F\r\304V\361\271\320\301C\357H\334\262:5\034\036=u\033\310\256\214\001\245\006D\312\201\362\302KJ\3478JlQ\331\217*!8\036\315r\245\231\3304,\211(\335\351\367\360y\206\306\323m\350\271\027\020Rf\3731\227:@Ut\212\006\203\245\224\0351\351(m\272B0Nu\363\035\367\375Q\211\006\032\306\241\311\370!W\332\002\267]\301\034C\032^?\274A\370o\227\013\304\202b\021\n.\224\206i\314\213((m\375G\233\266\nb\275\266\242\322\3229\007\351\240m1\340\254j\343\371S\332fx9\376\332Z\244\n|\026\263v\271\302\221\017=\247m\302\014S\n\324\314\313\244\351\251':I\014\204\262\367\277\213\224\242\355\224G\300\017m\332.w\006l\252\\\231\317\310\371\324\317{\231\245q\"\371!\336]\352Z\202]\347\207\313\323\350\244L\225\224p\262Scq\266iK\351\346\334<\372\221\215s\000z\230\316\346\323;\001\301LU{\031-\324\272\014\341.\360\2739\212\002*\033H\355'\323z\017\374\220\314\304\302L@\310\212>\347\243C?1FV\n\213\210q\205\203E\315:\215j9\223\342\177C\032z9\251\0071FF\0379\215M`\337\016\234F\231\322\304\237K-\314?\335e*-\203=\256L\253\337\346O\362\275Q}\362\345\357g\273\307\225\017\265+\237}5x\225\335\035>""\313\257\217^\215\027\246\325k\203\315\254\236m\014\277\313\331\264\372\371qw\360&{>\2745\334\235\326nf\213\323\332\355\254s^\2733\254\370ZgZ\2731\271\261\224\273Q}\2649~p\322:\335=\277\214\260I\365\365\344\365\336\207\233W\276X\310\256\017\367\362\306ha\264x^\273\225m\347\213\371\243\361\355\223\332i\355\254z\266\205/M\366\336N\336\036L\016\350\264vm\260\225\375\231W\362\273\243\337\306\235\343\312y\365\336\2603!\253\343\253'\017N\017'\273/\246\325\257\263\306\360N\276\220/z\036\357\263\037\207HmyT\031}3\016N\221\333\325A\375_\036\265$\025";
-    PyObject *data = __Pyx_DecompressString(cstring, 889, 1);
+    #elif (CYTHON_COMPRESS_STRINGS) != 0 /* compression: zlib (885 bytes) */
+const char* const cstring = "x\332mRKo\0337\020\216\000\025U\233\244\201\323\000I\221Ch\240\200\035\240][\250\255\026M\220 ib\327(j\330y8@\353\230\240\310Y-cj\271\"\271\262\324\246\200\217:\356Q\307=\352\250\243\217>\372\250\243\216\376\t\371\t\035\356\252\252\215d\201\035\316\203\217o\276o\202\325\372\266v@\\\304\034\371\245\357\"\035\023i\211\000%\233`\230\003\325'\326\031\311\035\030\277)&;\317w\276_\373i\215\260X\020\003\357\200;Kl\332\344\212Y\013\226\350\2204S\251\234\214\211\353'`\003\262\025\222\276NI\014 \210\323$\301}\027\017\270\010bb\301y\207,\2618\326\2169\251c\212\307e\334Z\"B\032|Dv\301\237\336`\312Bp\260\374\362\327\375`\275\376\376\345\037\373A}\275\\\032\367\367\305\337k\377,?\376\371~Yo\024\371\325\302\376\340\213\353E1x\314\204\240\370\014\010iYS\001\304\336\266\270\264\245'L\302i\210pW\2706\260\202\321\212\217\202\244\337\263\240\302\200&\314!\035\005Qx\r\331\3261\020m\310\254htW\n0\366\223\345D&H-&.\024\017\226m\204\275\330\277\260\0234\227\372\260Q\003s\253\370_\350\340\241W$nY\235\032\016\217\236\272\rDW\332\200R\003\"\345@y\241%\245\363<Rl\221\331\217*!8\036\315|\245\231\3304,\211(\335\351\367\360\177\206\302\323m\350\271\027\020Rf\3731\227:@Vt\212\002\203\245\224\0351\351(m\272\2020Nu\363\035\367\375Q\211\002\032\306\241\311\370!W\332\002\267]\301\034C\030\236?|A\370\273\313\005bA\261\010\005\026J\3034\346\205\025\224\266\376\203M[\005\260^[Qi\351\034\203t\320\266hpV\265\361\370)m3|\034\277\266\026\251\002\357\305\254]\256p\344M\317i\2330\303\224\0025\3232iz\350\211N\022\003\241\354\375\257\"\245(;\345\021\360C\233\266\313\310\200M\225+\375\0318\357\372y/\2754N$?\304\267K^\313d\327\371\341\3620:)S%$\234\354\324X\234m\332R\2729\027\217~$\343<\001=tg\363\351\225\200`\306\252\275\234-\330\272\234\302(\360\321<\213\004*\033H\355'\323z\r\374\220\314\310BO@\310\212>\347\243C?1FV\n\213\031\343\n\005\213\232u\332\263\025z\"\251\017\321FF\0379\215\360\261c\007N#Ai\342O\244\026\346\227v\231JKc\217+\323\352\267\371\223|oT\237|\371\373\331\356q\345C\355\312g_\r^ew\207\317\362\353""\243W\343\205i\365\332`3\253g\033\303\357r6\255~~\334\035\274\311\236\017o\rw\247\265\233\331\342\264v;\353\234\327\356\014+\276\326\231\326nLn,\345nT\037m\216\037\234\264Nw\317/g\330\244\372z\362z\357\303\315+_,d\327\207{yc\2640Z<\257\335\312\266\363\305\374\321\370\366I\355\264vV=\333\302M\223\275\267\223\267\007\223\003:\255]\033le\177\346\225\374\356\350\267q\347\270r^\2757\354L\310\352\370\352\311\203\323\303\311\356\213i\365\353\2541\274\223/\344\213\036\307\373\354\307!B[\036UF\337\214\203S\304vuP\377\027\027{!\377";
+    PyObject *data = __Pyx_DecompressString(cstring, 885, 1);
     if (unlikely(!data)) __PYX_ERR(0, 1, __pyx_L1_error)
     const char* const bytes = __Pyx_PyBytes_AsString(data);
     #if !CYTHON_ASSUME_SAFE_MACROS
     if (likely(bytes)); else { Py_DECREF(data); __PYX_ERR(0, 1, __pyx_L1_error) }
     #endif
-    #else /* compression: none (1417 bytes) */
-const char* const bytes = "Note that Cython is deliberately stricter than PEP-484 and rejects subclasses of builtin types. If you need to pass subclasses then set the 'annotation_typing' directive to False.^(SH\\.51|SZ\\.15|SZ\\.16)\\d{4}(?:)^(SH\\.6|SZ\\.0|SZ\\.3)\\d{5}(?:).?add_notedisableenablegcisenabledrpc_feed/core/rpc/feed.pyxself._pattern is not None or self._providers is not None or self.pipeline is not None^(sh51|sz15|sz16)\\d{4}(?:)^(sh6|sz0|sz3)\\d{5}(?:)<stringsource>BtFeedBtFeed.__reduce_cython__BtFeed.__setstate_cython__BtFeed.fetchBtFeed.loadGraph__Pyx_PyDict_NextRef_asyncio.coroutines__await__bt_feedc_objcline_in_tracebackclosecsvdataset_path__dict___dictend_datefetch__func__fund__getstate__graph_xml_is_coroutineitemsiteratorload__main____module____name____new__nextosparallelpatternpb_objpopprefix_providers__pyx_checksum__pyx_result__pyx_state__pyx_type__pyx_unpickle_BtFeed__pyx_vtable____qualname__recursive_glob__reduce____reduce_cython____reduce_ex__rpc_feed.core.datasetsrpc_feed.core.graphrpc_feed.core.rpc.feedrpc_feed.utils.ioselfsend__set_name__setdefault__setstate____setstate_cython__sidsstart_datestatestockstructsuffix__test__throwto_executetopicupdateuse_setstatevaluevalues\200\001\330\004$\240A\240V\2501\320\nM\310Q\200\001\360\010\000\005\016\210T\220\033\230D\240\r\250T\260\021\330\004\014\210G\2201\220F\230,\240a\330\004\007\200v\210W\220E\230\024\230Q\330\010\022\220!\330\010\027\220q\340\010\030\230\001\330\004\007\200q\330\010\017\320\017'\240t\2501\250G\260;\270g\300Q\340\010\017\320\017'\240t\2501\250G\260;\270a\320\004U\320UV\360\022\000\t\021\220\r\230V\2406\250\021\250!\340\010\024\220N\240!\240>\260\027\270\010\300\010\310\004\310I\320UV\320V]\320]^\320^_\330\010\014\210I\220[\240\001\240\033\250K\260q\200\001\340\004\037\230q\320 0\260\013\270;\300k\320QR\330\004\023\2206\230\030\240\021\240!\330\004\007\200|\2207\230!\330\010(\250\001\250\031\260.\300\001\330\004\013\2101";
+    #else /* compression: none (1414 bytes) */
+const char* const bytes = ".01Note that Cython is deliberately stricter than PEP-484 and rejects subclasses of builtin types. If you need to pass subclasses then set the 'annotation_typing' directive to False.^(SH\\.51|SZ\\.15|SZ\\.16)\\d{4}(?:)^(SH\\.6|SZ\\.0|SZ\\.3)\\d{5}(?:).?add_notedisableenablegcisenabledrpc_feed/core/rpc/feed.pyxself._pattern is not None or self._providers is not None or self.pipeline is not None^(sh51|sz15|sz16)\\d{4}(?:)^(sh6|sz0|sz3)\\d{5}(?:)<stringsource>BtFeedBtFeed.__reduce_cython__BtFeed.__setstate_cython__BtFeed.fetchBtFeed.loadGraph__Pyx_PyDict_NextRef_asyncio.coroutines__await__bt_feedc_objcline_in_tracebackclosecsvdataset_path__dict___dictend_datefetch__func__fund__getstate__graph_xml_is_coroutineitemsiteratorload__main____module____name____new__nextosparallelpatternpb_objpopprefix_providers__pyx_checksum__pyx_result__pyx_state__pyx_type__pyx_unpickle_BtFeed__pyx_vtable____qualname__recursive_glob__reduce____reduce_cython____reduce_ex__rpc_feed.core.datasetsrpc_feed.core.graphrpc_feed.core.rpc.feedrpc_feed.utils.ioselfsend__set_name__setdefault__setstate____setstate_cython__sidsstart_datestatestocksuffix__test__throwto_executetopicupdateuse_setstatevaluevalues\200\001\330\004$\240A\240V\2501\320\nM\310Q\200\001\360\010\000\005\016\210T\220\033\230D\240\r\250T\260\021\330\004\014\210G\2201\220F\230,\240a\330\004\007\200v\210W\220E\230\024\230Q\330\010\022\220!\330\010\027\220q\340\010\030\230\001\330\004\007\200q\330\010\017\320\017'\240t\2501\250G\260;\270g\300Q\340\010\017\320\017'\240t\2501\250G\260;\270a\320\004U\320UV\360\022\000\t\021\220\r\230V\2406\250\021\250!\340\010\024\220N\240!\240>\260\027\270\010\300\010\310\004\310I\320UV\320V]\320]^\320^_\330\010\014\210I\220[\240\001\240\033\250K\260q\200\001\340\004\037\230q\320 0\260\013\270;\300k\320QR\330\004\023\2206\230\030\240\021\240!\330\004\007\200|\2207\230!\330\010(\250\001\250\031\260.\300\001\330\004\013\2101";
     PyObject *data = NULL;
     CYTHON_UNUSED_VAR(__Pyx_DecompressString);
     #endif
@@ -5650,7 +5650,7 @@ const char* const bytes = "Note that Cython is deliberately stricter than PEP-48
     for (int i = 0; i < 90; i++) {
       Py_ssize_t bytes_length = index[i].length;
       PyObject *string = PyUnicode_DecodeUTF8(bytes + pos, bytes_length, NULL);
-      if (likely(string) && i >= 15) PyUnicode_InternInPlace(&string);
+      if (likely(string) && i >= 16) PyUnicode_InternInPlace(&string);
       if (unlikely(!string)) {
         Py_XDECREF(data);
         __PYX_ERR(0, 1, __pyx_L1_error)
