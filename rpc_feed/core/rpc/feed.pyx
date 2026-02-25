@@ -38,7 +38,9 @@ cdef class BtFeed:
         async for pb_obj in iterator(start_date, end_date, sids):
             yield pb_obj # protobuf object
 
-    cpdef void load(self, str graph_xml, str dataset_path, str prefix, bint parallel=True):
+    cpdef void load(self, str graph_xml, str dataset_path, str prefix, bint parallel=True) except *: 
+    # Cython 将 Python 代码编译成 C 代码，而 C没有 Python 的异常机制； except * 确保 Python 异常能被正确捕获和处理，而不是导致程序崩溃或异常丢失
+
         '''
         Adds a ``Data Feed`` instance to the mix.
         If ``name`` is not None it will be put into ``data._name`` which is
@@ -48,7 +50,6 @@ cdef class BtFeed:
         cdef str suffix, sub_suffix
 
         suffix, sub_suffix = prefix.split("_") # struct_fund
-
         iterables = recursive_glob(dataset_path, suffix=suffix, pattern=self._pattern[suffix][sub_suffix])
         self.pipeline.to_execute(graph_xml, iterables, parallel)
 

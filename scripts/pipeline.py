@@ -35,30 +35,20 @@ if __name__ == "__main__":
 
    args = parse_args()
 
-   # # calendar
-   # dataset_path = Path("~/Downloads/quant/data/calendar/calendar.csv").expanduser()
-   # xml = "../xml/calendar.graphml"
-   # bt_feed.load(xml, dataset_path, prefix=".csv", parallel=False) 
+   # # struct
+   # dataset_path = Path("~/Downloads/raw_data/struct/202601").expanduser()
+   # xml = "../xml/tick.graphml"
+   # bt_feed.load(xml, str(dataset_path), prefix=".01_stock")
     
-   # #asset
-   # dataset_path = Path("~/Downloads/minutes/assets/asset.csv").expanduser()
-   # xml = "../xml/asset.graphml"
-   # bt_feed.load(xml, dataset_path, prefix="csv", parallel=False)
-
-   # struct
-#    dataset_path = Path("~/Downloads/raw_data/struct/202512").expanduser()
-#    xml = "../xml/tick.graphml"
-#    bt_feed.load(xml, str(dataset_path), prefix=".01_stock")
+   # dataset_path = Path("~/Downloads/raw_data/struct/202601").expanduser() 
+   # xml = "../xml/fund.graphml"
+   # bt_feed.load(xml, str(dataset_path), prefix=".01_fund")
    
-   dataset_path = Path("~/Downloads/raw_data/struct/202512").expanduser() 
-   xml = "../xml/fund.graphml"
-   bt_feed.load(xml, dataset_path, prefix=".01_fund")
-
-#    # # dataset csv
-#    dataset_path = Path("~/Downloads/raw_data/csv/stock/2019").expanduser()
-#    xml = "../xml/tick_csv.graphml"
-#    bt_feed.load(xml, str(dataset_path), prefix="csv_stock")
-
-#    dataset_path = Path("~/Downloads/raw_data/csv/fund/2022").expanduser()
-#    xml = "../xml/fund_csv.graphml"
-#    bt_feed.load(xml, dataset_path, prefix=".csv_fund")
+   # # dataset csv
+   dataset_path = Path("~/Downloads/raw_data/csv/stock/2015").expanduser()
+   xml = "../xml/tick_csv.graphml"
+   bt_feed.load(xml, str(dataset_path), prefix="csv_stock")
+   
+   # dataset_path = Path("~/Downloads/raw_data/csv/fund/2022").expanduser()
+   # xml = "../xml/fund_csv.graphml"
+   # bt_feed.load(xml, str(dataset_path), prefix="csv_fund")

@@ -117,10 +117,8 @@ def recursive_glob(root_path: str, suffix: str, pattern: str) -> Generator[str, 
     """Recursively find all files under `root_path` ending with `suffix` and matching `filter` condition."""
     expand_root_path = os.path.expanduser(root_path)
     if not os.path.exists(expand_root_path):
-        # asyncio need to exit
-        # raise ValueError(f'{expand_root_path} not found')
-        warnings.warn(f'{expand_root_path} not found')
-        sys.exit(0)
+        # sys.exit(0)
+        raise FileNotFoundError(f'{expand_root_path} not found')
 
     if os.path.isfile(expand_root_path) and filter(expand_root_path.split(os.sep)[-1]):
         yield expand_root_path

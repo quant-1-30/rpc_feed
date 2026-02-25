@@ -34,7 +34,7 @@ class RpcServer(service_pb2_grpc.btDataFeedServicer):
         
         await self._set_context(context)
 
-        logging.info("Received Calendar")
+        # logging.info("Received Calendar")
 
         for key, value in context.invocation_metadata():
             print("Received initial metadata: key=%s value=%s" % (key, value))
@@ -58,7 +58,7 @@ class RpcServer(service_pb2_grpc.btDataFeedServicer):
         
         await self._set_context(context)
 
-        logging.info("Received Instrument %s" % request.SerializeToString())
+        # logging.info("Received Instrument %s" % request.SerializeToString())
 
         response_iterator = bt_feed.fetch("asset", request.start_date, request.end_date, list(request.sid)) 
 
@@ -74,7 +74,7 @@ class RpcServer(service_pb2_grpc.btDataFeedServicer):
         
         await self._set_context(context)
 
-        logging.info("Received Index")
+        # logging.info("Received Index")
 
         response_iterator = bt_feed.fetch("index", request.start_date, request.end_date, list(request.sid))
         async for response in response_iterator:
@@ -88,7 +88,8 @@ class RpcServer(service_pb2_grpc.btDataFeedServicer):
     ) -> service_pb2.ArrowFrame: # type: ignore
         
         await self._set_context(context)
-        logging.info("Received Tick")
+
+        # logging.info("Received Tick")
 
         response_iterator = bt_feed.fetch("tick", request.start_date, request.end_date, list(request.sid))
         async for response in response_iterator:
@@ -103,7 +104,8 @@ class RpcServer(service_pb2_grpc.btDataFeedServicer):
         
         await self._set_context(context)
 
-        logging.info("Received Close")
+        # logging.info("Received Close")
+
         response_iterator = bt_feed.fetch("close", request.start_date, request.end_date, list(request.sid))
         async for response in response_iterator:
             # print("CloseStreamCall repsonse size ", response.ByteSize())
@@ -117,7 +119,7 @@ class RpcServer(service_pb2_grpc.btDataFeedServicer):
         
         await self._set_context(context)
 
-        logging.info("Received Adjustment")
+        # logging.info("Received Adjustment")
 
         response_iterator = bt_feed.fetch("adjust", request.start_date, request.end_date, list(request.sid))
         async for response in response_iterator:
@@ -132,7 +134,7 @@ class RpcServer(service_pb2_grpc.btDataFeedServicer):
         
         await self._set_context(context)
 
-        logging.info("Received Right")
+        # logging.info("Received Right")
 
         response_iterator = bt_feed.fetch("right", request.start_date, request.end_date, list(request.sid))
         async for response in response_iterator:

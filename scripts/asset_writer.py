@@ -3,7 +3,7 @@
 import asyncio
 import pandas as pd
 from dotenv import load_dotenv
-from sqlalchemy import select, and_, or_ , text # SQLAlchemy 2.0.39 正确的导入方式
+from sqlalchemy import select, and_, or_ , text # SQLAlchemy 2.0.39 
 from pathlib import Path
 
 from rpc_feed.core.operator.pg.schema import Asset
@@ -16,7 +16,6 @@ def bulk_update(p_str: str):
     if not meta:
         return 0
 
-    # 构造参数占位符和参数字典
     value_expr = []
     params = {}
     

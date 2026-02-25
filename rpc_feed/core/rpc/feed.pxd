@@ -6,4 +6,4 @@ cdef class BtFeed:
 
     cdef object pipeline
 
-    cpdef void load(self, str graph_xml, str dataset_path, str prefix, bint parallel=?)
+    cpdef void load(self, str graph_xml, str dataset_path, str prefix, bint parallel=?) except *
