@@ -218,7 +218,7 @@ class DuckDBManager: # 非线程安全
             print(f"⚠️ Failed to save cache file: {e}")
 
     async def __aexit__(self, exc_type, exc_val, exc_tb):
-        print("__aexit__", exc_type, exc_val, exc_tb)
+        # print("__aexit__", exc_type, exc_val, exc_tb)
         self._save_cache()
         if self._tasks:
             await asyncio.gather(*self._tasks, return_exceptions=True)

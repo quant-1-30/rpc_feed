@@ -57,8 +57,8 @@ cpdef str create_parquet_macro(str path, str view_name):
     return (
         f"CREATE OR REPLACE VIEW {view_name} AS "
         f"SELECT * FROM parquet_scan('{path}/**/*.parquet', "
-        f"HIVE_PARTITIONING=TRUE, "
-        f"UNION_BY_NAME=TRUE);"
+        f"HIVE_PARTITIONING=TRUE, " # extract feature from parquet name
+        f"UNION_BY_NAME=TRUE);" # schema evolution
     )
 
 

@@ -39,7 +39,7 @@ def decode_yaml(yaml_path):
 def expand_path(path):
     p = os.path.expanduser(path)
     os.makedirs(p, exist_ok=True)
-    return p
+    return str(p)
 
 # def get_subdirs(dataset_root, depth=1):
 #     """快速扫描数据集子目录，使用 pathlib 提高性能 比os.walk 效果高"""

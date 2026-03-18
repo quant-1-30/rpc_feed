@@ -200,6 +200,7 @@ class ParquetWriter(Node):
     params = (
         ("root_path", ""),
         # parquet 参数
+        ("incr", False),
         ("partition_cols", ["year", "quarter", "sid", "date"]),
         ("max_partitions", 100000),  # 增加最大分区数到 100000
         ("max_open_files", 1000),  # 最大打开文件数，增加以提高并发
@@ -216,6 +217,18 @@ class ParquetWriter(Node):
         ("is_async", True)
         )
 
+    def __init__(self):
+        if self.p.incr:
+            behavior = "overwrite_or_ignore" 
+            now_str = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+            basename_template = f"day_{now_str}_{{i}}.parquet"
+        else:
+            behavior = "delete_matching"
+            basename_template = None
+        
+        self.existing_data_behavior = behavior
+        self.basename_template = basename_template
+    
     def _make_schema(self, df: pd.DataFrame) -> pa.Schema:
         data_fields = []
         for col in df.columns.difference(self.p.partition_cols):
@@ -245,21 +258,18 @@ class ParquetWriter(Node):
         schema, partition_schema = self._make_schema(meta)
         # import pdb; pdb.set_trace()
         table = pa.Table.from_pandas(meta, schema=schema, preserve_index=False)
-        # # table transfer dataframe
-        # df = table.to_pandas()
-        # pa.Table.from_pandas(df, schema=table.schema)
-        root_path = expand_path(self.p.root_path)
+
             
         ds.write_dataset(
             data=table,
-            base_dir=str(root_path),
-            format="parquet",
+            base_dir=expand_path(self.p.root_path),
+            format="parquet", # "parquet", "ipc"/"arrow"/"feather", and "csv"
             partitioning=ds.partitioning(partition_schema, flavor="hive"),
-            # 目录是指分区路径, overwrite_or_ignore  分区目录存在忽略本次写入 / 否则正常写入
-            # append_or_ignore 分区路径不存在创建目录并写入 / 如果目录已存在将数据“追加”写入
-            # delete_matching  --- 删除匹配分区目录
-            # error: 如果目标目录已存在，则报错 / append 
-            existing_data_behavior="delete_matching",  # 删除匹配分区目录，支持同一分区下的增量更新
+            # overwrite_or_ignore  --- overwrite same file or append
+            # delete_matching  --- overwrite all
+            # error --- strict no write when dir is not empty
+            basename_template=self.basename_template,
+            existing_data_behavior=self.existing_data_behavior,
             max_partitions=self.p.max_partitions,
             max_rows_per_file=self.p.max_rows_per_file,
             max_rows_per_group=self.p.max_rows_per_group,

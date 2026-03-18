@@ -21,11 +21,13 @@ cdef class BtFeed:
         self._pattern = {
             ".01":{
                 "stock": "^(sh6|sz0|sz3)\d{5}(?:)",
-                "fund": "^(sh51|sz15|sz16)\d{4}(?:)"
+                "fund": "^(sh51|sz15|sz16)\d{4}(?:)",
+                "benchmark": "^.+\.01$" # "^[^.]+\.01$" 
             },
             "csv": {
                 "stock": "^(SH\.6|SZ\.0|SZ\.3)\d{5}(?:)",
-                "fund": "^(SH\.51|SZ\.15|SZ\.16)\d{4}(?:)"
+                "fund": "^(SH\.51|SZ\.15|SZ\.16)\d{4}(?:)",
+                "benchmark": "^.+\.csv$" 
             }
         }
         

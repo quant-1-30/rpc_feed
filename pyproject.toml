@@ -33,6 +33,7 @@ psutil = "^7.0.0"
 openpyxl = "^3.1.5"
 uvloop = "^0.22.1"
 cython = "^3.2.3"
+polar = "^0.0.127"
 
 [[tool.poetry.source]]
 name = "tuna"

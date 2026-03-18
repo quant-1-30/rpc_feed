@@ -4173,7 +4173,7 @@ static PyObject *__pyx_f_8rpc_feed_4core_7gateway_6duckdb_5utils_create_parquet_
  *     return (
  *         f"CREATE OR REPLACE VIEW {view_name} AS "             # <<<<<<<<<<<<<<
  *         f"SELECT * FROM parquet_scan('{path}/[inserted by cython to avoid comment start]**[inserted by cython to avoid comment closer]/[inserted by cython to avoid comment start]*.parquet', "
- *         f"HIVE_PARTITIONING=TRUE, "
+ *         f"HIVE_PARTITIONING=TRUE, " # extract feature from parquet name
 */
   __pyx_t_1 = __Pyx_PyUnicode_Unicode(__pyx_v_view_name); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 58, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
@@ -4182,8 +4182,8 @@ static PyObject *__pyx_f_8rpc_feed_4core_7gateway_6duckdb_5utils_create_parquet_
  *     return (
  *         f"CREATE OR REPLACE VIEW {view_name} AS "
  *         f"SELECT * FROM parquet_scan('{path}/[inserted by cython to avoid comment start]**[inserted by cython to avoid comment closer]/[inserted by cython to avoid comment start]*.parquet', "             # <<<<<<<<<<<<<<
- *         f"HIVE_PARTITIONING=TRUE, "
- *         f"UNION_BY_NAME=TRUE);"
+ *         f"HIVE_PARTITIONING=TRUE, " # extract feature from parquet name
+ *         f"UNION_BY_NAME=TRUE);" # schema evolution
 */
   __pyx_t_2 = __Pyx_PyUnicode_Unicode(__pyx_v_path); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 59, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
@@ -4198,7 +4198,7 @@ static PyObject *__pyx_f_8rpc_feed_4core_7gateway_6duckdb_5utils_create_parquet_
  *     return (
  *         f"CREATE OR REPLACE VIEW {view_name} AS "             # <<<<<<<<<<<<<<
  *         f"SELECT * FROM parquet_scan('{path}/[inserted by cython to avoid comment start]**[inserted by cython to avoid comment closer]/[inserted by cython to avoid comment start]*.parquet', "
- *         f"HIVE_PARTITIONING=TRUE, "
+ *         f"HIVE_PARTITIONING=TRUE, " # extract feature from parquet name
 */
   __pyx_t_4 = __Pyx_PyUnicode_Join(__pyx_t_3, 5, 23 + __Pyx_PyUnicode_GET_LENGTH(__pyx_t_1) + 32 + __Pyx_PyUnicode_GET_LENGTH(__pyx_t_2) + 60, 127 | __Pyx_PyUnicode_MAX_CHAR_VALUE(__pyx_t_1) | __Pyx_PyUnicode_MAX_CHAR_VALUE(__pyx_t_2));
   if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 58, __pyx_L1_error)

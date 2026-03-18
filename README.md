@@ -92,3 +92,13 @@ rsync -avzP --delete src dst
 # smb sever message block \\电脑IP\共享文件夹名
 
 # rsync -avzP minute/ hengxinliu@192.168.64.1:/Users/hengxinliu/Downloads/rsync/
+
+. **绝对不要用读写替换（Read-Modify-Write）！** 5000 次 I/O 的写放大不仅拖慢行情处理，而且一旦爬虫中途断电，这 5000 个被覆盖到一半的 Parquet 文件将全部损坏，导致灾难性的回撤。
+2. **最快落地方案：修改 `basename_template`（采纳方案一）。**
+   保留您现在的代码架构，只需要改 2 行代码。把每天新爬取的分钟数据，作为一个名字叫 `day_18.parquet` 的新文件直接写入现有目录。Polars 的强大之处在于它根本不在乎一个目录下有几个 Parquet 文件，`scan_parquet` 会在微秒级把它们当成一张表来处理。
+3. **周末跑个批处理：** 写一个简单的 Python 脚本，用 crontab 挂在周六凌晨 2 点。把这个月碎掉的文件读进来，写出一个大的 `base.parquet`，然后删掉碎文件。这就构成了现代数据湖最经典的 **Lambda 架构**！
+
+
+# # table transfer dataframe
+# df = table.to_pandas()
+# pa.Table.from_pandas(df, schema=table.schema)
