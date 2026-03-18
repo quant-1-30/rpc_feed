@@ -2,6 +2,10 @@
 # -*- coding: utf-8 -*-
 import argparse
 from pathlib import Path
+from dotenv import load_dotenv
+
+load_dotenv()
+
 from rpc_feed.core.rpc.feed import bt_feed
 
 
@@ -33,28 +37,30 @@ def parse_args():
 
 if __name__ == "__main__":
 
-   args = parse_args()
+    args = parse_args()
 
-   # # struct
-   # dataset_path = Path("~/Downloads/rsync/202602").expanduser()
-   # xml = "../xml/tick.graphml"
-   # bt_feed.load(xml, str(dataset_path), prefix=".01_stock")
-    
-#    dataset_path = Path("~/Downloads/rsync/202602").expanduser() 
-#    xml = "../xml/fund.graphml"
-#    bt_feed.load(xml, str(dataset_path), prefix=".01_fund")
-   
-   # # dataset csv
-   # dataset_path = Path("~/Downloads/raw_data/csv/stock/2015").expanduser()
-   # xml = "../xml/tick_csv.graphml"
-   # bt_feed.load(xml, str(dataset_path), prefix="csv_stock")
-   
-   # dataset_path = Path("~/Downloads/raw_data/csv/fund/2022").expanduser()
-   # xml = "../xml/fund_csv.graphml"
-   # bt_feed.load(xml, str(dataset_path), prefix="csv_fund")
+    # # struct
+    # dataset_path = Path("~/Downloads/rsync/202602").expanduser()
+    # xml = "../xml/tick.graphml"
+    # bt_feed.load(xml, str(dataset_path), prefix=".01_stock")
 
-   # benchmark csv
-   dataset_path = Path("~/Downloads/raw_data/csv/benchmark_2026").expanduser()
-   xml = "../xml/benchmark_csv.graphml"
-   bt_feed.load(xml, str(dataset_path), prefix="csv_benchmark")
+    # #  
+    # dataset_path = Path("~/Downloads/rsync/202602").expanduser() 
+    # xml = "../xml/fund.graphml"
+    # bt_feed.load(xml, str(dataset_path), prefix=".01_fund")
+   
+    # # dataset csv
+    # dataset_path = Path("~/Downloads/raw_data/csv/stock/2022").expanduser()
+    # xml = "../xml/tick_csv.graphml"
+    # bt_feed.load(xml, str(dataset_path), prefix="csv_stock")
+   
+    # # dataset fund csv
+    # dataset_path = Path("~/Downloads/raw_data/csv/fund/2022").expanduser()
+    # xml = "../xml/fund_csv.graphml"
+    # bt_feed.load(xml, str(dataset_path), prefix="csv_fund")
+
+    # benchmark csv
+    dataset_path = Path("~/Downloads/raw_data/csv/benchmark_2026").expanduser()
+    xml = "../xml/benchmark_csv.graphml"
+    bt_feed.load(xml, str(dataset_path), prefix="csv_benchmark")
 

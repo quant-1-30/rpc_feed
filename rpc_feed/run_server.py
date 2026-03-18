@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 import os
+from dotenv import load_dotenv
 
 # force numpy run on one core
 os.environ["OMP_NUM_THREADS"] = "1"
@@ -9,6 +10,8 @@ os.environ["MKL_NUM_THREADS"] = "1"
 os.environ["OPENBLAS_NUM_THREADS"] = "1"
 os.environ["VECLIB_MAXIMUM_THREADS"] = "1"
 os.environ["NUMEXPR_NUM_THREADS"] = "1"
+
+load_dotenv()
 
 import sys
 import gc
@@ -18,9 +21,7 @@ import grpc
 import signal
 import logging
 import uvloop
-from dotenv import load_dotenv
 from concurrent.futures import ThreadPoolExecutor
-
 from core.rpc.serialize.pb import service_pb2_grpc
 from core.server import RpcServer
 from core.gateway import async_ops
@@ -111,7 +112,6 @@ def cleanup_before_exit(): # sys.exit(0)# SystemExit ---> atexit
 
 if __name__ == "__main__":
 
-    load_dotenv()
     logging.basicConfig(level=logging.INFO)
     asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
     asyncio.run(serve())

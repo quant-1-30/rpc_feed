@@ -17,11 +17,15 @@ cdef class Instrument:
     cdef object _flush(self, int count) # protobuf extend slice copy avoid append 
 
 
+#cdef class Index:
+#    cdef cnp.int32_t[:] _buf_date, _buf_open, _buf_high, _buf_low, _buf_close
+#    cdef cnp.int64_t[:] _buf_volume, _buf_amount
+#    
+#    cdef object _flush(self, int count, bytes sid)
+#
+
 cdef class Index:
-    cdef cnp.int32_t[:] _buf_date, _buf_open, _buf_high, _buf_low, _buf_close
-    cdef cnp.int64_t[:] _buf_volume, _buf_amount
-    
-    cdef object _flush(self, int count, bytes sid)
+    cdef str dataset_root
 
 
 cdef class Tick:

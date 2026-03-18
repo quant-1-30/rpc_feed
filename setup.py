@@ -34,6 +34,13 @@ extensions = [
         language="c++",                         
         extra_compile_args=["-O3", "-std=c++11"]
     ),
+    Extension(
+        name="rpc_feed.utils.dateintern", 
+        sources=["rpc_feed/utils/dateintern.pyx"],
+        include_dirs=[np.get_include(), current_dir],
+        language="c++", # vector/map
+        extra_compile_args=["-O3", "-std=c++11"],
+        )
 ]
 
 

@@ -102,3 +102,19 @@ rsync -avzP --delete src dst
 # # table transfer dataframe
 # df = table.to_pandas()
 # pa.Table.from_pandas(df, schema=table.schema)
+# df_month = pl.scan_parquet("dataset/year_month=202603/*.parquet").collect()
+# df_month = pl.scan_parquet("dataset/year_month=202603/*.parquet").collect()
+
+# batch_results = await asyncio.wait_for( # block util finish 
+#     loop.run_in_executor(None, self._process_batch, batch), # return Future
+#     timeout=TICK_PROCESS_TIMEOUT)
+
+
+# Parquet 格式最强大的两个特性：**分区裁剪（Partition Pruning）** 和 **谓词下推（Predicate Pushdown）**
+
+您构建的 `year=YYYY/quarter=QQ/sid=XXXXXX` 这种目录结构叫做 **Hive Partitioning**，这是大厂数据湖的标配
+Polars 的惰性引擎（Lazy API）极其聪明，只要您在 `scan_parquet` 之后接上 `.filter()`，它会在**读取磁盘之前**分析查询条件
+1. **分区裁剪**：如果您查 `start_date=20260301`，它连 `year=2005` 这个文件夹看都不会看一眼（零 I/O 开销）
+2. **谓词下推**：对于符合条件的文件夹，它只读取 Parquet 文件内部符合日期和 `sid` 的数据块（RowGroup）
+
+.zfill(6)：字符串的补零方法，参数 6 表示最终要生成的字符串长度 < 6 在左侧补 0；≥ 6：直接返回原字符串，不做修改
