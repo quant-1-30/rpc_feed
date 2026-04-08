@@ -26,6 +26,8 @@ cdef class Instrument:
 
 cdef class Index:
     cdef str dataset_root
+    
+    cdef _flush(self, bytes sid, object batch)
 
 
 cdef class Tick:

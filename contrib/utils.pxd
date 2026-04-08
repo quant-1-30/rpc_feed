@@ -13,3 +13,5 @@ cpdef list schema_range(Request req)
 cpdef str create_parquet_macro(str path, str view_name)
 
 cpdef dict preprocess_req(Request req)
+
+cpdef str request_to_sql(list view_names, dict req_meta, str template)

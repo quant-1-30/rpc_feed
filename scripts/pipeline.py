@@ -39,13 +39,12 @@ if __name__ == "__main__":
 
     args = parse_args()
 
-    # # struct
-    # dataset_path = Path("~/Downloads/rsync/202602").expanduser()
+    # struct
+    # dataset_path = Path("~/Downloads/rsync/202603").expanduser()
     # xml = "../xml/tick.graphml"
     # bt_feed.load(xml, str(dataset_path), prefix=".01_stock")
 
-    # #  
-    # dataset_path = Path("~/Downloads/rsync/202602").expanduser() 
+    # dataset_path = Path("~/Downloads/rsync/202603").expanduser() 
     # xml = "../xml/fund.graphml"
     # bt_feed.load(xml, str(dataset_path), prefix=".01_fund")
    
@@ -54,13 +53,12 @@ if __name__ == "__main__":
     # xml = "../xml/tick_csv.graphml"
     # bt_feed.load(xml, str(dataset_path), prefix="csv_stock")
    
-    # # dataset fund csv
     # dataset_path = Path("~/Downloads/raw_data/csv/fund/2022").expanduser()
     # xml = "../xml/fund_csv.graphml"
     # bt_feed.load(xml, str(dataset_path), prefix="csv_fund")
 
-    # benchmark csv
-    dataset_path = Path("~/Downloads/raw_data/csv/benchmark_2026").expanduser()
-    xml = "../xml/benchmark_csv.graphml"
-    bt_feed.load(xml, str(dataset_path), prefix="csv_benchmark")
+    # # benchmark csv
+    # dataset_path = Path("~/Downloads/raw_data/csv/benchmark_2026").expanduser()
+    # xml = "../xml/benchmark_csv.graphml"
+    # bt_feed.load(xml, str(dataset_path), prefix="csv_benchmark")
 

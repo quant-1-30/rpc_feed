@@ -3,13 +3,10 @@
 # cython: wraparound=False 
 # cython: cdivision=True
 
-import os
 import asyncio
 import numpy as np
-import polars as pl
 import pyarrow as pa
 import pyarrow.compute as pc
-from pathlib import Path
 from sqlalchemy import select, and_, or_, func, cast, Integer, BigInteger
 from sqlalchemy.orm import load_only  # load_only 在 orm 模块中
 
@@ -174,147 +171,68 @@ cdef class Instrument:
         return batch_to_resp(batch)
 
 
-# cdef class Index:
-
-#     def __init__(self):
-#         self._buf_date = np.empty(CHUNK_SIZE, dtype=np.int32)
-#         self._buf_open = np.empty(CHUNK_SIZE, dtype=np.int32)
-#         self._buf_high = np.empty(CHUNK_SIZE, dtype=np.int32)
-#         self._buf_low = np.empty(CHUNK_SIZE, dtype=np.int32)
-#         self._buf_close = np.empty(CHUNK_SIZE, dtype=np.int32)
-#         self._buf_volume = np.empty(CHUNK_SIZE, dtype=np.int64)
-#         self._buf_amount = np.empty(CHUNK_SIZE, dtype=np.int64)
-
-#     async def __call__(self, int start_date, int end_date, list sids=None):
-#         cdef:
-#             int i = 0
-#             object row, stream
-#             bytes r_sid, last_sid = b''
-
-#         async with async_ops as ctx:
-#             stmt = select(
-#                 Benchmark.sid, Benchmark.date,
-#                 cast(func.round(Benchmark.open * MULT), Integer),
-#                 cast(func.round(Benchmark.high * MULT), Integer),
-#                 cast(func.round(Benchmark.low * MULT), Integer),
-#                 cast(func.round(Benchmark.close * MULT), Integer),
-#                 cast(func.round(Benchmark.volume * MULT), BigInteger),
-#                 cast(func.round(Benchmark.amount * MULT), BigInteger),
-#             ).where(Benchmark.date.between(start_date, end_date)).order_by(Benchmark.sid, Benchmark.date)
-            
-#             if sids: stmt = stmt.where(Benchmark.sid.in_(sids))
-            
-#             stream_wrap = await ctx.on_query(stmt)
-
-#             async with stream_wrap as stream_proxy:
-#                 async for row in stream_proxy:
-#                     r_sid = row[0]
-
-#                     if (last_sid and r_sid != last_sid) or i >= CHUNK_SIZE:
-#                         yield self._flush(i, last_sid)
-#                         i = 0
-
-#                     self._buf_date[i] = row[1]
-#                     self._buf_open[i] = row[2]
-#                     self._buf_high[i] = row[3]
-#                     self._buf_low[i] = row[4]
-#                     self._buf_close[i] = row[5]
-#                     self._buf_volume[i] = row[6]
-#                     self._buf_amount[i] = row[7]
-#                     last_sid = r_sid
-#                     i += 1
-
-#                 if i > 0: yield self._flush(i, last_sid)
-
-#     cdef object _flush(self, int count, bytes sid):
-#         cdef dict metadata
-#         cdef object batch
-        
-#         batch = pa.RecordBatch.from_arrays(
-#             [
-#                 pa.array(self._buf_date[:count], type=pa.int32()),
-#                 pa.array(self._buf_open[:count], type=pa.int32()),
-#                 pa.array(self._buf_high[:count], type=pa.int32()),
-#                 pa.array(self._buf_low[:count], type=pa.int32()),
-#                 pa.array(self._buf_close[:count], type=pa.int32()),
-#                 pa.array(self._buf_volume[:count], type=pa.int64()),
-#                 pa.array(self._buf_amount[:count], type=pa.int64()),
-#             ],
-#             names=["tick", "open", "high", "low", "close", "volume", "amount"]
-#         )
-#         metadata = {
-#             b"sid": sid,
-#             b"rpc_type": b"index"
-#         }
-#         batch = batch.replace_schema_metadata(metadata) # zero_copy
-#         return batch_to_resp(batch)
-
-
 cdef class Index:
 
-    def __init__(self):
-        root = Path(os.getenv("DUCKDATASET")).expanduser()
-        self.dataset_root = os.path.join(root, "benchmark")
-
     async def __call__(self, int32_t start_date, int32_t end_date, list sids=None):
-        """
-            Hive 分区裁剪 (Partition Pruning) + 谓词下推 
-        """
-        cdef int32_t start_year = start_date // 10000
-        cdef int32_t end_year = end_date // 10000
-        cdef int64_t start_ts = intdt2ts(start_date)
-        cdef int64_t end_ts = intdt2ts(end_date)
+        cdef:
+            Request req = Request(start_date=start_date, end_date=end_date, sid=sids)
+            object batch, duck_mgr = get_duckdb_manager()
 
-        # LazyFrame
-        glob_path = f"{self.dataset_root}/*/*/*/*/*.parquet" # better than "{self.dataset_root}/**/*.parquet"
-
-        print("Index", start_year, end_year, start_ts, end_ts, glob_path)
-        lf = pl.scan_parquet(
-            glob_path,
-            hive_partitioning=True
-        )
-
-        lf = lf.filter(pl.col("year").cast(pl.Int32).is_between(start_year, end_year))
+        async with duck_mgr as ctx:
+            async for batch in ctx.query(req, TICK_TEMPLATE):
+                if batch.num_rows == 0: continue
+                try:
+                    for resp in self._process_batch(batch):
+                        yield resp 
+                except asyncio.TimeoutError:
+                    print("_process_batch Timeout")
+                    continue 
+                except asyncio.CancelledError:
+                    print("_process_batch CancelledError")
+                    raise 
+    
+    def _process_batch(self, object batch):
+        cdef object sid_col = batch.column("sid")
+        cdef Py_ssize_t num_rows = len(sid_col)
         
-        if sids:
-            # # Polars 执行引擎的逻辑 先把数字 强转成字符串
-            # sids_str = [s.decode("utf-8") for s in sids]
-            # lf = lf.filter(pl.col("sid").cast(pl.Utf8).is_in(sids_str)) 
-            sids_int = [int(s.decode("utf-8")) for s in sids]
-            lf = lf.filter(pl.col("sid").cast(pl.Int32).is_in(sids_int))
-
-        lf = lf.filter(pl.col("tick").cast(pl.Int32).is_between(start_ts, end_ts))
+        cdef object s_indices = None
+        cdef object e_indices = None
+        cdef object slice_batch, resp
+        cdef Py_ssize_t start, end
+        
+        if num_rows == 0: 
+            return
             
-        lf = lf.select([
-            pl.col("sid"),
-            pl.col("tick"), # pl.col("tick").alias("tick").cast(pl.Int32)
-            pl.col("open"), # (pl.col("open") * MULT).round().cast(pl.Int32)
-            pl.col("high"),
-            pl.col("low"),
-            pl.col("close"),
-            pl.col("volume"),
-            pl.col("amount"),
-        ]).sort(["sid", "tick"])
+        if num_rows == 1:
+            s_indices = pa.array([0], type=pa.int64())
+            e_indices = pa.array([1], type=pa.int64())
+        else:
+            equal_mask = pc.equal(sid_col, sid_col[0])
+            if pc.all(equal_mask).as_py():
+                s_indices = pa.array([0], type=pa.int64())
+                e_indices = pa.array([num_rows], type=pa.int64())
+            else:
+                lslice = sid_col.slice(offset=0, length=num_rows - 1)
+                rslice = sid_col.slice(offset=1, length=num_rows - 1)
+                bound_mask = pc.not_equal(lslice, rslice)
+                bound_indices = pc.add(pc.indices_nonzero(bound_mask), 1)
+                s_indices = pa.concat_arrays([pa.array([0], type=pa.int64()), bound_indices])
+                e_indices = pa.concat_arrays([bound_indices, pa.array([num_rows], type=pa.int64())])
 
-        # Polars collect C/Rust block api
-        df = await asyncio.to_thread(lf.collect)
+        for start_scalar, end_scalar in zip(s_indices, e_indices):
+            start = start_scalar.as_py()
+            end = end_scalar.as_py()
+            sid = sid_col[start].as_py()
+            slice_batch = batch.slice(start, end - start)
+            yield self._flush(sid, slice_batch)
 
-        if df.height == 0:
-            return  
-
-        # Zero-Copy to RecordBatch 
-        for (sid_val,), group_df in df.group_by(["sid"]):
-            arrow_table = group_df.drop("sid").to_arrow()
-            sid_str_6 = str(sid_val).zfill(6)
- 
-            for batch in arrow_table.to_batches(max_chunksize=CHUNK_SIZE):
-                metadata = {
-                    b"sid": sid_str_6.encode('utf-8'),
-                    b"rpc_type": b"index"
-                }
-                batch = batch.replace_schema_metadata(metadata)
-                
-                yield batch_to_resp(batch)
+    cdef _flush(self, bytes sid, object batch):
+        metadata = {
+        b"sid": sid,
+        b"rpc_type": b"index"
+        }
+        batch = batch.replace_schema_metadata(metadata) # zero_copy
+        return batch_to_resp(batch)
 
 
 cdef class Tick:
@@ -323,11 +241,9 @@ cdef class Tick:
         cdef:
             Request req = Request(start_date=start_date, end_date=end_date, sid=sids)
             object batch, duck_mgr = get_duckdb_manager()
-            object loop = asyncio.get_running_loop()
-            list batch_results
 
         async with duck_mgr as ctx:
-            async for batch in ctx.query(req, tick_template):
+            async for batch in ctx.query(req, TICK_TEMPLATE):
                 if batch.num_rows == 0: continue
                 try:
                     for resp in self._process_batch(batch):
@@ -399,15 +315,13 @@ cdef class Close:
         # hive_partitioning  --- automate path to key=value in partition cols 
         """
         cdef:
-            object batch, slice_batch
-            object duck_mgr = get_duckdb_manager()
+            Request req = Request(start_date=start_date, end_date=end_date, sid=sids)
+            object batch, duck_mgr = get_duckdb_manager()
+            int32_t num_rows  
             bytes sid
 
-            int num_rows  # Py_ssize_t
-            Request req = Request(start_date=start_date, end_date=end_date, sid=sids)
-
         async with duck_mgr as ctx:
-            async for batch in ctx.query(req, close_template):
+            async for batch in ctx.query(req, CLOSE_TEMPLATE):
                 num_rows = batch.num_rows
                 if num_rows == 0:
                     continue
@@ -420,8 +334,7 @@ cdef class Close:
 
                 for start, end in zip(s_indices, e_indices):
                     sid = sid_array[start]
-                    slice_batch = batch.slice(start, end - start)
-                    frame = self._flush(sid, slice_batch)
+                    frame = self._flush(sid, batch.slice(start, end - start))
                     yield frame
 
     cdef object _flush(self, bytes sid, object batch):

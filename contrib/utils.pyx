@@ -64,7 +64,7 @@ cpdef str create_parquet_macro(str path, str view_name):
 
 cpdef dict preprocess_req(Request req):
     """
-        ISO and sid_bytes
+        预处理请求：格式化 SID 列表和 ISO 时间字符串
     """
     cdef dict resp
     cdef int64_t start = req.start_date
@@ -86,11 +86,24 @@ cpdef dict preprocess_req(Request req):
     # for (std::vector<std::string>::iterator it = funk.begin(); it != funk.end(); ++it)
     for byte_sid in req.sid:
         py_sid = byte_sid.decode("utf-8") # bytes --> str avoid base64 encoding
-        str_sids.append(py_sid) # avoid repr auto add b prefix
+        str_sids.append(f"'{py_sid}'") # avoid repr auto add b prefix
     
     # DuckDB support ISO TIMESTAMP 
     resp = {"start_str": f"{s_y:04d}-{s_m:02d}-{s_d:02d} 00:00:00", 
            "end_str": f"{e_y:04d}-{e_m:02d}-{e_d:02d} 23:59:59", 
-           "sids": str_sids}
+           "sid_str": f"({','.join(str_sids)})"}
     return resp
 
+
+cpdef str request_to_sql(list view_names, dict req_meta, str template):
+    """
+        构造统一 SQL 查询，用于 sid + datetime 范围过滤
+    """
+    cdef dict sql_meta = preprocess_req(req_meta)
+    
+    # join super than + 
+    cdef str union_sql = "\nUNION ALL\n".join([f"SELECT * FROM {v}" for v in view_names])
+    
+    sql_meta["union_sql"] = union_sql
+    
+    return template.format_map(sql_meta)
