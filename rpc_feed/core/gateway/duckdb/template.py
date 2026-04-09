@@ -23,3 +23,12 @@ CLOSE_TEMPLATE = """
     GROUP BY sid, strftime(datetime, '%Y%m%d')
     ORDER BY sid, day ASC
 """
+
+EXPERIMENT_TEMPLATE = """
+    SELECT 
+        CAST(sid AS VARCHAR)::BLOB as sid,
+        distance, beta, macro_state, pred_score, prior_matrix
+    FROM read_parquet(?, hive_partitioning=true)
+    WHERE date BETWEEN ? AND ?
+    ORDER date ASC
+"""

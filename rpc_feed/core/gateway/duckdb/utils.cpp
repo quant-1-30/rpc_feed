@@ -2028,21 +2028,6 @@ static CYTHON_INLINE int __Pyx_ParseKeywords(
 static void __Pyx_RaiseArgtupleInvalid(const char* func_name, int exact,
     Py_ssize_t num_min, Py_ssize_t num_max, Py_ssize_t num_found);
 
-/* PyUnicode_Unicode.proto */
-static CYTHON_INLINE PyObject* __Pyx_PyUnicode_Unicode(PyObject *obj);
-
-/* JoinPyUnicode.export */
-static PyObject* __Pyx_PyUnicode_Join(PyObject** values, Py_ssize_t value_count, Py_ssize_t result_ulength,
-                                      Py_UCS4 max_char);
-
-/* ArgTypeTestFunc.export */
-static int __Pyx__ArgTypeTest(PyObject *obj, PyTypeObject *type, const char *name, int exact);
-
-/* ArgTypeTest.proto */
-#define __Pyx_ArgTypeTest(obj, type, none_allowed, name, exact)\
-    ((likely(__Pyx_IS_TYPE(obj, type) | (none_allowed && (obj == Py_None)))) ? 1 :\
-        __Pyx__ArgTypeTest(obj, type, name, exact))
-
 /* decode_c_string_utf16.proto (used by decode_c_bytes) */
 static CYTHON_INLINE PyObject *__Pyx_PyUnicode_DecodeUTF16(const char *s, Py_ssize_t size, const char *errors) {
     int byteorder = 0;
@@ -2082,6 +2067,10 @@ static CYTHON_INLINE PyObject* __Pyx_decode_bytes(
         as_c_string, size,
         start, stop, encoding, errors, decode_func);
 }
+
+/* JoinPyUnicode.export */
+static PyObject* __Pyx_PyUnicode_Join(PyObject** values, Py_ssize_t value_count, Py_ssize_t result_ulength,
+                                      Py_UCS4 max_char);
 
 /* FunctionExport.proto */
 static int __Pyx_ExportFunction(PyObject *api_dict, const char *name, void (*f)(void), const char *sig);
@@ -2499,7 +2488,6 @@ static int __Pyx_State_RemoveModule(void*);
 
 /* Module declarations from "rpc_feed.core.gateway.duckdb.utils" */
 static PyObject *__pyx_f_8rpc_feed_4core_7gateway_6duckdb_5utils_schema_range(struct __pyx_t_8rpc_feed_4core_7gateway_6duckdb_5utils_Request, int __pyx_skip_dispatch); /*proto*/
-static PyObject *__pyx_f_8rpc_feed_4core_7gateway_6duckdb_5utils_create_parquet_macro(PyObject *, PyObject *, int __pyx_skip_dispatch); /*proto*/
 static PyObject *__pyx_f_8rpc_feed_4core_7gateway_6duckdb_5utils_preprocess_req(struct __pyx_t_8rpc_feed_4core_7gateway_6duckdb_5utils_Request, int __pyx_skip_dispatch); /*proto*/
 static std::string __pyx_convert_string_from_py_6libcpp_6string_std__in_string(PyObject *); /*proto*/
 static struct __pyx_t_8rpc_feed_4core_7gateway_6duckdb_5utils_Request __pyx_convert__from_py_struct____pyx_t_8rpc_feed_4core_7gateway_6duckdb_5utils_Request(PyObject *); /*proto*/
@@ -2520,8 +2508,7 @@ int __pyx_module_is_main_rpc_feed__core__gateway__duckdb__utils = 0;
 static const char __pyx_k_a_mapping[] = "a mapping";
 /* #### Code section: decls ### */
 static PyObject *__pyx_pf_8rpc_feed_4core_7gateway_6duckdb_5utils_schema_range(CYTHON_UNUSED PyObject *__pyx_self, struct __pyx_t_8rpc_feed_4core_7gateway_6duckdb_5utils_Request __pyx_v_req); /* proto */
-static PyObject *__pyx_pf_8rpc_feed_4core_7gateway_6duckdb_5utils_2create_parquet_macro(CYTHON_UNUSED PyObject *__pyx_self, PyObject *__pyx_v_path, PyObject *__pyx_v_view_name); /* proto */
-static PyObject *__pyx_pf_8rpc_feed_4core_7gateway_6duckdb_5utils_4preprocess_req(CYTHON_UNUSED PyObject *__pyx_self, struct __pyx_t_8rpc_feed_4core_7gateway_6duckdb_5utils_Request __pyx_v_req); /* proto */
+static PyObject *__pyx_pf_8rpc_feed_4core_7gateway_6duckdb_5utils_2preprocess_req(CYTHON_UNUSED PyObject *__pyx_self, struct __pyx_t_8rpc_feed_4core_7gateway_6duckdb_5utils_Request __pyx_v_req); /* proto */
 /* #### Code section: late_includes ### */
 /* #### Code section: module_state ### */
 /* SmallCodeConfig */
@@ -2545,8 +2532,8 @@ typedef struct {
   __Pyx_CachedCFunction __pyx_umethod_PyDict_Type_items;
   __Pyx_CachedCFunction __pyx_umethod_PyDict_Type_pop;
   __Pyx_CachedCFunction __pyx_umethod_PyDict_Type_values;
-  PyObject *__pyx_codeobj_tab[3];
-  PyObject *__pyx_string_tab[50];
+  PyObject *__pyx_codeobj_tab[2];
+  PyObject *__pyx_string_tab[40];
 /* #### Code section: module_state_contents ### */
 /* CommonTypesMetaclass.module_state_decls */
 PyTypeObject *__pyx_CommonTypesMetaclassType;
@@ -2592,51 +2579,41 @@ static __pyx_mstatetype * const __pyx_mstate_global = &__pyx_mstate_global_stati
 #define __pyx_kp_u_02d __pyx_string_tab[2]
 #define __pyx_kp_u_04d __pyx_string_tab[3]
 #define __pyx_kp_u_23_59_59 __pyx_string_tab[4]
-#define __pyx_kp_u_AS_SELECT_FROM_parquet_scan __pyx_string_tab[5]
-#define __pyx_kp_u_CREATE_OR_REPLACE_VIEW __pyx_string_tab[6]
-#define __pyx_kp_u_No_value_specified_for_struct_at __pyx_string_tab[7]
-#define __pyx_kp_u_No_value_specified_for_struct_at_2 __pyx_string_tab[8]
-#define __pyx_kp_u_No_value_specified_for_struct_at_3 __pyx_string_tab[9]
-#define __pyx_kp_u_None __pyx_string_tab[10]
-#define __pyx_kp_u_Note_that_Cython_is_deliberately __pyx_string_tab[11]
-#define __pyx_kp_u__2 __pyx_string_tab[12]
-#define __pyx_kp_u_add_note __pyx_string_tab[13]
-#define __pyx_kp_u_parquet_HIVE_PARTITIONING_TRUE __pyx_string_tab[14]
-#define __pyx_kp_u_rpc_feed_core_gateway_duckdb_uti_2 __pyx_string_tab[15]
-#define __pyx_n_u_Pyx_PyDict_NextRef __pyx_string_tab[16]
-#define __pyx_n_u_Q __pyx_string_tab[17]
-#define __pyx_n_u_asyncio_coroutines __pyx_string_tab[18]
-#define __pyx_n_u_cline_in_traceback __pyx_string_tab[19]
-#define __pyx_n_u_create_parquet_macro __pyx_string_tab[20]
-#define __pyx_n_u_end_date __pyx_string_tab[21]
-#define __pyx_n_u_end_str __pyx_string_tab[22]
-#define __pyx_n_u_func __pyx_string_tab[23]
-#define __pyx_n_u_is_coroutine __pyx_string_tab[24]
-#define __pyx_n_u_items __pyx_string_tab[25]
-#define __pyx_n_u_main __pyx_string_tab[26]
-#define __pyx_n_u_module __pyx_string_tab[27]
-#define __pyx_n_u_name __pyx_string_tab[28]
-#define __pyx_n_u_path __pyx_string_tab[29]
-#define __pyx_n_u_pop __pyx_string_tab[30]
-#define __pyx_n_u_preprocess_req __pyx_string_tab[31]
-#define __pyx_n_u_pyx_capi __pyx_string_tab[32]
-#define __pyx_n_u_qualname __pyx_string_tab[33]
-#define __pyx_n_u_req __pyx_string_tab[34]
-#define __pyx_n_u_rpc_feed_core_gateway_duckdb_uti __pyx_string_tab[35]
-#define __pyx_n_u_schema_range __pyx_string_tab[36]
-#define __pyx_n_u_set_name __pyx_string_tab[37]
-#define __pyx_n_u_setdefault __pyx_string_tab[38]
-#define __pyx_n_u_sid __pyx_string_tab[39]
-#define __pyx_n_u_sids __pyx_string_tab[40]
-#define __pyx_n_u_start_date __pyx_string_tab[41]
-#define __pyx_n_u_start_str __pyx_string_tab[42]
-#define __pyx_n_u_test __pyx_string_tab[43]
-#define __pyx_n_u_values __pyx_string_tab[44]
-#define __pyx_n_u_view_name __pyx_string_tab[45]
-#define __pyx_kp_b_PyObject_PyObject_PyObject_int __pyx_string_tab[46]
-#define __pyx_kp_b_iso88591_A_s_6_A_F_G3a_6_1_4s_D_A_4r_Cq __pyx_string_tab[47]
-#define __pyx_kp_b_iso88591_Q_1_Cq_Rwc_3a_9BgS_q_Bc_Rs_T_3a __pyx_string_tab[48]
-#define __pyx_kp_b_iso88591_aq __pyx_string_tab[49]
+#define __pyx_kp_u_No_value_specified_for_struct_at __pyx_string_tab[5]
+#define __pyx_kp_u_No_value_specified_for_struct_at_2 __pyx_string_tab[6]
+#define __pyx_kp_u_No_value_specified_for_struct_at_3 __pyx_string_tab[7]
+#define __pyx_kp_u__2 __pyx_string_tab[8]
+#define __pyx_kp_u_rpc_feed_core_gateway_duckdb_uti_2 __pyx_string_tab[9]
+#define __pyx_n_u_Pyx_PyDict_NextRef __pyx_string_tab[10]
+#define __pyx_n_u_Q __pyx_string_tab[11]
+#define __pyx_n_u_asyncio_coroutines __pyx_string_tab[12]
+#define __pyx_n_u_cline_in_traceback __pyx_string_tab[13]
+#define __pyx_n_u_end_date __pyx_string_tab[14]
+#define __pyx_n_u_end_str __pyx_string_tab[15]
+#define __pyx_n_u_func __pyx_string_tab[16]
+#define __pyx_n_u_is_coroutine __pyx_string_tab[17]
+#define __pyx_n_u_items __pyx_string_tab[18]
+#define __pyx_n_u_main __pyx_string_tab[19]
+#define __pyx_n_u_module __pyx_string_tab[20]
+#define __pyx_n_u_name __pyx_string_tab[21]
+#define __pyx_n_u_pop __pyx_string_tab[22]
+#define __pyx_n_u_preprocess_req __pyx_string_tab[23]
+#define __pyx_n_u_pyx_capi __pyx_string_tab[24]
+#define __pyx_n_u_qualname __pyx_string_tab[25]
+#define __pyx_n_u_req __pyx_string_tab[26]
+#define __pyx_n_u_rpc_feed_core_gateway_duckdb_uti __pyx_string_tab[27]
+#define __pyx_n_u_schema_range __pyx_string_tab[28]
+#define __pyx_n_u_set_name __pyx_string_tab[29]
+#define __pyx_n_u_setdefault __pyx_string_tab[30]
+#define __pyx_n_u_sid __pyx_string_tab[31]
+#define __pyx_n_u_sids __pyx_string_tab[32]
+#define __pyx_n_u_start_date __pyx_string_tab[33]
+#define __pyx_n_u_start_str __pyx_string_tab[34]
+#define __pyx_n_u_test __pyx_string_tab[35]
+#define __pyx_n_u_values __pyx_string_tab[36]
+#define __pyx_kp_b_PyObject_struct___pyx_t_8rpc_fee __pyx_string_tab[37]
+#define __pyx_kp_b_iso88591_A_s_6_A_F_G3a_6_1_4s_D_A_4r_Cq __pyx_string_tab[38]
+#define __pyx_kp_b_iso88591_Q_1_Cq_Rwc_3a_9BgS_q_Bc_Rs_T_3a __pyx_string_tab[39]
 /* #### Code section: module_state_clear ### */
 #if CYTHON_USE_MODULE_STATE
 static CYTHON_SMALL_CODE int __pyx_m_clear(PyObject *m) {
@@ -2651,8 +2628,8 @@ static CYTHON_SMALL_CODE int __pyx_m_clear(PyObject *m) {
   #if CYTHON_PEP489_MULTI_PHASE_INIT
   __Pyx_State_RemoveModule(NULL);
   #endif
-  for (int i=0; i<3; ++i) { Py_CLEAR(clear_module_state->__pyx_codeobj_tab[i]); }
-  for (int i=0; i<50; ++i) { Py_CLEAR(clear_module_state->__pyx_string_tab[i]); }
+  for (int i=0; i<2; ++i) { Py_CLEAR(clear_module_state->__pyx_codeobj_tab[i]); }
+  for (int i=0; i<40; ++i) { Py_CLEAR(clear_module_state->__pyx_string_tab[i]); }
 /* #### Code section: module_state_clear_contents ### */
 /* CommonTypesMetaclass.module_state_clear */
 Py_CLEAR(clear_module_state->__pyx_CommonTypesMetaclassType);
@@ -2675,8 +2652,8 @@ static CYTHON_SMALL_CODE int __pyx_m_traverse(PyObject *m, visitproc visit, void
   __Pyx_VISIT_CONST(traverse_module_state->__pyx_empty_tuple);
   __Pyx_VISIT_CONST(traverse_module_state->__pyx_empty_bytes);
   __Pyx_VISIT_CONST(traverse_module_state->__pyx_empty_unicode);
-  for (int i=0; i<3; ++i) { __Pyx_VISIT_CONST(traverse_module_state->__pyx_codeobj_tab[i]); }
-  for (int i=0; i<50; ++i) { __Pyx_VISIT_CONST(traverse_module_state->__pyx_string_tab[i]); }
+  for (int i=0; i<2; ++i) { __Pyx_VISIT_CONST(traverse_module_state->__pyx_codeobj_tab[i]); }
+  for (int i=0; i<40; ++i) { __Pyx_VISIT_CONST(traverse_module_state->__pyx_string_tab[i]); }
 /* #### Code section: module_state_traverse_contents ### */
 /* CommonTypesMetaclass.module_state_traverse */
 Py_VISIT(traverse_module_state->__pyx_CommonTypesMetaclassType);
@@ -4069,241 +4046,12 @@ static PyObject *__pyx_pf_8rpc_feed_4core_7gateway_6duckdb_5utils_schema_range(C
 /* "rpc_feed/core/gateway/duckdb/utils.pyx":43
  * 
  * 
- * cpdef str create_parquet_macro(str path, str view_name):             # <<<<<<<<<<<<<<
- *     """
- *     Create a DuckDB macro for scanning parquet files with proper syntax.
-*/
-
-static PyObject *__pyx_pw_8rpc_feed_4core_7gateway_6duckdb_5utils_3create_parquet_macro(PyObject *__pyx_self, 
-#if CYTHON_METH_FASTCALL
-PyObject *const *__pyx_args, Py_ssize_t __pyx_nargs, PyObject *__pyx_kwds
-#else
-PyObject *__pyx_args, PyObject *__pyx_kwds
-#endif
-); /*proto*/
-static PyObject *__pyx_f_8rpc_feed_4core_7gateway_6duckdb_5utils_create_parquet_macro(PyObject *__pyx_v_path, PyObject *__pyx_v_view_name, CYTHON_UNUSED int __pyx_skip_dispatch) {
-  PyObject *__pyx_r = NULL;
-  __Pyx_RefNannyDeclarations
-  PyObject *__pyx_t_1 = NULL;
-  PyObject *__pyx_t_2 = NULL;
-  PyObject *__pyx_t_3[5];
-  PyObject *__pyx_t_4 = NULL;
-  int __pyx_lineno = 0;
-  const char *__pyx_filename = NULL;
-  int __pyx_clineno = 0;
-  __Pyx_RefNannySetupContext("create_parquet_macro", 0);
-
-  /* "rpc_feed/core/gateway/duckdb/utils.pyx":57
- *     """
- *     # not supported macro
- *     return (             # <<<<<<<<<<<<<<
- *         f"CREATE OR REPLACE VIEW {view_name} AS "
- *         f"SELECT * FROM parquet_scan('{path}/[inserted by cython to avoid comment start]**[inserted by cython to avoid comment closer]/[inserted by cython to avoid comment start]*.parquet', "
-*/
-  __Pyx_XDECREF(__pyx_r);
-
-  /* "rpc_feed/core/gateway/duckdb/utils.pyx":58
- *     # not supported macro
- *     return (
- *         f"CREATE OR REPLACE VIEW {view_name} AS "             # <<<<<<<<<<<<<<
- *         f"SELECT * FROM parquet_scan('{path}/[inserted by cython to avoid comment start]**[inserted by cython to avoid comment closer]/[inserted by cython to avoid comment start]*.parquet', "
- *         f"HIVE_PARTITIONING=TRUE, " # extract feature from parquet name
-*/
-  __pyx_t_1 = __Pyx_PyUnicode_Unicode(__pyx_v_view_name); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 58, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_1);
-
-  /* "rpc_feed/core/gateway/duckdb/utils.pyx":59
- *     return (
- *         f"CREATE OR REPLACE VIEW {view_name} AS "
- *         f"SELECT * FROM parquet_scan('{path}/[inserted by cython to avoid comment start]**[inserted by cython to avoid comment closer]/[inserted by cython to avoid comment start]*.parquet', "             # <<<<<<<<<<<<<<
- *         f"HIVE_PARTITIONING=TRUE, " # extract feature from parquet name
- *         f"UNION_BY_NAME=TRUE);" # schema evolution
-*/
-  __pyx_t_2 = __Pyx_PyUnicode_Unicode(__pyx_v_path); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 59, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_2);
-  __pyx_t_3[0] = __pyx_mstate_global->__pyx_kp_u_CREATE_OR_REPLACE_VIEW;
-  __pyx_t_3[1] = __pyx_t_1;
-  __pyx_t_3[2] = __pyx_mstate_global->__pyx_kp_u_AS_SELECT_FROM_parquet_scan;
-  __pyx_t_3[3] = __pyx_t_2;
-  __pyx_t_3[4] = __pyx_mstate_global->__pyx_kp_u_parquet_HIVE_PARTITIONING_TRUE;
-
-  /* "rpc_feed/core/gateway/duckdb/utils.pyx":58
- *     # not supported macro
- *     return (
- *         f"CREATE OR REPLACE VIEW {view_name} AS "             # <<<<<<<<<<<<<<
- *         f"SELECT * FROM parquet_scan('{path}/[inserted by cython to avoid comment start]**[inserted by cython to avoid comment closer]/[inserted by cython to avoid comment start]*.parquet', "
- *         f"HIVE_PARTITIONING=TRUE, " # extract feature from parquet name
-*/
-  __pyx_t_4 = __Pyx_PyUnicode_Join(__pyx_t_3, 5, 23 + __Pyx_PyUnicode_GET_LENGTH(__pyx_t_1) + 32 + __Pyx_PyUnicode_GET_LENGTH(__pyx_t_2) + 60, 127 | __Pyx_PyUnicode_MAX_CHAR_VALUE(__pyx_t_1) | __Pyx_PyUnicode_MAX_CHAR_VALUE(__pyx_t_2));
-  if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 58, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_4);
-  __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-  __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-  __pyx_r = ((PyObject*)__pyx_t_4);
-  __pyx_t_4 = 0;
-  goto __pyx_L0;
-
-  /* "rpc_feed/core/gateway/duckdb/utils.pyx":43
- * 
- * 
- * cpdef str create_parquet_macro(str path, str view_name):             # <<<<<<<<<<<<<<
- *     """
- *     Create a DuckDB macro for scanning parquet files with proper syntax.
-*/
-
-  /* function exit code */
-  __pyx_L1_error:;
-  __Pyx_XDECREF(__pyx_t_1);
-  __Pyx_XDECREF(__pyx_t_2);
-  __Pyx_XDECREF(__pyx_t_4);
-  __Pyx_AddTraceback("rpc_feed.core.gateway.duckdb.utils.create_parquet_macro", __pyx_clineno, __pyx_lineno, __pyx_filename);
-  __pyx_r = 0;
-  __pyx_L0:;
-  __Pyx_XGIVEREF(__pyx_r);
-  __Pyx_RefNannyFinishContext();
-  return __pyx_r;
-}
-
-/* Python wrapper */
-static PyObject *__pyx_pw_8rpc_feed_4core_7gateway_6duckdb_5utils_3create_parquet_macro(PyObject *__pyx_self, 
-#if CYTHON_METH_FASTCALL
-PyObject *const *__pyx_args, Py_ssize_t __pyx_nargs, PyObject *__pyx_kwds
-#else
-PyObject *__pyx_args, PyObject *__pyx_kwds
-#endif
-); /*proto*/
-PyDoc_STRVAR(__pyx_doc_8rpc_feed_4core_7gateway_6duckdb_5utils_2create_parquet_macro, "\n    Create a DuckDB macro for scanning parquet files with proper syntax.\n    \n    Args:\n        year: Year (e.g., 2019)\n        quarter: Quarter (e.g., 'Q4')\n        sid: Stock ID (e.g., 600225)\n        date: Date in YYYYMM format (e.g., '201911')\n    \n    Returns:\n        SQL string to create the macro\n    ");
-static PyMethodDef __pyx_mdef_8rpc_feed_4core_7gateway_6duckdb_5utils_3create_parquet_macro = {"create_parquet_macro", (PyCFunction)(void(*)(void))(__Pyx_PyCFunction_FastCallWithKeywords)__pyx_pw_8rpc_feed_4core_7gateway_6duckdb_5utils_3create_parquet_macro, __Pyx_METH_FASTCALL|METH_KEYWORDS, __pyx_doc_8rpc_feed_4core_7gateway_6duckdb_5utils_2create_parquet_macro};
-static PyObject *__pyx_pw_8rpc_feed_4core_7gateway_6duckdb_5utils_3create_parquet_macro(PyObject *__pyx_self, 
-#if CYTHON_METH_FASTCALL
-PyObject *const *__pyx_args, Py_ssize_t __pyx_nargs, PyObject *__pyx_kwds
-#else
-PyObject *__pyx_args, PyObject *__pyx_kwds
-#endif
-) {
-  PyObject *__pyx_v_path = 0;
-  PyObject *__pyx_v_view_name = 0;
-  #if !CYTHON_METH_FASTCALL
-  CYTHON_UNUSED Py_ssize_t __pyx_nargs;
-  #endif
-  CYTHON_UNUSED PyObject *const *__pyx_kwvalues;
-  PyObject* values[2] = {0,0};
-  int __pyx_lineno = 0;
-  const char *__pyx_filename = NULL;
-  int __pyx_clineno = 0;
-  PyObject *__pyx_r = 0;
-  __Pyx_RefNannyDeclarations
-  __Pyx_RefNannySetupContext("create_parquet_macro (wrapper)", 0);
-  #if !CYTHON_METH_FASTCALL
-  #if CYTHON_ASSUME_SAFE_SIZE
-  __pyx_nargs = PyTuple_GET_SIZE(__pyx_args);
-  #else
-  __pyx_nargs = PyTuple_Size(__pyx_args); if (unlikely(__pyx_nargs < 0)) return NULL;
-  #endif
-  #endif
-  __pyx_kwvalues = __Pyx_KwValues_FASTCALL(__pyx_args, __pyx_nargs);
-  {
-    PyObject ** const __pyx_pyargnames[] = {&__pyx_mstate_global->__pyx_n_u_path,&__pyx_mstate_global->__pyx_n_u_view_name,0};
-    const Py_ssize_t __pyx_kwds_len = (__pyx_kwds) ? __Pyx_NumKwargs_FASTCALL(__pyx_kwds) : 0;
-    if (unlikely(__pyx_kwds_len) < 0) __PYX_ERR(0, 43, __pyx_L3_error)
-    if (__pyx_kwds_len > 0) {
-      switch (__pyx_nargs) {
-        case  2:
-        values[1] = __Pyx_ArgRef_FASTCALL(__pyx_args, 1);
-        if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[1])) __PYX_ERR(0, 43, __pyx_L3_error)
-        CYTHON_FALLTHROUGH;
-        case  1:
-        values[0] = __Pyx_ArgRef_FASTCALL(__pyx_args, 0);
-        if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[0])) __PYX_ERR(0, 43, __pyx_L3_error)
-        CYTHON_FALLTHROUGH;
-        case  0: break;
-        default: goto __pyx_L5_argtuple_error;
-      }
-      const Py_ssize_t kwd_pos_args = __pyx_nargs;
-      if (__Pyx_ParseKeywords(__pyx_kwds, __pyx_kwvalues, __pyx_pyargnames, 0, values, kwd_pos_args, __pyx_kwds_len, "create_parquet_macro", 0) < (0)) __PYX_ERR(0, 43, __pyx_L3_error)
-      for (Py_ssize_t i = __pyx_nargs; i < 2; i++) {
-        if (unlikely(!values[i])) { __Pyx_RaiseArgtupleInvalid("create_parquet_macro", 1, 2, 2, i); __PYX_ERR(0, 43, __pyx_L3_error) }
-      }
-    } else if (unlikely(__pyx_nargs != 2)) {
-      goto __pyx_L5_argtuple_error;
-    } else {
-      values[0] = __Pyx_ArgRef_FASTCALL(__pyx_args, 0);
-      if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[0])) __PYX_ERR(0, 43, __pyx_L3_error)
-      values[1] = __Pyx_ArgRef_FASTCALL(__pyx_args, 1);
-      if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[1])) __PYX_ERR(0, 43, __pyx_L3_error)
-    }
-    __pyx_v_path = ((PyObject*)values[0]);
-    __pyx_v_view_name = ((PyObject*)values[1]);
-  }
-  goto __pyx_L6_skip;
-  __pyx_L5_argtuple_error:;
-  __Pyx_RaiseArgtupleInvalid("create_parquet_macro", 1, 2, 2, __pyx_nargs); __PYX_ERR(0, 43, __pyx_L3_error)
-  __pyx_L6_skip:;
-  goto __pyx_L4_argument_unpacking_done;
-  __pyx_L3_error:;
-  for (Py_ssize_t __pyx_temp=0; __pyx_temp < (Py_ssize_t)(sizeof(values)/sizeof(values[0])); ++__pyx_temp) {
-    Py_XDECREF(values[__pyx_temp]);
-  }
-  __Pyx_AddTraceback("rpc_feed.core.gateway.duckdb.utils.create_parquet_macro", __pyx_clineno, __pyx_lineno, __pyx_filename);
-  __Pyx_RefNannyFinishContext();
-  return NULL;
-  __pyx_L4_argument_unpacking_done:;
-  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_path), (&PyUnicode_Type), 1, "path", 1))) __PYX_ERR(0, 43, __pyx_L1_error)
-  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_view_name), (&PyUnicode_Type), 1, "view_name", 1))) __PYX_ERR(0, 43, __pyx_L1_error)
-  __pyx_r = __pyx_pf_8rpc_feed_4core_7gateway_6duckdb_5utils_2create_parquet_macro(__pyx_self, __pyx_v_path, __pyx_v_view_name);
-
-  /* function exit code */
-  goto __pyx_L0;
-  __pyx_L1_error:;
-  __pyx_r = NULL;
-  for (Py_ssize_t __pyx_temp=0; __pyx_temp < (Py_ssize_t)(sizeof(values)/sizeof(values[0])); ++__pyx_temp) {
-    Py_XDECREF(values[__pyx_temp]);
-  }
-  goto __pyx_L7_cleaned_up;
-  __pyx_L0:;
-  for (Py_ssize_t __pyx_temp=0; __pyx_temp < (Py_ssize_t)(sizeof(values)/sizeof(values[0])); ++__pyx_temp) {
-    Py_XDECREF(values[__pyx_temp]);
-  }
-  __pyx_L7_cleaned_up:;
-  __Pyx_RefNannyFinishContext();
-  return __pyx_r;
-}
-
-static PyObject *__pyx_pf_8rpc_feed_4core_7gateway_6duckdb_5utils_2create_parquet_macro(CYTHON_UNUSED PyObject *__pyx_self, PyObject *__pyx_v_path, PyObject *__pyx_v_view_name) {
-  PyObject *__pyx_r = NULL;
-  __Pyx_RefNannyDeclarations
-  PyObject *__pyx_t_1 = NULL;
-  int __pyx_lineno = 0;
-  const char *__pyx_filename = NULL;
-  int __pyx_clineno = 0;
-  __Pyx_RefNannySetupContext("create_parquet_macro", 0);
-  __Pyx_XDECREF(__pyx_r);
-  __pyx_t_1 = __pyx_f_8rpc_feed_4core_7gateway_6duckdb_5utils_create_parquet_macro(__pyx_v_path, __pyx_v_view_name, 1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 43, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_1);
-  __pyx_r = __pyx_t_1;
-  __pyx_t_1 = 0;
-  goto __pyx_L0;
-
-  /* function exit code */
-  __pyx_L1_error:;
-  __Pyx_XDECREF(__pyx_t_1);
-  __Pyx_AddTraceback("rpc_feed.core.gateway.duckdb.utils.create_parquet_macro", __pyx_clineno, __pyx_lineno, __pyx_filename);
-  __pyx_r = NULL;
-  __pyx_L0:;
-  __Pyx_XGIVEREF(__pyx_r);
-  __Pyx_RefNannyFinishContext();
-  return __pyx_r;
-}
-
-/* "rpc_feed/core/gateway/duckdb/utils.pyx":65
- * 
- * 
  * cpdef dict preprocess_req(Request req):             # <<<<<<<<<<<<<<
  *     """
  *         ISO and sid_bytes
 */
 
-static PyObject *__pyx_pw_8rpc_feed_4core_7gateway_6duckdb_5utils_5preprocess_req(PyObject *__pyx_self, 
+static PyObject *__pyx_pw_8rpc_feed_4core_7gateway_6duckdb_5utils_3preprocess_req(PyObject *__pyx_self, 
 #if CYTHON_METH_FASTCALL
 PyObject *const *__pyx_args, Py_ssize_t __pyx_nargs, PyObject *__pyx_kwds
 #else
@@ -4340,7 +4088,7 @@ static PyObject *__pyx_f_8rpc_feed_4core_7gateway_6duckdb_5utils_preprocess_req(
   int __pyx_clineno = 0;
   __Pyx_RefNannySetupContext("preprocess_req", 0);
 
-  /* "rpc_feed/core/gateway/duckdb/utils.pyx":70
+  /* "rpc_feed/core/gateway/duckdb/utils.pyx":48
  *     """
  *     cdef dict resp
  *     cdef int64_t start = req.start_date             # <<<<<<<<<<<<<<
@@ -4350,7 +4098,7 @@ static PyObject *__pyx_f_8rpc_feed_4core_7gateway_6duckdb_5utils_preprocess_req(
   __pyx_t_1 = __pyx_v_req.start_date;
   __pyx_v_start = __pyx_t_1;
 
-  /* "rpc_feed/core/gateway/duckdb/utils.pyx":71
+  /* "rpc_feed/core/gateway/duckdb/utils.pyx":49
  *     cdef dict resp
  *     cdef int64_t start = req.start_date
  *     cdef int64_t end = req.end_date             # <<<<<<<<<<<<<<
@@ -4360,7 +4108,7 @@ static PyObject *__pyx_f_8rpc_feed_4core_7gateway_6duckdb_5utils_preprocess_req(
   __pyx_t_1 = __pyx_v_req.end_date;
   __pyx_v_end = __pyx_t_1;
 
-  /* "rpc_feed/core/gateway/duckdb/utils.pyx":73
+  /* "rpc_feed/core/gateway/duckdb/utils.pyx":51
  *     cdef int64_t end = req.end_date
  * 
  *     cdef int s_y = start // 10000             # <<<<<<<<<<<<<<
@@ -4369,7 +4117,7 @@ static PyObject *__pyx_f_8rpc_feed_4core_7gateway_6duckdb_5utils_preprocess_req(
 */
   __pyx_v_s_y = (__pyx_v_start / 0x2710);
 
-  /* "rpc_feed/core/gateway/duckdb/utils.pyx":74
+  /* "rpc_feed/core/gateway/duckdb/utils.pyx":52
  * 
  *     cdef int s_y = start // 10000
  *     cdef int s_m = (start % 10000) // 100             # <<<<<<<<<<<<<<
@@ -4378,7 +4126,7 @@ static PyObject *__pyx_f_8rpc_feed_4core_7gateway_6duckdb_5utils_preprocess_req(
 */
   __pyx_v_s_m = ((__pyx_v_start % 0x2710) / 0x64);
 
-  /* "rpc_feed/core/gateway/duckdb/utils.pyx":75
+  /* "rpc_feed/core/gateway/duckdb/utils.pyx":53
  *     cdef int s_y = start // 10000
  *     cdef int s_m = (start % 10000) // 100
  *     cdef int s_d = start % 100             # <<<<<<<<<<<<<<
@@ -4387,7 +4135,7 @@ static PyObject *__pyx_f_8rpc_feed_4core_7gateway_6duckdb_5utils_preprocess_req(
 */
   __pyx_v_s_d = (__pyx_v_start % 0x64);
 
-  /* "rpc_feed/core/gateway/duckdb/utils.pyx":77
+  /* "rpc_feed/core/gateway/duckdb/utils.pyx":55
  *     cdef int s_d = start % 100
  * 
  *     cdef int e_y = end // 10000             # <<<<<<<<<<<<<<
@@ -4396,7 +4144,7 @@ static PyObject *__pyx_f_8rpc_feed_4core_7gateway_6duckdb_5utils_preprocess_req(
 */
   __pyx_v_e_y = (__pyx_v_end / 0x2710);
 
-  /* "rpc_feed/core/gateway/duckdb/utils.pyx":78
+  /* "rpc_feed/core/gateway/duckdb/utils.pyx":56
  * 
  *     cdef int e_y = end // 10000
  *     cdef int e_m = (end % 10000) // 100             # <<<<<<<<<<<<<<
@@ -4405,7 +4153,7 @@ static PyObject *__pyx_f_8rpc_feed_4core_7gateway_6duckdb_5utils_preprocess_req(
 */
   __pyx_v_e_m = ((__pyx_v_end % 0x2710) / 0x64);
 
-  /* "rpc_feed/core/gateway/duckdb/utils.pyx":79
+  /* "rpc_feed/core/gateway/duckdb/utils.pyx":57
  *     cdef int e_y = end // 10000
  *     cdef int e_m = (end % 10000) // 100
  *     cdef int e_d = end % 100             # <<<<<<<<<<<<<<
@@ -4414,19 +4162,19 @@ static PyObject *__pyx_f_8rpc_feed_4core_7gateway_6duckdb_5utils_preprocess_req(
 */
   __pyx_v_e_d = (__pyx_v_end % 0x64);
 
-  /* "rpc_feed/core/gateway/duckdb/utils.pyx":81
+  /* "rpc_feed/core/gateway/duckdb/utils.pyx":59
  *     cdef int e_d = end % 100
  * 
  *     cdef list str_sids = []             # <<<<<<<<<<<<<<
  *     cdef bytes byte_sid
  *     cdef str py_sid
 */
-  __pyx_t_2 = PyList_New(0); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 81, __pyx_L1_error)
+  __pyx_t_2 = PyList_New(0); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 59, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
   __pyx_v_str_sids = ((PyObject*)__pyx_t_2);
   __pyx_t_2 = 0;
 
-  /* "rpc_feed/core/gateway/duckdb/utils.pyx":87
+  /* "rpc_feed/core/gateway/duckdb/utils.pyx":65
  *     # cython auto transformt to (for auto& / const auto& v in ***)
  *     # for (std::vector<std::string>::iterator it = funk.begin(); it != funk.end(); ++it)
  *     for byte_sid in req.sid:             # <<<<<<<<<<<<<<
@@ -4436,12 +4184,12 @@ static PyObject *__pyx_f_8rpc_feed_4core_7gateway_6duckdb_5utils_preprocess_req(
   __pyx_t_3 = __pyx_v_req.sid.begin();
   for (; __pyx_t_3 != __pyx_v_req.sid.end(); ++__pyx_t_3) {
     __pyx_t_4 = *__pyx_t_3;
-    __pyx_t_2 = __pyx_convert_PyBytes_string_to_py_6libcpp_6string_std__in_string(__pyx_t_4); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 87, __pyx_L1_error)
+    __pyx_t_2 = __pyx_convert_PyBytes_string_to_py_6libcpp_6string_std__in_string(__pyx_t_4); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 65, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_2);
     __Pyx_XDECREF_SET(__pyx_v_byte_sid, ((PyObject*)__pyx_t_2));
     __pyx_t_2 = 0;
 
-    /* "rpc_feed/core/gateway/duckdb/utils.pyx":88
+    /* "rpc_feed/core/gateway/duckdb/utils.pyx":66
  *     # for (std::vector<std::string>::iterator it = funk.begin(); it != funk.end(); ++it)
  *     for byte_sid in req.sid:
  *         py_sid = byte_sid.decode("utf-8") # bytes --> str avoid base64 encoding             # <<<<<<<<<<<<<<
@@ -4450,23 +4198,23 @@ static PyObject *__pyx_f_8rpc_feed_4core_7gateway_6duckdb_5utils_preprocess_req(
 */
     if (unlikely(__pyx_v_byte_sid == Py_None)) {
       PyErr_Format(PyExc_AttributeError, "'NoneType' object has no attribute '%.30s'", "decode");
-      __PYX_ERR(0, 88, __pyx_L1_error)
+      __PYX_ERR(0, 66, __pyx_L1_error)
     }
-    __pyx_t_2 = __Pyx_decode_bytes(__pyx_v_byte_sid, 0, PY_SSIZE_T_MAX, NULL, NULL, PyUnicode_DecodeUTF8); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 88, __pyx_L1_error)
+    __pyx_t_2 = __Pyx_decode_bytes(__pyx_v_byte_sid, 0, PY_SSIZE_T_MAX, NULL, NULL, PyUnicode_DecodeUTF8); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 66, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_2);
     __Pyx_XDECREF_SET(__pyx_v_py_sid, ((PyObject*)__pyx_t_2));
     __pyx_t_2 = 0;
 
-    /* "rpc_feed/core/gateway/duckdb/utils.pyx":89
+    /* "rpc_feed/core/gateway/duckdb/utils.pyx":67
  *     for byte_sid in req.sid:
  *         py_sid = byte_sid.decode("utf-8") # bytes --> str avoid base64 encoding
  *         str_sids.append(py_sid) # avoid repr auto add b prefix             # <<<<<<<<<<<<<<
  * 
  *     # DuckDB support ISO TIMESTAMP
 */
-    __pyx_t_5 = __Pyx_PyList_Append(__pyx_v_str_sids, __pyx_v_py_sid); if (unlikely(__pyx_t_5 == ((int)-1))) __PYX_ERR(0, 89, __pyx_L1_error)
+    __pyx_t_5 = __Pyx_PyList_Append(__pyx_v_str_sids, __pyx_v_py_sid); if (unlikely(__pyx_t_5 == ((int)-1))) __PYX_ERR(0, 67, __pyx_L1_error)
 
-    /* "rpc_feed/core/gateway/duckdb/utils.pyx":87
+    /* "rpc_feed/core/gateway/duckdb/utils.pyx":65
  *     # cython auto transformt to (for auto& / const auto& v in ***)
  *     # for (std::vector<std::string>::iterator it = funk.begin(); it != funk.end(); ++it)
  *     for byte_sid in req.sid:             # <<<<<<<<<<<<<<
@@ -4475,20 +4223,20 @@ static PyObject *__pyx_f_8rpc_feed_4core_7gateway_6duckdb_5utils_preprocess_req(
 */
   }
 
-  /* "rpc_feed/core/gateway/duckdb/utils.pyx":92
+  /* "rpc_feed/core/gateway/duckdb/utils.pyx":70
  * 
  *     # DuckDB support ISO TIMESTAMP
  *     resp = {"start_str": f"{s_y:04d}-{s_m:02d}-{s_d:02d} 00:00:00",             # <<<<<<<<<<<<<<
  *            "end_str": f"{e_y:04d}-{e_m:02d}-{e_d:02d} 23:59:59",
  *            "sids": str_sids}
 */
-  __pyx_t_2 = __Pyx_PyDict_NewPresized(3); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 92, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_PyDict_NewPresized(3); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 70, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
-  __pyx_t_6 = __Pyx_PyUnicode_From_int(__pyx_v_s_y, 4, '0', 'd'); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 92, __pyx_L1_error)
+  __pyx_t_6 = __Pyx_PyUnicode_From_int(__pyx_v_s_y, 4, '0', 'd'); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 70, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_6);
-  __pyx_t_7 = __Pyx_PyUnicode_From_int(__pyx_v_s_m, 2, '0', 'd'); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 92, __pyx_L1_error)
+  __pyx_t_7 = __Pyx_PyUnicode_From_int(__pyx_v_s_m, 2, '0', 'd'); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 70, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_7);
-  __pyx_t_8 = __Pyx_PyUnicode_From_int(__pyx_v_s_d, 2, '0', 'd'); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 92, __pyx_L1_error)
+  __pyx_t_8 = __Pyx_PyUnicode_From_int(__pyx_v_s_d, 2, '0', 'd'); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 70, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_8);
   __pyx_t_9[0] = __pyx_t_6;
   __pyx_t_9[1] = __pyx_mstate_global->__pyx_kp_u_;
@@ -4497,26 +4245,26 @@ static PyObject *__pyx_f_8rpc_feed_4core_7gateway_6duckdb_5utils_preprocess_req(
   __pyx_t_9[4] = __pyx_t_8;
   __pyx_t_9[5] = __pyx_mstate_global->__pyx_kp_u_00_00_00;
   __pyx_t_10 = __Pyx_PyUnicode_Join(__pyx_t_9, 6, __Pyx_PyUnicode_GET_LENGTH(__pyx_t_6) + 1 * 2 + __Pyx_PyUnicode_GET_LENGTH(__pyx_t_7) + __Pyx_PyUnicode_GET_LENGTH(__pyx_t_8) + 9, 127);
-  if (unlikely(!__pyx_t_10)) __PYX_ERR(0, 92, __pyx_L1_error)
+  if (unlikely(!__pyx_t_10)) __PYX_ERR(0, 70, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_10);
   __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
   __Pyx_DECREF(__pyx_t_7); __pyx_t_7 = 0;
   __Pyx_DECREF(__pyx_t_8); __pyx_t_8 = 0;
-  if (PyDict_SetItem(__pyx_t_2, __pyx_mstate_global->__pyx_n_u_start_str, __pyx_t_10) < (0)) __PYX_ERR(0, 92, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_2, __pyx_mstate_global->__pyx_n_u_start_str, __pyx_t_10) < (0)) __PYX_ERR(0, 70, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_10); __pyx_t_10 = 0;
 
-  /* "rpc_feed/core/gateway/duckdb/utils.pyx":93
+  /* "rpc_feed/core/gateway/duckdb/utils.pyx":71
  *     # DuckDB support ISO TIMESTAMP
  *     resp = {"start_str": f"{s_y:04d}-{s_m:02d}-{s_d:02d} 00:00:00",
  *            "end_str": f"{e_y:04d}-{e_m:02d}-{e_d:02d} 23:59:59",             # <<<<<<<<<<<<<<
  *            "sids": str_sids}
  *     return resp
 */
-  __pyx_t_10 = __Pyx_PyUnicode_From_int(__pyx_v_e_y, 4, '0', 'd'); if (unlikely(!__pyx_t_10)) __PYX_ERR(0, 93, __pyx_L1_error)
+  __pyx_t_10 = __Pyx_PyUnicode_From_int(__pyx_v_e_y, 4, '0', 'd'); if (unlikely(!__pyx_t_10)) __PYX_ERR(0, 71, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_10);
-  __pyx_t_8 = __Pyx_PyUnicode_From_int(__pyx_v_e_m, 2, '0', 'd'); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 93, __pyx_L1_error)
+  __pyx_t_8 = __Pyx_PyUnicode_From_int(__pyx_v_e_m, 2, '0', 'd'); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 71, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_8);
-  __pyx_t_7 = __Pyx_PyUnicode_From_int(__pyx_v_e_d, 2, '0', 'd'); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 93, __pyx_L1_error)
+  __pyx_t_7 = __Pyx_PyUnicode_From_int(__pyx_v_e_d, 2, '0', 'd'); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 71, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_7);
   __pyx_t_9[0] = __pyx_t_10;
   __pyx_t_9[1] = __pyx_mstate_global->__pyx_kp_u_;
@@ -4525,26 +4273,26 @@ static PyObject *__pyx_f_8rpc_feed_4core_7gateway_6duckdb_5utils_preprocess_req(
   __pyx_t_9[4] = __pyx_t_7;
   __pyx_t_9[5] = __pyx_mstate_global->__pyx_kp_u_23_59_59;
   __pyx_t_6 = __Pyx_PyUnicode_Join(__pyx_t_9, 6, __Pyx_PyUnicode_GET_LENGTH(__pyx_t_10) + 1 * 2 + __Pyx_PyUnicode_GET_LENGTH(__pyx_t_8) + __Pyx_PyUnicode_GET_LENGTH(__pyx_t_7) + 9, 127);
-  if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 93, __pyx_L1_error)
+  if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 71, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_6);
   __Pyx_DECREF(__pyx_t_10); __pyx_t_10 = 0;
   __Pyx_DECREF(__pyx_t_8); __pyx_t_8 = 0;
   __Pyx_DECREF(__pyx_t_7); __pyx_t_7 = 0;
-  if (PyDict_SetItem(__pyx_t_2, __pyx_mstate_global->__pyx_n_u_end_str, __pyx_t_6) < (0)) __PYX_ERR(0, 92, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_2, __pyx_mstate_global->__pyx_n_u_end_str, __pyx_t_6) < (0)) __PYX_ERR(0, 70, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
 
-  /* "rpc_feed/core/gateway/duckdb/utils.pyx":94
+  /* "rpc_feed/core/gateway/duckdb/utils.pyx":72
  *     resp = {"start_str": f"{s_y:04d}-{s_m:02d}-{s_d:02d} 00:00:00",
  *            "end_str": f"{e_y:04d}-{e_m:02d}-{e_d:02d} 23:59:59",
  *            "sids": str_sids}             # <<<<<<<<<<<<<<
  *     return resp
  * 
 */
-  if (PyDict_SetItem(__pyx_t_2, __pyx_mstate_global->__pyx_n_u_sids, __pyx_v_str_sids) < (0)) __PYX_ERR(0, 92, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_2, __pyx_mstate_global->__pyx_n_u_sids, __pyx_v_str_sids) < (0)) __PYX_ERR(0, 70, __pyx_L1_error)
   __pyx_v_resp = ((PyObject*)__pyx_t_2);
   __pyx_t_2 = 0;
 
-  /* "rpc_feed/core/gateway/duckdb/utils.pyx":95
+  /* "rpc_feed/core/gateway/duckdb/utils.pyx":73
  *            "end_str": f"{e_y:04d}-{e_m:02d}-{e_d:02d} 23:59:59",
  *            "sids": str_sids}
  *     return resp             # <<<<<<<<<<<<<<
@@ -4555,7 +4303,7 @@ static PyObject *__pyx_f_8rpc_feed_4core_7gateway_6duckdb_5utils_preprocess_req(
   __pyx_r = __pyx_v_resp;
   goto __pyx_L0;
 
-  /* "rpc_feed/core/gateway/duckdb/utils.pyx":65
+  /* "rpc_feed/core/gateway/duckdb/utils.pyx":43
  * 
  * 
  * cpdef dict preprocess_req(Request req):             # <<<<<<<<<<<<<<
@@ -4583,16 +4331,16 @@ static PyObject *__pyx_f_8rpc_feed_4core_7gateway_6duckdb_5utils_preprocess_req(
 }
 
 /* Python wrapper */
-static PyObject *__pyx_pw_8rpc_feed_4core_7gateway_6duckdb_5utils_5preprocess_req(PyObject *__pyx_self, 
+static PyObject *__pyx_pw_8rpc_feed_4core_7gateway_6duckdb_5utils_3preprocess_req(PyObject *__pyx_self, 
 #if CYTHON_METH_FASTCALL
 PyObject *const *__pyx_args, Py_ssize_t __pyx_nargs, PyObject *__pyx_kwds
 #else
 PyObject *__pyx_args, PyObject *__pyx_kwds
 #endif
 ); /*proto*/
-PyDoc_STRVAR(__pyx_doc_8rpc_feed_4core_7gateway_6duckdb_5utils_4preprocess_req, "\n        ISO and sid_bytes\n    ");
-static PyMethodDef __pyx_mdef_8rpc_feed_4core_7gateway_6duckdb_5utils_5preprocess_req = {"preprocess_req", (PyCFunction)(void(*)(void))(__Pyx_PyCFunction_FastCallWithKeywords)__pyx_pw_8rpc_feed_4core_7gateway_6duckdb_5utils_5preprocess_req, __Pyx_METH_FASTCALL|METH_KEYWORDS, __pyx_doc_8rpc_feed_4core_7gateway_6duckdb_5utils_4preprocess_req};
-static PyObject *__pyx_pw_8rpc_feed_4core_7gateway_6duckdb_5utils_5preprocess_req(PyObject *__pyx_self, 
+PyDoc_STRVAR(__pyx_doc_8rpc_feed_4core_7gateway_6duckdb_5utils_2preprocess_req, "\n        ISO and sid_bytes\n    ");
+static PyMethodDef __pyx_mdef_8rpc_feed_4core_7gateway_6duckdb_5utils_3preprocess_req = {"preprocess_req", (PyCFunction)(void(*)(void))(__Pyx_PyCFunction_FastCallWithKeywords)__pyx_pw_8rpc_feed_4core_7gateway_6duckdb_5utils_3preprocess_req, __Pyx_METH_FASTCALL|METH_KEYWORDS, __pyx_doc_8rpc_feed_4core_7gateway_6duckdb_5utils_2preprocess_req};
+static PyObject *__pyx_pw_8rpc_feed_4core_7gateway_6duckdb_5utils_3preprocess_req(PyObject *__pyx_self, 
 #if CYTHON_METH_FASTCALL
 PyObject *const *__pyx_args, Py_ssize_t __pyx_nargs, PyObject *__pyx_kwds
 #else
@@ -4622,32 +4370,32 @@ PyObject *__pyx_args, PyObject *__pyx_kwds
   {
     PyObject ** const __pyx_pyargnames[] = {&__pyx_mstate_global->__pyx_n_u_req,0};
     const Py_ssize_t __pyx_kwds_len = (__pyx_kwds) ? __Pyx_NumKwargs_FASTCALL(__pyx_kwds) : 0;
-    if (unlikely(__pyx_kwds_len) < 0) __PYX_ERR(0, 65, __pyx_L3_error)
+    if (unlikely(__pyx_kwds_len) < 0) __PYX_ERR(0, 43, __pyx_L3_error)
     if (__pyx_kwds_len > 0) {
       switch (__pyx_nargs) {
         case  1:
         values[0] = __Pyx_ArgRef_FASTCALL(__pyx_args, 0);
-        if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[0])) __PYX_ERR(0, 65, __pyx_L3_error)
+        if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[0])) __PYX_ERR(0, 43, __pyx_L3_error)
         CYTHON_FALLTHROUGH;
         case  0: break;
         default: goto __pyx_L5_argtuple_error;
       }
       const Py_ssize_t kwd_pos_args = __pyx_nargs;
-      if (__Pyx_ParseKeywords(__pyx_kwds, __pyx_kwvalues, __pyx_pyargnames, 0, values, kwd_pos_args, __pyx_kwds_len, "preprocess_req", 0) < (0)) __PYX_ERR(0, 65, __pyx_L3_error)
+      if (__Pyx_ParseKeywords(__pyx_kwds, __pyx_kwvalues, __pyx_pyargnames, 0, values, kwd_pos_args, __pyx_kwds_len, "preprocess_req", 0) < (0)) __PYX_ERR(0, 43, __pyx_L3_error)
       for (Py_ssize_t i = __pyx_nargs; i < 1; i++) {
-        if (unlikely(!values[i])) { __Pyx_RaiseArgtupleInvalid("preprocess_req", 1, 1, 1, i); __PYX_ERR(0, 65, __pyx_L3_error) }
+        if (unlikely(!values[i])) { __Pyx_RaiseArgtupleInvalid("preprocess_req", 1, 1, 1, i); __PYX_ERR(0, 43, __pyx_L3_error) }
       }
     } else if (unlikely(__pyx_nargs != 1)) {
       goto __pyx_L5_argtuple_error;
     } else {
       values[0] = __Pyx_ArgRef_FASTCALL(__pyx_args, 0);
-      if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[0])) __PYX_ERR(0, 65, __pyx_L3_error)
+      if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[0])) __PYX_ERR(0, 43, __pyx_L3_error)
     }
-    __pyx_v_req = __pyx_convert__from_py_struct____pyx_t_8rpc_feed_4core_7gateway_6duckdb_5utils_Request(values[0]); if (unlikely(PyErr_Occurred())) __PYX_ERR(0, 65, __pyx_L3_error)
+    __pyx_v_req = __pyx_convert__from_py_struct____pyx_t_8rpc_feed_4core_7gateway_6duckdb_5utils_Request(values[0]); if (unlikely(PyErr_Occurred())) __PYX_ERR(0, 43, __pyx_L3_error)
   }
   goto __pyx_L6_skip;
   __pyx_L5_argtuple_error:;
-  __Pyx_RaiseArgtupleInvalid("preprocess_req", 1, 1, 1, __pyx_nargs); __PYX_ERR(0, 65, __pyx_L3_error)
+  __Pyx_RaiseArgtupleInvalid("preprocess_req", 1, 1, 1, __pyx_nargs); __PYX_ERR(0, 43, __pyx_L3_error)
   __pyx_L6_skip:;
   goto __pyx_L4_argument_unpacking_done;
   __pyx_L3_error:;
@@ -4658,7 +4406,7 @@ PyObject *__pyx_args, PyObject *__pyx_kwds
   __Pyx_RefNannyFinishContext();
   return NULL;
   __pyx_L4_argument_unpacking_done:;
-  __pyx_r = __pyx_pf_8rpc_feed_4core_7gateway_6duckdb_5utils_4preprocess_req(__pyx_self, __pyx_v_req);
+  __pyx_r = __pyx_pf_8rpc_feed_4core_7gateway_6duckdb_5utils_2preprocess_req(__pyx_self, __pyx_v_req);
 
   /* function exit code */
   for (Py_ssize_t __pyx_temp=0; __pyx_temp < (Py_ssize_t)(sizeof(values)/sizeof(values[0])); ++__pyx_temp) {
@@ -4668,7 +4416,7 @@ PyObject *__pyx_args, PyObject *__pyx_kwds
   return __pyx_r;
 }
 
-static PyObject *__pyx_pf_8rpc_feed_4core_7gateway_6duckdb_5utils_4preprocess_req(CYTHON_UNUSED PyObject *__pyx_self, struct __pyx_t_8rpc_feed_4core_7gateway_6duckdb_5utils_Request __pyx_v_req) {
+static PyObject *__pyx_pf_8rpc_feed_4core_7gateway_6duckdb_5utils_2preprocess_req(CYTHON_UNUSED PyObject *__pyx_self, struct __pyx_t_8rpc_feed_4core_7gateway_6duckdb_5utils_Request __pyx_v_req) {
   PyObject *__pyx_r = NULL;
   __Pyx_RefNannyDeclarations
   PyObject *__pyx_t_1 = NULL;
@@ -4677,7 +4425,7 @@ static PyObject *__pyx_pf_8rpc_feed_4core_7gateway_6duckdb_5utils_4preprocess_re
   int __pyx_clineno = 0;
   __Pyx_RefNannySetupContext("preprocess_req", 0);
   __Pyx_XDECREF(__pyx_r);
-  __pyx_t_1 = __pyx_f_8rpc_feed_4core_7gateway_6duckdb_5utils_preprocess_req(__pyx_v_req, 1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 65, __pyx_L1_error)
+  __pyx_t_1 = __pyx_f_8rpc_feed_4core_7gateway_6duckdb_5utils_preprocess_req(__pyx_v_req, 1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 43, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   __pyx_r = __pyx_t_1;
   __pyx_t_1 = 0;
@@ -4743,12 +4491,12 @@ static int __Pyx_modinit_function_export_code(__pyx_mstatetype *__pyx_mstate) {
   {
     __pyx_t_1 = __Pyx_ApiExport_GetApiDict(); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 1, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_1);
-    const char * __pyx_export_signature = __Pyx_PyBytes_AsString(__pyx_mstate_global->__pyx_kp_b_PyObject_PyObject_PyObject_int);
+    const char * __pyx_export_signature = __Pyx_PyBytes_AsString(__pyx_mstate_global->__pyx_kp_b_PyObject_struct___pyx_t_8rpc_fee);
     #if !CYTHON_ASSUME_SAFE_MACROS
     if (unlikely(!__pyx_export_signature)) __PYX_ERR(0, 1, __pyx_L1_error)
     #endif
-    const char * __pyx_export_name = __pyx_export_signature + 161;
-    void (*const __pyx_export_pointers[])(void) = {(void (*)(void))&__pyx_f_8rpc_feed_4core_7gateway_6duckdb_5utils_create_parquet_macro, (void (*)(void))&__pyx_f_8rpc_feed_4core_7gateway_6duckdb_5utils_preprocess_req, (void (*)(void))&__pyx_f_8rpc_feed_4core_7gateway_6duckdb_5utils_schema_range, (void (*)(void)) NULL};
+    const char * __pyx_export_name = __pyx_export_signature + 101;
+    void (*const __pyx_export_pointers[])(void) = {(void (*)(void))&__pyx_f_8rpc_feed_4core_7gateway_6duckdb_5utils_preprocess_req, (void (*)(void))&__pyx_f_8rpc_feed_4core_7gateway_6duckdb_5utils_schema_range, (void (*)(void)) NULL};
     void (*const *__pyx_export_pointer)(void) = __pyx_export_pointers;
     const char *__pyx_export_current_signature = __pyx_export_signature;
     while (*__pyx_export_pointer) {
@@ -5088,31 +4836,16 @@ __Pyx_RefNannySetupContext("PyInit_utils", 0);
   /* "rpc_feed/core/gateway/duckdb/utils.pyx":43
  * 
  * 
- * cpdef str create_parquet_macro(str path, str view_name):             # <<<<<<<<<<<<<<
- *     """
- *     Create a DuckDB macro for scanning parquet files with proper syntax.
-*/
-  __pyx_t_2 = __Pyx_CyFunction_New(&__pyx_mdef_8rpc_feed_4core_7gateway_6duckdb_5utils_3create_parquet_macro, 0, __pyx_mstate_global->__pyx_n_u_create_parquet_macro, NULL, __pyx_mstate_global->__pyx_n_u_rpc_feed_core_gateway_duckdb_uti, __pyx_mstate_global->__pyx_d, ((PyObject *)__pyx_mstate_global->__pyx_codeobj_tab[1])); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 43, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_2);
-  #if CYTHON_COMPILING_IN_CPYTHON && PY_VERSION_HEX >= 0x030E0000
-  PyUnstable_Object_EnableDeferredRefcount(__pyx_t_2);
-  #endif
-  if (PyDict_SetItem(__pyx_mstate_global->__pyx_d, __pyx_mstate_global->__pyx_n_u_create_parquet_macro, __pyx_t_2) < (0)) __PYX_ERR(0, 43, __pyx_L1_error)
-  __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-
-  /* "rpc_feed/core/gateway/duckdb/utils.pyx":65
- * 
- * 
  * cpdef dict preprocess_req(Request req):             # <<<<<<<<<<<<<<
  *     """
  *         ISO and sid_bytes
 */
-  __pyx_t_2 = __Pyx_CyFunction_New(&__pyx_mdef_8rpc_feed_4core_7gateway_6duckdb_5utils_5preprocess_req, 0, __pyx_mstate_global->__pyx_n_u_preprocess_req, NULL, __pyx_mstate_global->__pyx_n_u_rpc_feed_core_gateway_duckdb_uti, __pyx_mstate_global->__pyx_d, ((PyObject *)__pyx_mstate_global->__pyx_codeobj_tab[2])); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 65, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_CyFunction_New(&__pyx_mdef_8rpc_feed_4core_7gateway_6duckdb_5utils_3preprocess_req, 0, __pyx_mstate_global->__pyx_n_u_preprocess_req, NULL, __pyx_mstate_global->__pyx_n_u_rpc_feed_core_gateway_duckdb_uti, __pyx_mstate_global->__pyx_d, ((PyObject *)__pyx_mstate_global->__pyx_codeobj_tab[1])); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 43, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
   #if CYTHON_COMPILING_IN_CPYTHON && PY_VERSION_HEX >= 0x030E0000
   PyUnstable_Object_EnableDeferredRefcount(__pyx_t_2);
   #endif
-  if (PyDict_SetItem(__pyx_mstate_global->__pyx_d, __pyx_mstate_global->__pyx_n_u_preprocess_req, __pyx_t_2) < (0)) __PYX_ERR(0, 65, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_mstate_global->__pyx_d, __pyx_mstate_global->__pyx_n_u_preprocess_req, __pyx_t_2) < (0)) __PYX_ERR(0, 43, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
 
   /* "rpc_feed/core/gateway/duckdb/utils.pyx":1
@@ -5185,34 +4918,34 @@ static int __Pyx_InitCachedConstants(__pyx_mstatetype *__pyx_mstate) {
 static int __Pyx_InitConstants(__pyx_mstatetype *__pyx_mstate) {
   CYTHON_UNUSED_VAR(__pyx_mstate);
   {
-    const struct { const unsigned int length: 8; } index[] = {{1},{9},{3},{3},{9},{32},{23},{52},{50},{45},{4},{179},{1},{8},{60},{38},{20},{1},{18},{18},{20},{8},{7},{8},{13},{5},{8},{10},{8},{4},{3},{14},{12},{12},{3},{34},{12},{12},{10},{3},{4},{10},{9},{8},{6},{9},{209},{176},{177},{21}};
-    #if (CYTHON_COMPRESS_STRINGS) == 2 /* compression: bz2 (1029 bytes) */
-const char* const cstring = "BZh91AY&SY@F\206\230\000\000x\377\373\377\377}\374y\377\377\372\277\347\377\240\277\377\377\340@@@@@@@\000\000@@\000@\000P\003]\355m\334\025@b\032\232&\204\2151\251\215C#'\224\014 \0324\014\201\210\006\206\2324a=\t\240\321\210\320h\204\246\3127\251==)\372\221\243\3121\000\001\223F\200\000\000\000\000\014\200\r48\000\000h\032\032\032\032d\000h\000\003@44\000\000\310\000\002)\372\211\222\031OMA\352yF\230\232\006\203&\206FL\020h\0004\310\r\r\000\304\323\321\001(   \320T\366\247\2414\214\206\206\321\000\032\032d\000\000\000\000\032\014\365L\250L\257\003\000\220\236r\362\026n\376^z\360U\345\014`\025\276_\244\010\000\024\000\202\344\247\363\213\0321TH8\303l4B\021^\022\216J\212,\360\252\242\341y\030\214Gs\240\340\347\n\250\252\002IB\\\035\333\200T\274\004\2733\221/+wz\275\033\252U\254u\035\032y\032\335\356'\246XY\376\307\353\306Q\3118\177\3111^\347iJiv\336NM\352\275\0302C\370\273\327\270\273\264\023/\334\177$\353\tS\210\020A\3352\0304\217V\331e\267\016\262-\034\351A\325\257\314\0322A8Mb\tF$\245)\355L#S\322\224\272\301\330@8,\342\244\020\221\036\224\270v4\354\332\314\202\254\247\360\003\307\314\235\025\233]\347\034(\221?\272\240\304\240\312\014O\237\242\305\202\332iRVgMO?R\013&\255L4\264<w\262c\020\326\026\315\331\245\352u\343\017+W\026\2748\247\372\351\326s\333aX\317U\273\355\216\234\277\"\254V\013\227\351zx\376F\335\2727\376\355^\025\354*2\247\233N\357w\322\214\343\347gFH\333d\2330\275\342\304\262\213\001x4\240A\017\360\240\321R\244\235\237\001{\345\3311\375\257\255\322\340\024\016\326}6\036+\344\030\242\360;\324sA\250Z\257q!KS\253\265<O\014\360V\251nF\376\250X\311L\257N\206\355\375\2639\002\344\234nM\344|\316\347\247k\365\370T\264,\014\303\034\371\365\026\3011Y)\333W%\034\200#\224v4(<\037\223\370\330\235(\010\347\030\225n\203\261\272D\324\t\206\247\003\202tEX\016\271\323`O\231)\326\360!F\206qW\302\323Y!Itt\030[\211\224\205\212\242\252\342\351\205\002\361d\013R\214V\304\211\213\206\032\251\0277\214\017\221\203(\"\263*\306\322\204\256\035'J\320\346\262\275\313t\223~c\222""\023cdz\000\323\014\005.v\273h\252A\202\tT`\351\273ni:\217\030\342\323\347\235\022t\301R\t\262\216e\211\306\216\347Ii\315\010\352\330\232\020\266\013\215I\233\357-2\032(\311,V\374\331c\240\266\300n5\"\266\207S\313\336\311bGZTgL\215\0320$\223\010\270\262:\334=\254\221&\027_u\360\324\306\343\21201]2\223\231\342u+\306\345H\245\365*\304\234\245Z\204\374\365A\347\200i\006\3340@\247b\260}\244AY5\320\207\";\212\241\232tp\2707\264\323:\215(\226\023\320\214\204'$\224\254\3333J`\024H*\207,+\312\351\323\3669m/K\364a\273 \\\204l\317\004\303\002U\324\001\276\234\323\005\360\207)\201\202\326\324\333t=\200\270\032!o\334\327>0\021\203\347\216}\007\2456}\334{\260\242}\320\0058I\325\343\374\330\275\345\320/\304\276\264\221G\001\303M4U\232\026\026;d\337\356\022r,CC\313\321\235\r\232\250f;\220Wc\2726\026\005I\007\215\254\320\345\257\250\244\206\342\277B\256\203\007\016\322r\021\217~[i&fWw\223\n\243/\376.\344\212p\241 \200\215\r0";
-    PyObject *data = __Pyx_DecompressString(cstring, 1029, 2);
+    const struct { const unsigned int length: 8; } index[] = {{1},{9},{3},{3},{9},{52},{50},{45},{1},{38},{20},{1},{18},{18},{8},{7},{8},{13},{5},{8},{10},{8},{3},{14},{12},{12},{3},{34},{12},{12},{10},{3},{4},{10},{9},{8},{6},{128},{176},{177}};
+    #if (CYTHON_COMPRESS_STRINGS) == 2 /* compression: bz2 (720 bytes) */
+const char* const cstring = "BZh91AY&SYk\344\216\022\000\000S\177\373\377\377}\370x\377\377\360\275\203\374\000\277\377\377\340@@@@@@@\000\000@@\000@\000@\002Xk\263\255X\341\244\324jj\0326F\247\250y4\312yA\350\236\241\240\000d\032\000\032=OQ\243F\021\265\006P\214M\002hL\206\3224\000\006\200\000\320\000\000\000\0004\032i\032E=\032\2314h\000\000\000\000\000\000\000\000\r\033H\320e\t\244jm&\364\221\223d\231\001\2404\300!\243### \000\006\203L\213\371d\260\2368\004\017\217\345Z\323V/\230*\222\377\321\374\010$\224$\031\020W\201{\312\nn\n\026\230\242\367\261\257\006\244P\203\024v(le\014\301C\\9\003\200r\210>\016\014^c\013\340\225t|U\001M'\247\342}\244R\316\024\\\251\034C5\0344\375\240\363?f9\325\344\233\325\236\367r\356\231\313\002(\t\364\r\352\21036\363RL\0300\2208(#\204+\307\007\r\252\36082$%\0104R\022\025\013\003V\252H\363l\020U}\340\247?\n\2374\251\303p\341mr\224R\2235O\253\326\211\262\256B\243I$\026PkH\222FC\310\025\004AR8\331]*?DF'\036@\033+\021\\?1\235\003\021x\301\374e\300\372!\031?O\226\330\351\221*py\360\342\312\205ouu\3669M`\021\330\222`\325\227\3201\021\031p\037\306T\254E\037t\3132\224\t\315\273\321:#\274\252m\310f5\314?\263\301d=\215Q\264\010l\315\220%\242p\203\371F\001rh\024$n\270\347\315\000\374,\023l\225\372D\331$\231(W\250\240\242\234\344\323j$\201=\263\237\232J\030\013\rI\264\247\302c}y\013+,\010\254QDX\247H\306C\301\371\022P[\025\364\260D+,\244\264\211\323\337I\206e\030A%\300\222\242\220\241?\016\030\245\260!\271\234\3523c\274X\270\303\005\327jd\345a\317\2442\004\260z\260\311 \025l \006\331j\225t\034\204\226\252\271I\225\211\001D,)\205 1fK\307(\006\200R\232\2274\352U\233\236$\034\270#\224h\220\230\203\030E\023|\005w\374,\201w\313f\375\274^\240H @\364\366)%\374A\006(x\374\005\321\303\317r\225\314.\375Z\010\346\025c\261v\277\336.\261y\353\313V\037\330\014A\004\010\301\000\266\261\302\210p\376\242G\336*n\332q\251\224jfk1,K\211j\236\273\302\314\321\253\023\365\352):0\301\214\231\306\200\224\346,\251\231\241e\024J\202B\377\213\271\"\234(H5\362G\t\000";
+    PyObject *data = __Pyx_DecompressString(cstring, 720, 2);
     if (unlikely(!data)) __PYX_ERR(0, 1, __pyx_L1_error)
     const char* const bytes = __Pyx_PyBytes_AsString(data);
     #if !CYTHON_ASSUME_SAFE_MACROS
     if (likely(bytes)); else { Py_DECREF(data); __PYX_ERR(0, 1, __pyx_L1_error) }
     #endif
-    #elif (CYTHON_COMPRESS_STRINGS) != 0 /* compression: zlib (905 bytes) */
-const char* const cstring = "x\332\225RAs\0327\024\206\030RR\334N\300\231$mz\020\316L\211\251\003\306&i\222N\247\203\311:e&\306x!\351\344\244\021Z\001\252\227\335e\245\265\303\255G\216:\352\270G\216\3769{\344'\370'\364\355\202\033g\246\323iv4\253'\351\373\236\276\357\351=E{{\257\222\261\267o\3555,\264\177\360\352\331K\030\250\331C=\343\255\321\352\243\n:2O\216\221G\374i\300$\026\2248O\312-\323h\366\rtb\"\323\350\276m\266\014\364\276m\374\201:.:'v\300\220\360\030\345C\316,4t}$\244\037P\211\210\224>\037\004\222\241\262\220\304\227\330\"\222\225\3777\2079\326\0272\004\267\000\354\260\216\013+9&\022\265fr\354:\210\013d1\233\017\230\017\371\354YL\345T2?\0069\250kt\2376^4\020q,\344\263?\031\225\002\211`@m\"\004\023\310\035\242A\300m\311\035$g\036\023U\324\036\242\231\033 \207\201\022\351B\251\304g\0049f\016\022L\306\001*\023\307q%\221\334u0\320\2713*#\213\373p\t?g1\373\210\330\202U\177#\226\205\001\310j\225J\255R]W\277\274\213~o\2777p\267i\366\333\375\366I\247\335y\363k\337|g\354\242w\035X\342\303\017\270\323<6\222\275\235_|\217\342!\210\252Q\327g\265\021x\275 \263\232\025\3203kP\013$\267E\325\233}\304\270\013\277\356\3545\224\000w\330Gi\262\341)\0213\207r\267\nL\027\220\016\023\324\206?\346\240\332'\224\r\010=\243>\203\224\370\2723&\204\372\356\365#\3053T\025\343a\340P\2141\027\370\237T\\\262\211\300\200\207d\360M\\+\260Y\0349d\002\263G\344\330s=\317g\236\357R&\004\366\331\024\266A$%\036\217\201\323\200\330+0\034]\273\214\265\262\352\332eu\345\262\232\270\024t\314&\004\373\304\031\001\005^b}\023D\026\033\222\300\226\320)\361\370\324\226\253(q\020/0N:N\234sv\221\220\273\263\223A\334\031\250\362\344S\270\213n\306\334\221h%[\234q\017[\\\2003:\336I\335\340\256{v\005\223\370\305\265\027\334\210\315\340\237\327n\360\363\225\035\374,\361\203M\006\025\027\362?\356H\375\333\343\244>\257i\352f]\376J_}\235\312~\257\267t3\312<PB\227\226\231-\365|\265\276\247\216\364\266~\023\036\204$Jv\213\272\036\0377b\\|\374Z\337\322\345p+lF\311\256\257\013\313\314w\272p\265\231\312\336\231o\252\226\232F\271\202z\250\037\204""\351\260\020\345\356\252\257\324T\247\257n\247\262\337\314\217\343l\272\245\317\303\323\220.\356/\246\227\033\227\365(\177_\rt\032\256?\nKp\357p\321\\\364.\323Q~K\325\243L~^_\351}\244\037\353\323(\363Po\304\202\n\352\021\344\231F\231\242\372I\233\372\002\322\201\216\242\332\321\007:\021\376R\037\352Q\330[\244\227`qz\225Ke\363\363\355\371\341\234\252{\312\004/\217u?,&.sE\265\255\016\025\005\001-\355\2574o\250\272j\306\301-UR\373\352T\0215]\346\276\235\217\022n9\006\345\347\373\363\236JG\233\005U\2106\357\252\3642\211\326\202\177HeoG\271RX\010KQ\356\307\220\204\323\277\001\035\230\005\023";
-    PyObject *data = __Pyx_DecompressString(cstring, 905, 1);
+    #elif (CYTHON_COMPRESS_STRINGS) != 0 /* compression: zlib (626 bytes) */
+const char* const cstring = "x\332\225\221;W\3330\024\307cH\332\264I{p\302\001Z\026\003CJ\037y\361ha\351\tp\350TJ\002\273\216\"\313\301%\361K2\220\255\243\307;j\364\230\221\217\3431\037!\037\241\222\235\364\261\265>:\322\225t\377W\277\377\365\007\243\331<NG\263m6\367M\243\275w|p$\307\205k\334\341aH\r\346Qb[65\r\313\r\014\306\203\220p\003s\036\330\375\220S\243\3068\016821\247\265\177\326P\307\374O\005\263\315\332\347\300#\310\242\324l\0207\240\215\201,p\217\307\r3$\267f\277\021r{\310\352\336\370\001\241K9]\216\317l\302\321\005}\340=ju1\033;\304v\353R\351\312L\20722\2243\262\035\304\003Lh\037\223\333\005\225Z%\001BV\350\020\204\220\315\320/\231\315\351\210!4\302R(\277\221k\206C\252\"\007\217\344\352\271\236\027P/p\te\014\005\324\227G\022\206`\317VI~\210\207Y\242\274Z\270QL\264>wS\317\334\324S7\214\334\320\021F\001v\006R\302(\237\277\"#\223Z8\034r\331\0265~\377\203,J\351\325\006\241\264\275\354r\374\255\377\235\312\226\276}3\357m\006\306\321\247\005\006\332W\034\350\343\034\004\035f$\350 EA=\352\313:\374\275a;\0131\273\265=d\332\314\303\234\334\354\346r\177;\317\375I\377C\233=\317\025^\213\252\350$\371u`bk\232\257\302a\266_\205s\261-\276\304{1N\322\323\212h\251\353}\225\247\256\317\304\222\250\305\325\270\223\244\247\201\320\247\371WB\237\225s\205gQ\031N\301O\212:l\210\365X\213\365\244\270\002O\301\027\332\354I\256\360\"\372\252\252\211Sq\027wc2Y\233\370\217\313\217\255\244\264\006}\241\311\347\317\343-\371\2565\351L\256\036\265\244T\205V\222/E\255\214wS\354\210n\222\337\020\313\nH\207MY\307O\362\025x'z\342^\226\223\034\025\330\025{\"\005?\022'b\020_M\264\251\264\350\317\212\271B)\332\216N\"\002\253\320\223^v\304u\\I]\026+\260\r'@$\300\251\0102\346ehAG\005K\260\005m\350\002\006\177Z|\031\rRmM%\225\242vt\005ZR\326AO\312+\240M\323H\001\377\004\031\332l\216";
+    PyObject *data = __Pyx_DecompressString(cstring, 626, 1);
     if (unlikely(!data)) __PYX_ERR(0, 1, __pyx_L1_error)
     const char* const bytes = __Pyx_PyBytes_AsString(data);
     #if !CYTHON_ASSUME_SAFE_MACROS
     if (likely(bytes)); else { Py_DECREF(data); __PYX_ERR(0, 1, __pyx_L1_error) }
     #endif
-    #else /* compression: none (1409 bytes) */
-const char* const bytes = "- 00:00:0002d04d 23:59:59 AS SELECT * FROM parquet_scan('CREATE OR REPLACE VIEW No value specified for struct attribute 'start_date'No value specified for struct attribute 'end_date'No value specified for struct attribute 'sid'NoneNote that Cython is deliberately stricter than PEP-484 and rejects subclasses of builtin types. If you need to pass subclasses then set the 'annotation_typing' directive to False.?add_note/**/*.parquet', HIVE_PARTITIONING=TRUE, UNION_BY_NAME=TRUE);rpc_feed/core/gateway/duckdb/utils.pyx__Pyx_PyDict_NextRefQasyncio.coroutinescline_in_tracebackcreate_parquet_macroend_dateend_str__func___is_coroutineitems__main____module____name__pathpoppreprocess_req__pyx_capi____qualname__reqrpc_feed.core.gateway.duckdb.utilsschema_range__set_name__setdefaultsidsidsstart_datestart_str__test__valuesview_namePyObject *(PyObject *, PyObject *, int __pyx_skip_dispatch)\000PyObject *(struct __pyx_t_8rpc_feed_4core_7gateway_6duckdb_5utils_Request, int __pyx_skip_dispatch)\000\000create_parquet_macro\000preprocess_req\000schema_range\200\001\360\n\000\005\032\230\023\230A\330\004\027\220s\230!\340\004\023\2206\230\023\230A\330\004\024\220F\230\"\230G\2403\240a\330\004\023\2206\230\022\2301\340\004\023\2204\220s\230!\330\004\024\220D\230\002\230'\240\023\240A\330\004\023\2204\220r\230\021\340\004\031\230\021\360\014\000\005\t\210\014\220C\220q\330\010\021\220\030\230\027\240\001\240\021\330\010\020\220\007\220q\230\001\360\006\000\005\r\210M\230\022\2301\230C\230v\240Q\240c\250\026\250q\260\003\2601\330\013\026\220b\230\001\230\023\230F\240!\2403\240f\250A\250S\260\001\330\013\023\2201\330\004\013\2101\200\001\360\n\000\005\033\230#\230Q\330\004\030\230\003\2301\340\004\021\220\033\230C\230q\330\004\022\220+\230R\230w\240c\250\021\340\004\022\220)\2303\230a\330\004\023\2209\230B\230g\240S\250\001\340\004\027\220q\360\010\000\005\013\210\"\210B\210c\220\024\220R\220s\230#\230T\240\022\2403\240a\330\010\022\220\"\220B\220c\230\023\230C\230r\240\021\330\010\020\220""\003\2201\220A\330\010\020\220\002\220!\2202\220Q\220a\220q\340\010\016\210g\220R\220s\230'\240\021\330\010\013\2102\210S\220\001\330\014\021\220\021\330\014\020\220\001\340\014\021\220\021\330\004\013\2101\200\001\360\034\000\005\006\330\010!\240\021\240!\330\010&\240a\240q";
+    #else /* compression: none (968 bytes) */
+const char* const bytes = "- 00:00:0002d04d 23:59:59No value specified for struct attribute 'start_date'No value specified for struct attribute 'end_date'No value specified for struct attribute 'sid'?rpc_feed/core/gateway/duckdb/utils.pyx__Pyx_PyDict_NextRefQasyncio.coroutinescline_in_tracebackend_dateend_str__func___is_coroutineitems__main____module____name__poppreprocess_req__pyx_capi____qualname__reqrpc_feed.core.gateway.duckdb.utilsschema_range__set_name__setdefaultsidsidsstart_datestart_str__test__valuesPyObject *(struct __pyx_t_8rpc_feed_4core_7gateway_6duckdb_5utils_Request, int __pyx_skip_dispatch)\000\000preprocess_req\000schema_range\200\001\360\n\000\005\032\230\023\230A\330\004\027\220s\230!\340\004\023\2206\230\023\230A\330\004\024\220F\230\"\230G\2403\240a\330\004\023\2206\230\022\2301\340\004\023\2204\220s\230!\330\004\024\220D\230\002\230'\240\023\240A\330\004\023\2204\220r\230\021\340\004\031\230\021\360\014\000\005\t\210\014\220C\220q\330\010\021\220\030\230\027\240\001\240\021\330\010\020\220\007\220q\230\001\360\006\000\005\r\210M\230\022\2301\230C\230v\240Q\240c\250\026\250q\260\003\2601\330\013\026\220b\230\001\230\023\230F\240!\2403\240f\250A\250S\260\001\330\013\023\2201\330\004\013\2101\200\001\360\n\000\005\033\230#\230Q\330\004\030\230\003\2301\340\004\021\220\033\230C\230q\330\004\022\220+\230R\230w\240c\250\021\340\004\022\220)\2303\230a\330\004\023\2209\230B\230g\240S\250\001\340\004\027\220q\360\010\000\005\013\210\"\210B\210c\220\024\220R\220s\230#\230T\240\022\2403\240a\330\010\022\220\"\220B\220c\230\023\230C\230r\240\021\330\010\020\220\003\2201\220A\330\010\020\220\002\220!\2202\220Q\220a\220q\340\010\016\210g\220R\220s\230'\240\021\330\010\013\2102\210S\220\001\330\014\021\220\021\330\014\020\220\001\340\014\021\220\021\330\004\013\2101";
     PyObject *data = NULL;
     CYTHON_UNUSED_VAR(__Pyx_DecompressString);
     #endif
     PyObject **stringtab = __pyx_mstate->__pyx_string_tab;
     Py_ssize_t pos = 0;
-    for (int i = 0; i < 46; i++) {
+    for (int i = 0; i < 37; i++) {
       Py_ssize_t bytes_length = index[i].length;
       PyObject *string = PyUnicode_DecodeUTF8(bytes + pos, bytes_length, NULL);
-      if (likely(string) && i >= 16) PyUnicode_InternInPlace(&string);
+      if (likely(string) && i >= 10) PyUnicode_InternInPlace(&string);
       if (unlikely(!string)) {
         Py_XDECREF(data);
         __PYX_ERR(0, 1, __pyx_L1_error)
@@ -5220,7 +4953,7 @@ const char* const bytes = "- 00:00:0002d04d 23:59:59 AS SELECT * FROM parquet_sc
       stringtab[i] = string;
       pos += bytes_length;
     }
-    for (int i = 46; i < 50; i++) {
+    for (int i = 37; i < 40; i++) {
       Py_ssize_t bytes_length = index[i].length;
       PyObject *string = PyBytes_FromStringAndSize(bytes + pos, bytes_length);
       stringtab[i] = string;
@@ -5231,15 +4964,15 @@ const char* const bytes = "- 00:00:0002d04d 23:59:59 AS SELECT * FROM parquet_sc
       }
     }
     Py_XDECREF(data);
-    for (Py_ssize_t i = 0; i < 50; i++) {
+    for (Py_ssize_t i = 0; i < 40; i++) {
       if (unlikely(PyObject_Hash(stringtab[i]) == -1)) {
         __PYX_ERR(0, 1, __pyx_L1_error)
       }
     }
     #if CYTHON_IMMORTAL_CONSTANTS
     {
-      PyObject **table = stringtab + 46;
-      for (Py_ssize_t i=0; i<4; ++i) {
+      PyObject **table = stringtab + 37;
+      for (Py_ssize_t i=0; i<3; ++i) {
         #if CYTHON_COMPILING_IN_CPYTHON_FREETHREADING
         Py_SET_REFCNT(table[i], _Py_IMMORTAL_REFCNT_LOCAL);
         #else
@@ -5255,12 +4988,12 @@ const char* const bytes = "- 00:00:0002d04d 23:59:59 AS SELECT * FROM parquet_sc
 }
 /* #### Code section: init_codeobjects ### */
 typedef struct {
-    unsigned int argcount : 2;
+    unsigned int argcount : 1;
     unsigned int num_posonly_args : 1;
     unsigned int num_kwonly_args : 1;
-    unsigned int nlocals : 2;
+    unsigned int nlocals : 1;
     unsigned int flags : 10;
-    unsigned int first_line : 7;
+    unsigned int first_line : 6;
 } __Pyx_PyCode_New_function_description;
 /* NewCodeObj.proto */
 static PyObject* __Pyx_PyCode_New(
@@ -5282,14 +5015,9 @@ static int __Pyx_CreateCodeObjects(__pyx_mstatetype *__pyx_mstate) {
     __pyx_mstate_global->__pyx_codeobj_tab[0] = __Pyx_PyCode_New(descr, varnames, __pyx_mstate->__pyx_kp_u_rpc_feed_core_gateway_duckdb_uti_2, __pyx_mstate->__pyx_n_u_schema_range, __pyx_mstate->__pyx_kp_b_iso88591_Q_1_Cq_Rwc_3a_9BgS_q_Bc_Rs_T_3a, tuple_dedup_map); if (unlikely(!__pyx_mstate_global->__pyx_codeobj_tab[0])) goto bad;
   }
   {
-    const __Pyx_PyCode_New_function_description descr = {2, 0, 0, 2, (unsigned int)(CO_OPTIMIZED|CO_NEWLOCALS), 43};
-    PyObject* const varnames[] = {__pyx_mstate->__pyx_n_u_path, __pyx_mstate->__pyx_n_u_view_name};
-    __pyx_mstate_global->__pyx_codeobj_tab[1] = __Pyx_PyCode_New(descr, varnames, __pyx_mstate->__pyx_kp_u_rpc_feed_core_gateway_duckdb_uti_2, __pyx_mstate->__pyx_n_u_create_parquet_macro, __pyx_mstate->__pyx_kp_b_iso88591_aq, tuple_dedup_map); if (unlikely(!__pyx_mstate_global->__pyx_codeobj_tab[1])) goto bad;
-  }
-  {
-    const __Pyx_PyCode_New_function_description descr = {1, 0, 0, 1, (unsigned int)(CO_OPTIMIZED|CO_NEWLOCALS), 65};
+    const __Pyx_PyCode_New_function_description descr = {1, 0, 0, 1, (unsigned int)(CO_OPTIMIZED|CO_NEWLOCALS), 43};
     PyObject* const varnames[] = {__pyx_mstate->__pyx_n_u_req};
-    __pyx_mstate_global->__pyx_codeobj_tab[2] = __Pyx_PyCode_New(descr, varnames, __pyx_mstate->__pyx_kp_u_rpc_feed_core_gateway_duckdb_uti_2, __pyx_mstate->__pyx_n_u_preprocess_req, __pyx_mstate->__pyx_kp_b_iso88591_A_s_6_A_F_G3a_6_1_4s_D_A_4r_Cq, tuple_dedup_map); if (unlikely(!__pyx_mstate_global->__pyx_codeobj_tab[2])) goto bad;
+    __pyx_mstate_global->__pyx_codeobj_tab[1] = __Pyx_PyCode_New(descr, varnames, __pyx_mstate->__pyx_kp_u_rpc_feed_core_gateway_duckdb_uti_2, __pyx_mstate->__pyx_n_u_preprocess_req, __pyx_mstate->__pyx_kp_b_iso88591_A_s_6_A_F_G3a_6_1_4s_D_A_4r_Cq, tuple_dedup_map); if (unlikely(!__pyx_mstate_global->__pyx_codeobj_tab[1])) goto bad;
   }
   Py_DECREF(tuple_dedup_map);
   return 0;
@@ -7131,11 +6859,31 @@ static void __Pyx_RaiseArgtupleInvalid(
                  (num_expected == 1) ? "" : "s", num_found);
 }
 
-/* PyUnicode_Unicode */
-static CYTHON_INLINE PyObject* __Pyx_PyUnicode_Unicode(PyObject *obj) {
-    if (unlikely(obj == Py_None))
-        obj = __pyx_mstate_global->__pyx_kp_u_None;
-    return __Pyx_NewRef(obj);
+/* decode_c_bytes (used by decode_bytes) */
+static CYTHON_INLINE PyObject* __Pyx_decode_c_bytes(
+         const char* cstring, Py_ssize_t length, Py_ssize_t start, Py_ssize_t stop,
+         const char* encoding, const char* errors,
+         PyObject* (*decode_func)(const char *s, Py_ssize_t size, const char *errors)) {
+    if (unlikely((start < 0) | (stop < 0))) {
+        if (start < 0) {
+            start += length;
+            if (start < 0)
+                start = 0;
+        }
+        if (stop < 0)
+            stop += length;
+    }
+    if (stop > length)
+        stop = length;
+    if (unlikely(stop <= start))
+        return __Pyx_NewRef(__pyx_mstate_global->__pyx_empty_unicode);
+    length = stop - start;
+    cstring += start;
+    if (decode_func) {
+        return decode_func(cstring, length, errors);
+    } else {
+        return PyUnicode_Decode(cstring, length, encoding, errors);
+    }
 }
 
 /* JoinPyUnicode */
@@ -7214,81 +6962,6 @@ bad:
     Py_DECREF(value_tuple);
     return result;
 #endif
-}
-
-/* ArgTypeTestFunc (used by ArgTypeTest) */
-static int __Pyx__ArgTypeTest(PyObject *obj, PyTypeObject *type, const char *name, int exact)
-{
-    __Pyx_TypeName type_name;
-    __Pyx_TypeName obj_type_name;
-    PyObject *extra_info = __pyx_mstate_global->__pyx_empty_unicode;
-    int from_annotation_subclass = 0;
-    if (unlikely(!type)) {
-        PyErr_SetString(PyExc_SystemError, "Missing type object");
-        return 0;
-    }
-    else if (!exact) {
-        if (likely(__Pyx_TypeCheck(obj, type))) return 1;
-    } else if (exact == 2) {
-        if (__Pyx_TypeCheck(obj, type)) {
-            from_annotation_subclass = 1;
-            extra_info = __pyx_mstate_global->__pyx_kp_u_Note_that_Cython_is_deliberately;
-        }
-    }
-    type_name = __Pyx_PyType_GetFullyQualifiedName(type);
-    obj_type_name = __Pyx_PyType_GetFullyQualifiedName(Py_TYPE(obj));
-    PyErr_Format(PyExc_TypeError,
-        "Argument '%.200s' has incorrect type (expected " __Pyx_FMT_TYPENAME
-        ", got " __Pyx_FMT_TYPENAME ")"
-#if __PYX_LIMITED_VERSION_HEX < 0x030C0000
-        "%s%U"
-#endif
-        , name, type_name, obj_type_name
-#if __PYX_LIMITED_VERSION_HEX < 0x030C0000
-        , (from_annotation_subclass ? ". " : ""), extra_info
-#endif
-        );
-#if __PYX_LIMITED_VERSION_HEX >= 0x030C0000
-    if (exact == 2 && from_annotation_subclass) {
-        PyObject *res;
-        PyObject *vargs[2];
-        vargs[0] = PyErr_GetRaisedException();
-        vargs[1] = extra_info;
-        res = PyObject_VectorcallMethod(__pyx_mstate_global->__pyx_kp_u_add_note, vargs, 2, NULL);
-        Py_XDECREF(res);
-        PyErr_SetRaisedException(vargs[0]);
-    }
-#endif
-    __Pyx_DECREF_TypeName(type_name);
-    __Pyx_DECREF_TypeName(obj_type_name);
-    return 0;
-}
-
-/* decode_c_bytes (used by decode_bytes) */
-static CYTHON_INLINE PyObject* __Pyx_decode_c_bytes(
-         const char* cstring, Py_ssize_t length, Py_ssize_t start, Py_ssize_t stop,
-         const char* encoding, const char* errors,
-         PyObject* (*decode_func)(const char *s, Py_ssize_t size, const char *errors)) {
-    if (unlikely((start < 0) | (stop < 0))) {
-        if (start < 0) {
-            start += length;
-            if (start < 0)
-                start = 0;
-        }
-        if (stop < 0)
-            stop += length;
-    }
-    if (stop > length)
-        stop = length;
-    if (unlikely(stop <= start))
-        return __Pyx_NewRef(__pyx_mstate_global->__pyx_empty_unicode);
-    length = stop - start;
-    cstring += start;
-    if (decode_func) {
-        return decode_func(cstring, length, errors);
-    } else {
-        return PyUnicode_Decode(cstring, length, encoding, errors);
-    }
 }
 
 /* FunctionExport */

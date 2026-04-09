@@ -486,3 +486,32 @@ cdef class Right:
         }
         batch = batch.replace_schema_metadata(metadata) # zero_copy
         return batch_to_resp(batch)
+
+
+cdef class Experiment:
+
+    async def __call__(self, int32_t start_date, int32_t end_date, list sids=[]):
+        cdef:
+            Request req = Request(start_date=start_date, end_date=end_date, sid=sids)
+            object batch, duck_mgr = get_duckdb_manager()
+
+        async with duck_mgr as ctx:
+            async for batch in ctx.query_experiment(req, EXPERIMENT_TEMPLATE):
+                if batch.num_rows == 0: continue
+                try:
+                    for resp in self._process_batch(batch):
+                        yield resp 
+                except asyncio.TimeoutError:
+                    print("_process_batch Timeout")
+                    continue 
+                except asyncio.CancelledError:
+                    print("_process_batch CancelledError")
+                    raise 
+
+    cdef _flush(self, bytes sid, object batch):
+        metadata = {
+        b"sid": sid,
+        b"rpc_type": b"experiment"
+        }
+        batch = batch.replace_schema_metadata(metadata) # zero_copy
+        return batch_to_resp(batch)

@@ -112,6 +112,24 @@ class DuckDBManager:
                 if os.path.exists(dir_path): # os cache
                     exact_globs.append(os.path.join(dir_path, "*.parquet"))
         return exact_globs
+    
+    def _glob_experiment_path(self, req: dict) -> list:
+        ranges = schema_range(req) 
+        exact_globs =[]
+                
+        for y, q, ym in ranges:
+            dir_path = os.path.join(
+                self.dataset_root, 
+                "experiment",
+                req["sid"][0], # experiment_id --- sid
+                f"year={y}", 
+                f"quarter={q}", 
+                f"date={ym}"
+            )
+            
+        if os.path.exists(dir_path): # os cache
+            exact_globs.append(os.path.join(dir_path, "*.parquet"))
+        return exact_globs
 
     async def query(self, req: dict, raw_template: str):
         conn = self.connection_pool.get_connection()
@@ -129,6 +147,27 @@ class DuckDBManager:
             reader = conn.execute(
                 raw_template, 
                 [file_globs, sids, sql_meta["start_str"], sql_meta["end_str"]]
+            ).fetch_record_batch(self.batch_size)
+
+            while True:
+                try:
+                    yield reader.read_next_batch()
+                except StopIteration:
+                    break
+        finally:
+            self.connection_pool.return_connection(conn)
+    
+    async def query_experiment(self, req: dict, raw_template: str):
+        conn = self.connection_pool.get_connection()
+        try:
+            file_globs = self._glob_experiment_path(req)
+            if not file_globs:
+                return
+                
+            # C++ Parameter Binding
+            reader = conn.execute(
+                raw_template, 
+                [file_globs, req["start_date"], req["end_date"]]
             ).fetch_record_batch(self.batch_size)
 
             while True:

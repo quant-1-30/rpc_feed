@@ -40,28 +40,6 @@ cpdef list schema_range(Request req):
     return result
 
 
-cpdef str create_parquet_macro(str path, str view_name):
-    """
-    Create a DuckDB macro for scanning parquet files with proper syntax.
-    
-    Args:
-        year: Year (e.g., 2019)
-        quarter: Quarter (e.g., 'Q4')
-        sid: Stock ID (e.g., 600225)
-        date: Date in YYYYMM format (e.g., '201911')
-    
-    Returns:
-        SQL string to create the macro
-    """
-    # not supported macro
-    return (
-        f"CREATE OR REPLACE VIEW {view_name} AS "
-        f"SELECT * FROM parquet_scan('{path}/**/*.parquet', "
-        f"HIVE_PARTITIONING=TRUE, " # extract feature from parquet name
-        f"UNION_BY_NAME=TRUE);" # schema evolution
-    )
-
-
 cpdef dict preprocess_req(Request req):
     """
         ISO and sid_bytes

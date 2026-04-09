@@ -10,6 +10,4 @@ cdef struct Request:
 
 cpdef list schema_range(Request req)
     
-cpdef str create_parquet_macro(str path, str view_name)
-
 cpdef dict preprocess_req(Request req)
