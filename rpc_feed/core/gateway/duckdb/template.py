@@ -24,11 +24,24 @@ CLOSE_TEMPLATE = """
     ORDER BY sid, day ASC
 """
 
-EXPERIMENT_TEMPLATE = """
+DAILY_RET_TEMPLATE = """
+    WITH daily_close AS (
+        SELECT 
+            CAST(sid AS VARCHAR)::BLOB as sid,
+            strftime(datetime, '%Y%m%d')::INTEGER as day,
+            arg_max(close, datetime) as close
+        FROM read_parquet(?, hive_partitioning=true, hive_types={'sid': 'VARCHAR'})
+        WHERE sid IN (SELECT * FROM UNNEST(?))
+          AND datetime BETWEEN ?::TIMESTAMP AND ?::TIMESTAMP
+          AND close IS NOT NULL 
+          AND close > 0
+        GROUP BY sid, strftime(datetime, '%Y%m%d')
+    )
     SELECT 
-        CAST(sid AS VARCHAR)::BLOB as sid,
-        distance, beta, macro_state, pred_score, prior_matrix
-    FROM read_parquet(?, hive_partitioning=true)
-    WHERE date BETWEEN ? AND ?
-    ORDER date ASC
+        sid,
+        day,
+        close,
+        (close / LAG(close, 1) OVER (PARTITION BY sid ORDER BY day ASC)) - 1.0 AS daily_ret
+    FROM daily_close
+    ORDER BY sid, day ASC
 """

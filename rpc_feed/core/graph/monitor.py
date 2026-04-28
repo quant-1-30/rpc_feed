@@ -1,26 +1,19 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-"""
-内存监控和 OOM 预防工具
-
-专门用于监控和解决数据处理管道中的内存问题
-"""
-
 import os
 import gc
 import sys
 import time
 import psutil
 import threading
-from typing import Dict, List, Optional, Callable
+from typing import Dict, List, Optional, Callable, Any
 from dataclasses import dataclass
 from contextlib import contextmanager
 
 
 @dataclass
 class MemorySnapshot:
-    """内存快照数据结构"""
     timestamp: float
     process_memory_mb: float
     system_memory_percent: float
@@ -28,16 +21,52 @@ class MemorySnapshot:
     obj_count: int
 
 
-class MemoryMonitor:
-    """
-    内存监控器
+class GraphMemoryManager:
     
-    功能：
-    - 实时监控内存使用
-    - 自动垃圾回收
-    - 内存泄漏检测
-    - OOM 预警
-    """
+    def __init__(self):
+        self.threshold = float(os.getenv("GRAPH_MAX_MEMORY_PERCENT", "80")) / 100
+        self.q_size = int(os.getenv("GRAPH_QSIZE", max(4, os.cpu_count() or 4)))
+        self.gc_threads = []
+
+    def check_memory_usage(self) -> Dict[str, Any]:
+        """检查 RSS 内存并根据阈值触发 GC"""
+        try:
+            process = psutil.Process(os.getpid())
+            rss_mb = process.memory_info().rss / (1024 * 1024)
+            system_memory = psutil.virtual_memory()
+
+            status = {
+                'rss_mb': round(rss_mb, 1),
+                'usage_percent': system_memory.percent,
+                'critical': system_memory.percent > (self.threshold * 100)
+            }
+            if status['critical']:
+                print(f"🚨 [MemoryManager] 内存达到危险水位 ({system_memory.percent}%)，触发异步 GC")
+                self._trigger_gc(rss_mb)
+            return status
+        except Exception as e:
+            return {'error': str(e)}
+
+    def _trigger_gc(self, rss_before: float):
+        def async_gc():
+            t0 = time.perf_counter()
+            objs_before = gc.get_count()
+            gc.collect()
+            t1 = time.perf_counter()
+            rss_after = psutil.Process(os.getpid()).memory_info().rss / (1024 * 1024)
+            print(f"🧹 [GC] 完成: 耗时 {t1-t0:.2f}s, 释放约 {rss_before - rss_after:.1f} MB")
+
+        thd = threading.Thread(target=async_gc, daemon=True)
+        thd.start()
+        self.gc_threads.append(thd)
+
+    def cleanup_gc(self):
+        for t in self.gc_threads:
+            if t.is_alive(): t.join(timeout=1.0)
+        self.gc_threads.clear()
+
+
+class MemoryMonitor:
     
     def __init__(self, 
                  max_memory_mb: int = 2048,
@@ -54,7 +83,6 @@ class MemoryMonitor:
         self.monitoring = False
         self.monitor_thread = None
         
-        # 回调函数
         self.warning_callback: Optional[Callable] = None
         self.critical_callback: Optional[Callable] = None
     
@@ -262,12 +290,8 @@ class MemoryMonitor:
 @contextmanager
 def memory_limit(max_memory_mb: int = 2048, auto_cleanup: bool = True):
     """
-    内存限制上下文管理器
-    
-    使用示例:
     with memory_limit(1024):  # 限制1GB
-        # 你的代码
-        process_large_data()
+        *****
     """
     monitor = MemoryMonitor(max_memory_mb=max_memory_mb)
     
@@ -289,12 +313,8 @@ def memory_limit(max_memory_mb: int = 2048, auto_cleanup: bool = True):
 
 
 def diagnose_memory_issue() -> Dict:
-    """诊断当前的内存问题"""
-    print("🔍 内存问题诊断")
     print("=" * 30)
-    
     try:
-        # 基本信息
         process = psutil.Process()
         memory_info = process.memory_info()
         system_memory = psutil.virtual_memory()

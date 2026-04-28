@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<graphml xmlns="http://graphml.graphdrawing.org/xmlns"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://graphml.graphdrawing.org/xmlns
+         http://graphml.graphdrawing.org/xmlns/1.0/graphml.xsd">
+    
+    <!-- 定义属性键 -->
+    <key id="type" for="node" attr.name="type" attr.type="string"/>
+    <key id="description" for="node" attr.name="description" attr.type="string"/>
+    <key id="priority" for="node" attr.name="priority" attr.type="int"/>
+    <key id="enabled" for="node" attr.name="enabled" attr.type="boolean"/>
+
+    <!-- 配置属性 -->
+    <key id="params" for="node" attr.name="params" attr.type="string"/>
+    <key id="version" for="node" attr.name="version" attr.type="string"/>
+
+    <graph id="G" edgedefault="directed">
+        <node id="StructUnpacker">
+            <data key="type">unpacker</data>
+            <data key="description">Unpacks data from binary format</data>
+            <data key="priority">1</data>
+            <data key="enabled">true</data>
+            
+            <!-- 业务属性 -->
+            <data key="params">{}</data>
+            <data key="version">2.1.0</data>
+        </node>
+        <node id="StructDateParser">
+            <data key="type">decoder</data>
+            <data key="description">Decodes data from binary format</data>
+            <data key="priority">1</data>
+            <data key="enabled">true</data>
+            
+            <!-- 业务属性 -->
+            <data key="params">{}</data>
+            <data key="version">2.1.0</data>
+        </node>
+        <node id="Multiply">
+            <data key="type">multiplier</data>
+            <data key="description">Multiplies data</data>
+            <data key="priority">1</data>
+            <data key="enabled">true</data>
+            
+            <!-- 业务属性 -->
+            <data key="params">{"multiply": 1000}</data>
+            <data key="version">2.1.0</data>
+        </node>
+        <node id="Dtypes">
+            <data key="type">dtypes</data>
+            <data key="description">Sets data types</data>
+            <data key="priority">1</data>
+            <data key="enabled">true</data>
+            
+            <!-- 业务属性 -->
+            <data key="params">{}</data>
+            <data key="version">2.1.0</data>
+        </node>
+        <node id="ParquetWriter">
+            <data key="type">writer</data>
+            <data key="description">Writes data to Parquet</data>
+            <data key="priority">2</data>
+            <data key="enabled">true</data>
+            
+            <!-- 业务属性 -->
+            <data key="params">{"root_path": "~/Downloads/test"}</data>
+            <data key="version">2.1.0</data>
+        </node>
+        <edge source="StructUnpacker" target="StructDateParser"/>
+        <edge source="StructDateParser" target="Multiply"/>
+        <edge source="Multiply" target="Dtypes"/>
+        <edge source="Dtypes" target="ParquetWriter"/>
+    </graph>
+</graphml>

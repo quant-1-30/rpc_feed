@@ -269,6 +269,22 @@ url = "https://pypi.tuna.tsinghua.edu.cn/simple"
 reference = "tuna"
 
 [[package]]
+name = "cloudpickle"
+version = "3.1.2"
+description = "Pickler class to extend the standard pickle.Pickler functionality"
+optional = false
+python-versions = ">=3.8"
+files = [
+    {file = "cloudpickle-3.1.2-py3-none-any.whl", hash = "sha256:9acb47f6afd73f60dc1df93bb801b472f05ff42fa6c84167d25cb206be1fbf4a"},
+    {file = "cloudpickle-3.1.2.tar.gz", hash = "sha256:7fda9eb655c9c230dab534f1983763de5835249750e85fbcef43aaa30a9a2414"},
+]
+
+[package.source]
+type = "legacy"
+url = "https://pypi.tuna.tsinghua.edu.cn/simple"
+reference = "tuna"
+
+[[package]]
 name = "colorama"
 version = "0.4.6"
 description = "Cross-platform colored terminal text."
@@ -1263,6 +1279,28 @@ files = [
     {file = "kiwisolver-1.4.7-pp39-pypy39_pp73-win_amd64.whl", hash = "sha256:0c6c43471bc764fad4bc99c5c2d6d16a676b1abf844ca7c8702bdae92df01ee0"},
     {file = "kiwisolver-1.4.7.tar.gz", hash = "sha256:9893ff81bd7107f7b685d3017cc6583daadb4fc26e4a888350df530e41980a60"},
 ]
+
+[package.source]
+type = "legacy"
+url = "https://pypi.tuna.tsinghua.edu.cn/simple"
+reference = "tuna"
+
+[[package]]
+name = "loky"
+version = "3.5.6"
+description = "A robust implementation of concurrent.futures.ProcessPoolExecutor"
+optional = false
+python-versions = ">=3.9"
+files = [
+    {file = "loky-3.5.6-py3-none-any.whl", hash = "sha256:6d5300ac68cbd5084e89a6a0a187785d6a79950d461c80223d2c9a41d672b3d4"},
+    {file = "loky-3.5.6.tar.gz", hash = "sha256:d96935ed689aa53eeb7b329769544950fa10a52706968f5d0af3d9c33a761e77"},
+]
+
+[package.dependencies]
+cloudpickle = "*"
+
+[package.extras]
+tests = ["packaging", "psutil", "pytest"]
 
 [package.source]
 type = "legacy"
@@ -3462,4 +3500,4 @@ reference = "tuna"
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.11"
-content-hash = "15ec480bbb3b0b83f80d7aad9b2b5ac67b1ce8bc26b7e4f994174215cf519f1d"
+content-hash = "fbb3d077b4d3f3804d5c8a0b04cf233a4cc59be6139cf528502ab39458d63df3"

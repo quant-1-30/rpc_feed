@@ -156,27 +156,6 @@ class DuckDBManager:
                     break
         finally:
             self.connection_pool.return_connection(conn)
-    
-    async def query_experiment(self, req: dict, raw_template: str):
-        conn = self.connection_pool.get_connection()
-        try:
-            file_globs = self._glob_experiment_path(req)
-            if not file_globs:
-                return
-                
-            # C++ Parameter Binding
-            reader = conn.execute(
-                raw_template, 
-                [file_globs, req["start_date"], req["end_date"]]
-            ).fetch_record_batch(self.batch_size)
-
-            while True:
-                try:
-                    yield reader.read_next_batch()
-                except StopIteration:
-                    break
-        finally:
-            self.connection_pool.return_connection(conn)
 
 
 _duck_inst = None

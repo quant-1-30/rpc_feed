@@ -62,3 +62,7 @@ if __name__ == "__main__":
     # xml = "../xml/benchmark_csv.graphml"
     # bt_feed.load(xml, str(dataset_path), prefix="csv_benchmark")
 
+    # test
+    dataset_path = Path("~/Downloads/rsync/202603").expanduser()
+    xml = "../xml/test.graphml"
+    bt_feed.load(xml, str(dataset_path), prefix=".01_stock")

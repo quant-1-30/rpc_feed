@@ -137,4 +137,254 @@ cdef class Index:
                 batch = batch.replace_schema_metadata(metadata)
                 
                 yield batch_to_resp(batch)
+
+
+cdef class TradingCalendar:
+    """Calendar provider base class
+
+    Provide calendar data.
+    """
+    def __init__(self): # __cinit__ used for memory allocate in C
+        self._buf_date = np.empty(CHUNK_SIZE, dtype=np.int32)
+
+    async def __call__(self, int start_date, int end_date, list sids=[]):
+        """Get calendar of certain market in given time range.
+
+        Parameters
+        ----------
+        start_time : str
+            start of the time range.
+        end_time : str
+            end of the time range.
+        freq : str
+            time frequency, available: year/quarter/month/week/day.
+        future : bool
+            whether including future trading day.
+
+        Returns: List[int]
+        """ 
+        cdef int i    
+        cdef object row, stream, result
+
+        async with async_ops as ctx:
+            stmt = select(Benchmark.date).distinct().where(
+                    Benchmark.date.between(start_date, end_date)
+            ).order_by(Benchmark.date)
+
+            stream_wrap = await ctx.on_query(stmt) # stream wrap
+
+            async with stream_wrap as stream_proxy:
+                async for row in stream_proxy.scalars():
+                    r_sid = row
+
+                    if i >= CHUNK_SIZE:
+                        yield self._flush(i)
+                        i = 0
+
+                    self._buf_date[i] = row
+                    i += 1
+
+                if i > 0:
+                    yield self._flush(i)
+
+    cdef object _flush(self, int count): # protobuf extend slice copy 
+        cdef dict metadata
+        cdef object batch
+
+        batch = pa.RecordBatch.from_arrays(
+            [
+                pa.array(self._buf_date[:count], type=pa.int32())
+            ],
+            names=["date"]
+        )
+        metadata = {
+            # b"tz_info": meta.tz_info,
+            b"rpc_type": b"calendar"
+        }
+        batch = batch.replace_schema_metadata(metadata) # zero_copy
+        return batch_to_resp(batch)
+
+
+cdef class Experiment:
+
+    async def __call__(self, int32_t start_date, int32_t end_date, list sids=[]):
+        cdef:
+            Request req = Request(start_date=start_date, end_date=end_date, sid=sids)
+            object batch, duck_mgr = get_duckdb_manager()
+
+        async with duck_mgr as ctx:
+            async for batch in ctx.query_experiment(req, EXPERIMENT_TEMPLATE):
+                if batch.num_rows == 0: continue
+                try:
+                    for resp in self._process_batch(batch):
+                        yield resp 
+                except asyncio.TimeoutError:
+                    print("_process_batch Timeout")
+                    continue 
+                except asyncio.CancelledError:
+                    print("_process_batch CancelledError")
+                    raise 
+
+    cdef _flush(self, bytes sid, object batch):
+        metadata = {
+        b"sid": sid,
+        b"rpc_type": b"experiment"
+        }
+        batch = batch.replace_schema_metadata(metadata) # zero_copy
+        return batch_to_resp(batch)
+
+cdef class Close:
+
+    async def __call__(self, int start_date, int end_date, list sids=[]):
+        """Get dataset data.
+
+        Parameters
+        ----------
+
+        Returns
+        ----------
+        # SELECT * FROM stock
+        # WHERE datetime >= TIMESTAMP '2024-06-01 09:30:00'
+        # DuckDB '2024-06-01 09:30:00' TIMESTAMP align with Parquet datetime column
+        # hive_partitioning  --- automate path to key=value in partition cols 
+        """
+        cdef:
+            Request req = Request(start_date=start_date, end_date=end_date, sid=sids)
+            object batch, duck_mgr = get_duckdb_manager()
+            int32_t num_rows  
+            bytes sid
+
+        async with duck_mgr as ctx:
+            async for batch in ctx.query(req, CLOSE_TEMPLATE):
+                num_rows = batch.num_rows
+                if num_rows == 0:
+                    continue
                 
+                sid_array = batch.column("sid").to_numpy(zero_copy_only=False)
+
+                c_indices = np.where(sid_array[:num_rows-1] != sid_array[1:])[0] + 1
+                s_indices = np.insert(c_indices, 0, 0)
+                e_indices = np.append(c_indices, len(sid_array))
+
+                for start, end in zip(s_indices, e_indices):
+                    sid = sid_array[start]
+                    frame = self._flush(sid, batch.slice(start, end - start))
+                    yield frame
+
+    cdef object _flush(self, bytes sid, object batch):
+        cdef dict metadata
+        
+        metadata = {
+            b"sid": sid,
+            b"rpc_type": b"close"
+        }
+        batch = batch.replace_schema_metadata(metadata) # zero_copy
+        return batch_to_resp(batch)
+
+
+            # from sqlalchemy.orm import load_only  # load_only 在 orm 模块中
+            # stmt = select(Asset).options(
+            #     load_only(Asset.sid, Asset.name, Asset.first_trading, Asset.delist) # only load necessary columns
+            # )
+
+ cdef class Index:
+
+    async def __call__(self, int32_t start_date, int32_t end_date, list sids=None):
+        cdef:
+            Request req = Request(start_date=start_date, end_date=end_date, sid=sids)
+            object batch, duck_mgr = get_duckdb_manager()
+
+        async with duck_mgr as ctx:
+            async for batch in ctx.query(req, TICK_TEMPLATE):
+                if batch.num_rows == 0: continue
+                try:
+                    for resp in self._process_batch(batch):
+                        yield resp 
+                except asyncio.TimeoutError:
+                    print("_process_batch Timeout")
+                    continue 
+                except asyncio.CancelledError:
+                    print("_process_batch CancelledError")
+                    raise 
+    
+    def _process_batch(self, object batch):
+        cdef object sid_col = batch.column("sid")
+        cdef Py_ssize_t num_rows = len(sid_col)
+        
+        cdef tuple indices
+        cdef object s_indices, e_indices, slice_batch
+        cdef Py_ssize_t start, end
+        
+        if num_rows == 0: 
+            return
+            
+        indices = _slice_by_sid(sid_col, num_rows)
+        s_indices = indices[0]
+        e_indices = indices[1]
+
+        for start_scalar, end_scalar in zip(s_indices, e_indices):
+            start = start_scalar.as_py()
+            end = end_scalar.as_py()
+            sid = sid_col[start].as_py()
+            slice_batch = batch.slice(start, end - start)
+            yield self._flush(sid, slice_batch)
+
+    cdef _flush(self, bytes sid, object batch):
+        metadata = {
+        b"sid": sid,
+        b"rpc_type": b"index"
+        }
+        batch = batch.replace_schema_metadata(metadata) # zero_copy
+        return batch_to_resp(batch)
+
+
+cdef class DailyRet:
+
+    async def __call__(self, int32_t start_date, int32_t end_date, list sids=[]):
+        cdef:
+            Request req = Request(start_date=start_date, end_date=end_date, sid=sids)
+            object batch, duck_mgr = get_duckdb_manager()
+
+        async with duck_mgr as ctx:
+            async for batch in ctx.query(req, DAILY_RET_TEMPLATE):
+                if batch.num_rows == 0: 
+                    continue
+                try:
+                    for resp in self._process_batch(batch):
+                        yield resp 
+                except asyncio.TimeoutError:
+                    print("DailyRet _process_batch Timeout")
+                    continue 
+                except asyncio.CancelledError:
+                    print("DailyRet _process_batch CancelledError")
+                    raise 
+
+    def _process_batch(self, object batch):
+        """PyArrow Compute avoid to_numpy memory """
+
+        cdef tuple indices
+        cdef object s_indices, e_indices, slice_batch
+        cdef Py_ssize_t start, end
+        
+        if num_rows == 0: 
+            return
+            
+        indices = _slice_by_sid(sid_col, num_rows)
+        s_indices = indices[0]
+        e_indices = indices[1]
+
+        for start_scalar, end_scalar in zip(s_indices, e_indices):
+            start = start_scalar.as_py()
+            end = end_scalar.as_py()
+            sid = sid_col[start].as_py()
+            
+            slice_batch = batch.slice(start, end - start)
+            yield self._flush(sid, slice_batch)
+
+    cdef object _flush(self, bytes sid, object batch):
+        cdef dict metadata = {
+            b"sid": sid,
+            b"rpc_type": b"daily_ret"  # 指定 rpc_type
+        }
+        batch = batch.replace_schema_metadata(metadata) # Zero-copy 替换 metadata
+        return batch_to_resp(batch)

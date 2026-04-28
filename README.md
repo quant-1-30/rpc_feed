@@ -146,4 +146,25 @@ self._row_iter = self._make_iter()
 #         row_group_size=100_000,
 #         maintain_order=False  # 更快
 # )
-    
+
+<!-- # force numpy run on one core
+os.environ["OMP_NUM_THREADS"] = "1"
+os.environ["MKL_NUM_THREADS"] = "1"
+os.environ["OPENBLAS_NUM_THREADS"] = "1"
+os.environ["VECLIB_MAXIMUM_THREADS"] = "1"
+os.environ["NUMEXPR_NUM_THREADS"] = "1"  -->
+
+#### A. 零拷贝导致内存竞态（Segment Fault 的直接原因）
+当你使用 `self._buf_first_trading = np.empty(...)` 初始化一个 NumPy 数组，并在 `_flush` 中使用 `pa.array(self._buf_first_trading[:count])` 时：
+1. **PyArrow 的零拷贝**：对于 NumPy 数组，`pa.array` 会尽可能进行零拷贝（Zero-Copy），这意味着 Arrow 数组并没有复制数据，它的底层指针**直接指向了你预先分配的 `self._buf_first_trading` 这块内存**。
+2. **异步复写**：你通过 `yield batch_to_resp(batch)` 将数据抛出（通常交给了 gRPC 或其他异步网络层进行序列化发送）。这需要一定时间。
+3. **覆盖正在被使用的内存**：此时 `async for` 循环并没有停止，它进入了下一个循环，并执行 `self._buf_first_trading[i] = row[2]`。
+4. **爆炸**：底层的 C++ Arrow IPC 序列化器正在读取这块内存，而 Cython 此时正在往这块内存里写新的值。C++ 读取了被破坏的数据结构，甚至遇到了错位的内存对齐，直接导致 Segmentation Fault。
+
+在 Cython 中，`.pxd` 文件的角色等同于 C/C++ 中的 **头文件（Header files, `.h`）**。
+它的作用是**“声明（Declaration）”**，而不是**“定义和初始化（Definition & Initialization）”**。
+
+当你把 `cdef long CHUNK_SIZE = 1024` 写在 `.pxd` 中时：
+1. Cython 编译器看到 `.pxd` 文件，把它翻译成了 C 语言的 `extern long CHUNK_SIZE;`（意思是在别的地方有一个叫这个名字的变量）。
+2. **`.pxd` 文件不会生成可执行的初始化代码。** 也就是说，赋值操作 `= 1024` 被编译器直接忽略或者丢弃了。
+3. 在底层的 C 语言标准中，**未显式初始化的全局变量，默认值会被填充为 `0`。**
