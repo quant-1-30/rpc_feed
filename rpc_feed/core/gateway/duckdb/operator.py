@@ -11,7 +11,8 @@ import queue
 from pathlib import Path
 from dotenv import load_dotenv
 from concurrent.futures import ThreadPoolExecutor
-from .utils import schema_range, preprocess_req
+from .utils import schema_range, preprocess_req 
+
 from rpc_feed.utils.wrapper import singleton
 
 
@@ -136,9 +137,11 @@ class DuckDBManager:
         try:
             file_globs = self._glob_path(req)
             if not file_globs:
+                print("no file globs")
                 return
-                
+              
             sql_meta = preprocess_req(req)
+            print("sql_meta :", sql_meta)
             sids = sql_meta["sids"]
             if not sids:
                 return

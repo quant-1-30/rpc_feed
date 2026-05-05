@@ -168,3 +168,22 @@ os.environ["NUMEXPR_NUM_THREADS"] = "1"  -->
 1. Cython 编译器看到 `.pxd` 文件，把它翻译成了 C 语言的 `extern long CHUNK_SIZE;`（意思是在别的地方有一个叫这个名字的变量）。
 2. **`.pxd` 文件不会生成可执行的初始化代码。** 也就是说，赋值操作 `= 1024` 被编译器直接忽略或者丢弃了。
 3. 在底层的 C 语言标准中，**未显式初始化的全局变量，默认值会被填充为 `0`。**
+
+
+这个错误的根本原因在于 Cython 的语法机制。你在头部执行了 `from libc.time cimport tm`，此时 `tm` 在 Cython 的上下文中已经是一个合法的**类型（Type）**，不需要（也不能）再像纯 C 语言那样在前面加上 `struct` 关键字。加上 `struct` 会让 Cython 解析器完全懵掉，从而报出 `Syntax error`
+
+这是一个非常触及 Cython 核心底层设计的问题。
+
+简单来说：**因为 `pxd` 中定义的 `struct` 是纯粹的 C 语言底层数据结构，而 Python 的 `import` 只能识别和引入 Python 对象（即继承自 `PyObject` 的东西）
+
+### 1. 编译期 vs 运行期
+*   **`.pxd` 文件相当于 C/C++ 中的头文件 (`.h`)**。它只是纯粹的**声明**，给 Cython 编译器看的。它本身在编译后不会生成任何可以直接被 Python 虚拟机执行的独立模块（`.so` 或 `.pyd`）。
+*   **`cimport` 发生在编译期**。当你在 `.pyx` 中 `cimport` 一个结构体时，Cython 编译器在生成 C 代码时，会直接把对应的 C `struct` 定义引入进来。
+*   **`import` 发生在运行期**。Python 在运行时去硬盘上找编译好的动态链接库（`.so`/`.pyd`）或 `.py` 源码。纯 C 的 `struct` 在编译成二进制后，只是一段连续的内存布局，没有 Python 类应该有的属性字典（`__dict__`）、方法表、引用计数（`ob_refcnt`）等。Python 解释器根本不知道怎么解析这块纯 C 内存。
+
+### 2. C 空间 (C-Space) 与 Python 空间 (Python-Space) 隔离
+在 Cython 中，世界被严格分为两半：
+*   **C 空间**：`cdef int`，`cdef struct`，`cdef void func()`。这些追求极致性能，没有任何 Python 额外开销，但 Python 无法直接接触它们。
+*   **Python 空间**：`def func()`，`class`，`list`，`dict`。这些是 Python 对象，带引用计数，性能有损耗，但能被外部 `import`。
+
+`struct` 属于绝对的 C 空间，因此只能在 Cython 内部通过 `cimport` 互相调用

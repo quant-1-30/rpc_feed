@@ -1160,6 +1160,9 @@ static int __Pyx_init_co_variables(void) {
 #include <string_view>
 #include <string>
 #include <stdint.h>
+#include <stddef.h>
+#include <time.h>
+#include "time.h"
 #ifdef _OPENMP
 #include <omp.h>
 #endif /* _OPENMP */
@@ -1791,6 +1794,30 @@ static CYTHON_INLINE PyObject* __Pyx_PyUnicode_FromOrdinal_Padded(int value, Py_
 static CYTHON_INLINE PyObject* __Pyx_uchar___Pyx_PyUnicode_From_int(int value, Py_ssize_t width, char padding_char);
 static CYTHON_INLINE PyObject* __Pyx____Pyx_PyUnicode_From_int(int value, Py_ssize_t width, char padding_char, char format_char);
 
+/* JoinPyUnicode.export */
+static PyObject* __Pyx_PyUnicode_Join(PyObject** values, Py_ssize_t value_count, Py_ssize_t result_ulength,
+                                      Py_UCS4 max_char);
+
+/* decode_c_string_utf16.proto (used by decode_c_string) */
+static CYTHON_INLINE PyObject *__Pyx_PyUnicode_DecodeUTF16(const char *s, Py_ssize_t size, const char *errors) {
+    int byteorder = 0;
+    return PyUnicode_DecodeUTF16(s, size, errors, &byteorder);
+}
+static CYTHON_INLINE PyObject *__Pyx_PyUnicode_DecodeUTF16LE(const char *s, Py_ssize_t size, const char *errors) {
+    int byteorder = -1;
+    return PyUnicode_DecodeUTF16(s, size, errors, &byteorder);
+}
+static CYTHON_INLINE PyObject *__Pyx_PyUnicode_DecodeUTF16BE(const char *s, Py_ssize_t size, const char *errors) {
+    int byteorder = 1;
+    return PyUnicode_DecodeUTF16(s, size, errors, &byteorder);
+}
+
+/* decode_c_string.proto */
+static CYTHON_INLINE PyObject* __Pyx_decode_c_string(
+         const char* cstring, Py_ssize_t start, Py_ssize_t stop,
+         const char* encoding, const char* errors,
+         PyObject* (*decode_func)(const char *s, Py_ssize_t size, const char *errors));
+
 /* UnicodeConcatInPlace.proto */
 # if CYTHON_COMPILING_IN_CPYTHON
     #if CYTHON_REFNANNY
@@ -2028,20 +2055,6 @@ static CYTHON_INLINE int __Pyx_ParseKeywords(
 static void __Pyx_RaiseArgtupleInvalid(const char* func_name, int exact,
     Py_ssize_t num_min, Py_ssize_t num_max, Py_ssize_t num_found);
 
-/* decode_c_string_utf16.proto (used by decode_c_bytes) */
-static CYTHON_INLINE PyObject *__Pyx_PyUnicode_DecodeUTF16(const char *s, Py_ssize_t size, const char *errors) {
-    int byteorder = 0;
-    return PyUnicode_DecodeUTF16(s, size, errors, &byteorder);
-}
-static CYTHON_INLINE PyObject *__Pyx_PyUnicode_DecodeUTF16LE(const char *s, Py_ssize_t size, const char *errors) {
-    int byteorder = -1;
-    return PyUnicode_DecodeUTF16(s, size, errors, &byteorder);
-}
-static CYTHON_INLINE PyObject *__Pyx_PyUnicode_DecodeUTF16BE(const char *s, Py_ssize_t size, const char *errors) {
-    int byteorder = 1;
-    return PyUnicode_DecodeUTF16(s, size, errors, &byteorder);
-}
-
 /* decode_c_bytes.proto (used by decode_bytes) */
 static CYTHON_INLINE PyObject* __Pyx_decode_c_bytes(
          const char* cstring, Py_ssize_t length, Py_ssize_t start, Py_ssize_t stop,
@@ -2067,10 +2080,6 @@ static CYTHON_INLINE PyObject* __Pyx_decode_bytes(
         as_c_string, size,
         start, stop, encoding, errors, decode_func);
 }
-
-/* JoinPyUnicode.export */
-static PyObject* __Pyx_PyUnicode_Join(PyObject** values, Py_ssize_t value_count, Py_ssize_t result_ulength,
-                                      Py_UCS4 max_char);
 
 /* FunctionExport.proto */
 static int __Pyx_ExportFunction(PyObject *api_dict, const char *name, void (*f)(void), const char *sig);
@@ -2317,6 +2326,9 @@ static int __Pyx_VectorcallBuilder_AddArgStr(const char *key, PyObject *value, P
 #endif
 
 /* CIntToPy.proto */
+static CYTHON_INLINE PyObject* __Pyx_PyLong_From_int64_t(int64_t value);
+
+/* CIntToPy.proto */
 static CYTHON_INLINE PyObject* __Pyx_PyLong_From_int(int value);
 
 /* CppExceptionConversion.proto */
@@ -2484,9 +2496,13 @@ static int __Pyx_State_RemoveModule(void*);
 
 /* Module declarations from "libc.stdint" */
 
-/* Module declarations from "cython" */
+/* Module declarations from "libc.stddef" */
+
+/* Module declarations from "libc.time" */
 
 /* Module declarations from "rpc_feed.core.gateway.duckdb.utils" */
+static void __pyx_f_8rpc_feed_4core_7gateway_6duckdb_5utils__parse_to_ymd(int64_t, int *, int *, int *); /*proto*/
+static PyObject *__pyx_f_8rpc_feed_4core_7gateway_6duckdb_5utils__parse_date(int64_t, int); /*proto*/
 static PyObject *__pyx_f_8rpc_feed_4core_7gateway_6duckdb_5utils_schema_range(struct __pyx_t_8rpc_feed_4core_7gateway_6duckdb_5utils_Request, int __pyx_skip_dispatch); /*proto*/
 static PyObject *__pyx_f_8rpc_feed_4core_7gateway_6duckdb_5utils_preprocess_req(struct __pyx_t_8rpc_feed_4core_7gateway_6duckdb_5utils_Request, int __pyx_skip_dispatch); /*proto*/
 static std::string __pyx_convert_string_from_py_6libcpp_6string_std__in_string(PyObject *); /*proto*/
@@ -2506,6 +2522,7 @@ int __pyx_module_is_main_rpc_feed__core__gateway__duckdb__utils = 0;
 /* #### Code section: global_var ### */
 /* #### Code section: string_decls ### */
 static const char __pyx_k_a_mapping[] = "a mapping";
+static const char __pyx_k_Y_m_d_H_M_S[] = "%Y-%m-%d %H:%M:%S";
 /* #### Code section: decls ### */
 static PyObject *__pyx_pf_8rpc_feed_4core_7gateway_6duckdb_5utils_schema_range(CYTHON_UNUSED PyObject *__pyx_self, struct __pyx_t_8rpc_feed_4core_7gateway_6duckdb_5utils_Request __pyx_v_req); /* proto */
 static PyObject *__pyx_pf_8rpc_feed_4core_7gateway_6duckdb_5utils_2preprocess_req(CYTHON_UNUSED PyObject *__pyx_self, struct __pyx_t_8rpc_feed_4core_7gateway_6duckdb_5utils_Request __pyx_v_req); /* proto */
@@ -2533,7 +2550,8 @@ typedef struct {
   __Pyx_CachedCFunction __pyx_umethod_PyDict_Type_pop;
   __Pyx_CachedCFunction __pyx_umethod_PyDict_Type_values;
   PyObject *__pyx_codeobj_tab[2];
-  PyObject *__pyx_string_tab[40];
+  PyObject *__pyx_string_tab[42];
+  PyObject *__pyx_number_tab[3];
 /* #### Code section: module_state_contents ### */
 /* CommonTypesMetaclass.module_state_decls */
 PyTypeObject *__pyx_CommonTypesMetaclassType;
@@ -2578,42 +2596,47 @@ static __pyx_mstatetype * const __pyx_mstate_global = &__pyx_mstate_global_stati
 #define __pyx_kp_u_00_00_00 __pyx_string_tab[1]
 #define __pyx_kp_u_02d __pyx_string_tab[2]
 #define __pyx_kp_u_04d __pyx_string_tab[3]
-#define __pyx_kp_u_23_59_59 __pyx_string_tab[4]
-#define __pyx_kp_u_No_value_specified_for_struct_at __pyx_string_tab[5]
-#define __pyx_kp_u_No_value_specified_for_struct_at_2 __pyx_string_tab[6]
-#define __pyx_kp_u_No_value_specified_for_struct_at_3 __pyx_string_tab[7]
-#define __pyx_kp_u__2 __pyx_string_tab[8]
-#define __pyx_kp_u_rpc_feed_core_gateway_duckdb_uti_2 __pyx_string_tab[9]
-#define __pyx_n_u_Pyx_PyDict_NextRef __pyx_string_tab[10]
-#define __pyx_n_u_Q __pyx_string_tab[11]
-#define __pyx_n_u_asyncio_coroutines __pyx_string_tab[12]
-#define __pyx_n_u_cline_in_traceback __pyx_string_tab[13]
-#define __pyx_n_u_end_date __pyx_string_tab[14]
-#define __pyx_n_u_end_str __pyx_string_tab[15]
-#define __pyx_n_u_func __pyx_string_tab[16]
-#define __pyx_n_u_is_coroutine __pyx_string_tab[17]
-#define __pyx_n_u_items __pyx_string_tab[18]
-#define __pyx_n_u_main __pyx_string_tab[19]
-#define __pyx_n_u_module __pyx_string_tab[20]
-#define __pyx_n_u_name __pyx_string_tab[21]
-#define __pyx_n_u_pop __pyx_string_tab[22]
-#define __pyx_n_u_preprocess_req __pyx_string_tab[23]
-#define __pyx_n_u_pyx_capi __pyx_string_tab[24]
-#define __pyx_n_u_qualname __pyx_string_tab[25]
-#define __pyx_n_u_req __pyx_string_tab[26]
-#define __pyx_n_u_rpc_feed_core_gateway_duckdb_uti __pyx_string_tab[27]
-#define __pyx_n_u_schema_range __pyx_string_tab[28]
-#define __pyx_n_u_set_name __pyx_string_tab[29]
-#define __pyx_n_u_setdefault __pyx_string_tab[30]
-#define __pyx_n_u_sid __pyx_string_tab[31]
-#define __pyx_n_u_sids __pyx_string_tab[32]
-#define __pyx_n_u_start_date __pyx_string_tab[33]
-#define __pyx_n_u_start_str __pyx_string_tab[34]
-#define __pyx_n_u_test __pyx_string_tab[35]
-#define __pyx_n_u_values __pyx_string_tab[36]
-#define __pyx_kp_b_PyObject_struct___pyx_t_8rpc_fee __pyx_string_tab[37]
-#define __pyx_kp_b_iso88591_A_s_6_A_F_G3a_6_1_4s_D_A_4r_Cq __pyx_string_tab[38]
-#define __pyx_kp_b_iso88591_Q_1_Cq_Rwc_3a_9BgS_q_Bc_Rs_T_3a __pyx_string_tab[39]
+#define __pyx_kp_u_1970_01_01_00_00_00 __pyx_string_tab[4]
+#define __pyx_kp_u_1970_01_01_23_59_59 __pyx_string_tab[5]
+#define __pyx_kp_u_23_59_59 __pyx_string_tab[6]
+#define __pyx_kp_u_No_value_specified_for_struct_at __pyx_string_tab[7]
+#define __pyx_kp_u_No_value_specified_for_struct_at_2 __pyx_string_tab[8]
+#define __pyx_kp_u_No_value_specified_for_struct_at_3 __pyx_string_tab[9]
+#define __pyx_kp_u__2 __pyx_string_tab[10]
+#define __pyx_kp_u_rpc_feed_core_gateway_duckdb_uti_2 __pyx_string_tab[11]
+#define __pyx_n_u_Pyx_PyDict_NextRef __pyx_string_tab[12]
+#define __pyx_n_u_Q __pyx_string_tab[13]
+#define __pyx_n_u_asyncio_coroutines __pyx_string_tab[14]
+#define __pyx_n_u_cline_in_traceback __pyx_string_tab[15]
+#define __pyx_n_u_end_date __pyx_string_tab[16]
+#define __pyx_n_u_end_str __pyx_string_tab[17]
+#define __pyx_n_u_func __pyx_string_tab[18]
+#define __pyx_n_u_is_coroutine __pyx_string_tab[19]
+#define __pyx_n_u_items __pyx_string_tab[20]
+#define __pyx_n_u_main __pyx_string_tab[21]
+#define __pyx_n_u_module __pyx_string_tab[22]
+#define __pyx_n_u_name __pyx_string_tab[23]
+#define __pyx_n_u_pop __pyx_string_tab[24]
+#define __pyx_n_u_preprocess_req __pyx_string_tab[25]
+#define __pyx_n_u_pyx_capi __pyx_string_tab[26]
+#define __pyx_n_u_qualname __pyx_string_tab[27]
+#define __pyx_n_u_req __pyx_string_tab[28]
+#define __pyx_n_u_rpc_feed_core_gateway_duckdb_uti __pyx_string_tab[29]
+#define __pyx_n_u_schema_range __pyx_string_tab[30]
+#define __pyx_n_u_set_name __pyx_string_tab[31]
+#define __pyx_n_u_setdefault __pyx_string_tab[32]
+#define __pyx_n_u_sid __pyx_string_tab[33]
+#define __pyx_n_u_sids __pyx_string_tab[34]
+#define __pyx_n_u_start_date __pyx_string_tab[35]
+#define __pyx_n_u_start_str __pyx_string_tab[36]
+#define __pyx_n_u_test __pyx_string_tab[37]
+#define __pyx_n_u_values __pyx_string_tab[38]
+#define __pyx_kp_b_PyObject_int64_t_int_PyObject_st __pyx_string_tab[39]
+#define __pyx_kp_b_iso88591_A_s_1G1_k_q_Cq_q_q_M_Ky_1 __pyx_string_tab[40]
+#define __pyx_kp_b_iso88591_c_Cq_as_3aq_AT_aq_a_Bc_Rs_T_3a __pyx_string_tab[41]
+#define __pyx_int_100000000000 __pyx_number_tab[0]
+#define __pyx_int_0x5af3107a4000 __pyx_number_tab[1]
+#define __pyx_int_0x16345785d8a0000 __pyx_number_tab[2]
 /* #### Code section: module_state_clear ### */
 #if CYTHON_USE_MODULE_STATE
 static CYTHON_SMALL_CODE int __pyx_m_clear(PyObject *m) {
@@ -2629,7 +2652,8 @@ static CYTHON_SMALL_CODE int __pyx_m_clear(PyObject *m) {
   __Pyx_State_RemoveModule(NULL);
   #endif
   for (int i=0; i<2; ++i) { Py_CLEAR(clear_module_state->__pyx_codeobj_tab[i]); }
-  for (int i=0; i<40; ++i) { Py_CLEAR(clear_module_state->__pyx_string_tab[i]); }
+  for (int i=0; i<42; ++i) { Py_CLEAR(clear_module_state->__pyx_string_tab[i]); }
+  for (int i=0; i<3; ++i) { Py_CLEAR(clear_module_state->__pyx_number_tab[i]); }
 /* #### Code section: module_state_clear_contents ### */
 /* CommonTypesMetaclass.module_state_clear */
 Py_CLEAR(clear_module_state->__pyx_CommonTypesMetaclassType);
@@ -2653,7 +2677,8 @@ static CYTHON_SMALL_CODE int __pyx_m_traverse(PyObject *m, visitproc visit, void
   __Pyx_VISIT_CONST(traverse_module_state->__pyx_empty_bytes);
   __Pyx_VISIT_CONST(traverse_module_state->__pyx_empty_unicode);
   for (int i=0; i<2; ++i) { __Pyx_VISIT_CONST(traverse_module_state->__pyx_codeobj_tab[i]); }
-  for (int i=0; i<40; ++i) { __Pyx_VISIT_CONST(traverse_module_state->__pyx_string_tab[i]); }
+  for (int i=0; i<42; ++i) { __Pyx_VISIT_CONST(traverse_module_state->__pyx_string_tab[i]); }
+  for (int i=0; i<3; ++i) { __Pyx_VISIT_CONST(traverse_module_state->__pyx_number_tab[i]); }
 /* #### Code section: module_state_traverse_contents ### */
 /* CommonTypesMetaclass.module_state_traverse */
 Py_VISIT(traverse_module_state->__pyx_CommonTypesMetaclassType);
@@ -3646,12 +3671,671 @@ static std::vector<std::string>  __pyx_convert_vector_from_py_std_3a__3a_string(
   return __pyx_r;
 }
 
-/* "rpc_feed/core/gateway/duckdb/utils.pyx":11
+/* "rpc_feed/core/gateway/duckdb/utils.pyx":19
+ * # intended for schema_range
+ * # ==========================================
+ * cdef void _parse_to_ymd(int64_t val, int* y, int* m, int* d):             # <<<<<<<<<<<<<<
+ *     """
+ *     YYYYMMDD / ,
+*/
+
+static void __pyx_f_8rpc_feed_4core_7gateway_6duckdb_5utils__parse_to_ymd(int64_t __pyx_v_val, int *__pyx_v_y, int *__pyx_v_m, int *__pyx_v_d) {
+  time_t __pyx_v_t_val;
+  struct tm __pyx_v_timeinfo;
+  struct tm *__pyx_v_ret_ptr;
+  __Pyx_RefNannyDeclarations
+  int __pyx_t_1;
+  PyObject *__pyx_t_2 = NULL;
+  PyObject *__pyx_t_3 = NULL;
+  int __pyx_t_4;
+  int __pyx_lineno = 0;
+  const char *__pyx_filename = NULL;
+  int __pyx_clineno = 0;
+  __Pyx_RefNannySetupContext("_parse_to_ymd", 0);
+
+  /* "rpc_feed/core/gateway/duckdb/utils.pyx":27
+ *     cdef tm* ret_ptr
+ * 
+ *     if val <= 99991231:             # <<<<<<<<<<<<<<
+ *         y[0] = val // 10000
+ *         m[0] = (val % 10000) // 100
+*/
+  __pyx_t_1 = (__pyx_v_val <= 0x5F5BEBF);
+  if (__pyx_t_1) {
+
+    /* "rpc_feed/core/gateway/duckdb/utils.pyx":28
+ * 
+ *     if val <= 99991231:
+ *         y[0] = val // 10000             # <<<<<<<<<<<<<<
+ *         m[0] = (val % 10000) // 100
+ *         d[0] = val % 100
+*/
+    (__pyx_v_y[0]) = (__pyx_v_val / 0x2710);
+
+    /* "rpc_feed/core/gateway/duckdb/utils.pyx":29
+ *     if val <= 99991231:
+ *         y[0] = val // 10000
+ *         m[0] = (val % 10000) // 100             # <<<<<<<<<<<<<<
+ *         d[0] = val % 100
+ *     else:
+*/
+    (__pyx_v_m[0]) = ((__pyx_v_val % 0x2710) / 0x64);
+
+    /* "rpc_feed/core/gateway/duckdb/utils.pyx":30
+ *         y[0] = val // 10000
+ *         m[0] = (val % 10000) // 100
+ *         d[0] = val % 100             # <<<<<<<<<<<<<<
+ *     else:
+ *         #  Unix Timestamp
+*/
+    (__pyx_v_d[0]) = (__pyx_v_val % 0x64);
+
+    /* "rpc_feed/core/gateway/duckdb/utils.pyx":27
+ *     cdef tm* ret_ptr
+ * 
+ *     if val <= 99991231:             # <<<<<<<<<<<<<<
+ *         y[0] = val // 10000
+ *         m[0] = (val % 10000) // 100
+*/
+    goto __pyx_L3;
+  }
+
+  /* "rpc_feed/core/gateway/duckdb/utils.pyx":33
+ *     else:
+ *         #  Unix Timestamp
+ *         if val > 100000000000000000: #  ns             # <<<<<<<<<<<<<<
+ *             val = val // 1000000000
+ *         elif val > 100000000000000:  #  us
+*/
+  /*else*/ {
+    __pyx_t_2 = __Pyx_PyLong_From_int64_t(__pyx_v_val); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 33, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_2);
+    __pyx_t_3 = PyObject_RichCompare(__pyx_t_2, __pyx_mstate_global->__pyx_int_0x16345785d8a0000, Py_GT); __Pyx_XGOTREF(__pyx_t_3); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 33, __pyx_L1_error)
+    __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
+    __pyx_t_1 = __Pyx_PyObject_IsTrue(__pyx_t_3); if (unlikely((__pyx_t_1 < 0))) __PYX_ERR(0, 33, __pyx_L1_error)
+    __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
+    if (__pyx_t_1) {
+
+      /* "rpc_feed/core/gateway/duckdb/utils.pyx":34
+ *         #  Unix Timestamp
+ *         if val > 100000000000000000: #  ns
+ *             val = val // 1000000000             # <<<<<<<<<<<<<<
+ *         elif val > 100000000000000:  #  us
+ *             val = val // 1000000
+*/
+      __pyx_v_val = (__pyx_v_val / 0x3B9ACA00);
+
+      /* "rpc_feed/core/gateway/duckdb/utils.pyx":33
+ *     else:
+ *         #  Unix Timestamp
+ *         if val > 100000000000000000: #  ns             # <<<<<<<<<<<<<<
+ *             val = val // 1000000000
+ *         elif val > 100000000000000:  #  us
+*/
+      goto __pyx_L4;
+    }
+
+    /* "rpc_feed/core/gateway/duckdb/utils.pyx":35
+ *         if val > 100000000000000000: #  ns
+ *             val = val // 1000000000
+ *         elif val > 100000000000000:  #  us             # <<<<<<<<<<<<<<
+ *             val = val // 1000000
+ *         elif val > 100000000000:     #  ms
+*/
+    __pyx_t_3 = __Pyx_PyLong_From_int64_t(__pyx_v_val); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 35, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_3);
+    __pyx_t_2 = PyObject_RichCompare(__pyx_t_3, __pyx_mstate_global->__pyx_int_0x5af3107a4000, Py_GT); __Pyx_XGOTREF(__pyx_t_2); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 35, __pyx_L1_error)
+    __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
+    __pyx_t_1 = __Pyx_PyObject_IsTrue(__pyx_t_2); if (unlikely((__pyx_t_1 < 0))) __PYX_ERR(0, 35, __pyx_L1_error)
+    __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
+    if (__pyx_t_1) {
+
+      /* "rpc_feed/core/gateway/duckdb/utils.pyx":36
+ *             val = val // 1000000000
+ *         elif val > 100000000000000:  #  us
+ *             val = val // 1000000             # <<<<<<<<<<<<<<
+ *         elif val > 100000000000:     #  ms
+ *             val = val // 1000
+*/
+      __pyx_v_val = (__pyx_v_val / 0xF4240);
+
+      /* "rpc_feed/core/gateway/duckdb/utils.pyx":35
+ *         if val > 100000000000000000: #  ns
+ *             val = val // 1000000000
+ *         elif val > 100000000000000:  #  us             # <<<<<<<<<<<<<<
+ *             val = val // 1000000
+ *         elif val > 100000000000:     #  ms
+*/
+      goto __pyx_L4;
+    }
+
+    /* "rpc_feed/core/gateway/duckdb/utils.pyx":37
+ *         elif val > 100000000000000:  #  us
+ *             val = val // 1000000
+ *         elif val > 100000000000:     #  ms             # <<<<<<<<<<<<<<
+ *             val = val // 1000
+ * 
+*/
+    __pyx_t_2 = __Pyx_PyLong_From_int64_t(__pyx_v_val); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 37, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_2);
+    __pyx_t_3 = PyObject_RichCompare(__pyx_t_2, __pyx_mstate_global->__pyx_int_100000000000, Py_GT); __Pyx_XGOTREF(__pyx_t_3); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 37, __pyx_L1_error)
+    __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
+    __pyx_t_1 = __Pyx_PyObject_IsTrue(__pyx_t_3); if (unlikely((__pyx_t_1 < 0))) __PYX_ERR(0, 37, __pyx_L1_error)
+    __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
+    if (__pyx_t_1) {
+
+      /* "rpc_feed/core/gateway/duckdb/utils.pyx":38
+ *             val = val // 1000000
+ *         elif val > 100000000000:     #  ms
+ *             val = val // 1000             # <<<<<<<<<<<<<<
+ * 
+ *         t_val = <time_t>val
+*/
+      __pyx_v_val = (__pyx_v_val / 0x3E8);
+
+      /* "rpc_feed/core/gateway/duckdb/utils.pyx":37
+ *         elif val > 100000000000000:  #  us
+ *             val = val // 1000000
+ *         elif val > 100000000000:     #  ms             # <<<<<<<<<<<<<<
+ *             val = val // 1000
+ * 
+*/
+    }
+    __pyx_L4:;
+
+    /* "rpc_feed/core/gateway/duckdb/utils.pyx":40
+ *             val = val // 1000
+ * 
+ *         t_val = <time_t>val             # <<<<<<<<<<<<<<
+ *         ret_ptr = localtime_r(&t_val, &timeinfo)
+ * 
+*/
+    __pyx_v_t_val = ((time_t)__pyx_v_val);
+
+    /* "rpc_feed/core/gateway/duckdb/utils.pyx":41
+ * 
+ *         t_val = <time_t>val
+ *         ret_ptr = localtime_r(&t_val, &timeinfo)             # <<<<<<<<<<<<<<
+ * 
+ *         if ret_ptr != NULL:
+*/
+    __pyx_v_ret_ptr = localtime_r((&__pyx_v_t_val), (&__pyx_v_timeinfo));
+
+    /* "rpc_feed/core/gateway/duckdb/utils.pyx":43
+ *         ret_ptr = localtime_r(&t_val, &timeinfo)
+ * 
+ *         if ret_ptr != NULL:             # <<<<<<<<<<<<<<
+ *             y[0] = timeinfo.tm_year + 1900
+ *             m[0] = timeinfo.tm_mon + 1
+*/
+    __pyx_t_1 = (__pyx_v_ret_ptr != NULL);
+    if (__pyx_t_1) {
+
+      /* "rpc_feed/core/gateway/duckdb/utils.pyx":44
+ * 
+ *         if ret_ptr != NULL:
+ *             y[0] = timeinfo.tm_year + 1900             # <<<<<<<<<<<<<<
+ *             m[0] = timeinfo.tm_mon + 1
+ *             d[0] = timeinfo.tm_mday
+*/
+      (__pyx_v_y[0]) = (__pyx_v_timeinfo.tm_year + 0x76C);
+
+      /* "rpc_feed/core/gateway/duckdb/utils.pyx":45
+ *         if ret_ptr != NULL:
+ *             y[0] = timeinfo.tm_year + 1900
+ *             m[0] = timeinfo.tm_mon + 1             # <<<<<<<<<<<<<<
+ *             d[0] = timeinfo.tm_mday
+ *         else:
+*/
+      (__pyx_v_m[0]) = (__pyx_v_timeinfo.tm_mon + 1);
+
+      /* "rpc_feed/core/gateway/duckdb/utils.pyx":46
+ *             y[0] = timeinfo.tm_year + 1900
+ *             m[0] = timeinfo.tm_mon + 1
+ *             d[0] = timeinfo.tm_mday             # <<<<<<<<<<<<<<
+ *         else:
+ *             y[0] = 1970
+*/
+      __pyx_t_4 = __pyx_v_timeinfo.tm_mday;
+      (__pyx_v_d[0]) = __pyx_t_4;
+
+      /* "rpc_feed/core/gateway/duckdb/utils.pyx":43
+ *         ret_ptr = localtime_r(&t_val, &timeinfo)
+ * 
+ *         if ret_ptr != NULL:             # <<<<<<<<<<<<<<
+ *             y[0] = timeinfo.tm_year + 1900
+ *             m[0] = timeinfo.tm_mon + 1
+*/
+      goto __pyx_L5;
+    }
+
+    /* "rpc_feed/core/gateway/duckdb/utils.pyx":48
+ *             d[0] = timeinfo.tm_mday
+ *         else:
+ *             y[0] = 1970             # <<<<<<<<<<<<<<
+ *             m[0] = 1
+ *             d[0] = 1
+*/
+    /*else*/ {
+      (__pyx_v_y[0]) = 0x7B2;
+
+      /* "rpc_feed/core/gateway/duckdb/utils.pyx":49
+ *         else:
+ *             y[0] = 1970
+ *             m[0] = 1             # <<<<<<<<<<<<<<
+ *             d[0] = 1
+ * 
+*/
+      (__pyx_v_m[0]) = 1;
+
+      /* "rpc_feed/core/gateway/duckdb/utils.pyx":50
+ *             y[0] = 1970
+ *             m[0] = 1
+ *             d[0] = 1             # <<<<<<<<<<<<<<
+ * 
+ * 
+*/
+      (__pyx_v_d[0]) = 1;
+    }
+    __pyx_L5:;
+  }
+  __pyx_L3:;
+
+  /* "rpc_feed/core/gateway/duckdb/utils.pyx":19
+ * # intended for schema_range
+ * # ==========================================
+ * cdef void _parse_to_ymd(int64_t val, int* y, int* m, int* d):             # <<<<<<<<<<<<<<
+ *     """
+ *     YYYYMMDD / ,
+*/
+
+  /* function exit code */
+  goto __pyx_L0;
+  __pyx_L1_error:;
+  __Pyx_XDECREF(__pyx_t_2);
+  __Pyx_XDECREF(__pyx_t_3);
+  __Pyx_AddTraceback("rpc_feed.core.gateway.duckdb.utils._parse_to_ymd", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __pyx_L0:;
+  __Pyx_RefNannyFinishContext();
+}
+
+/* "rpc_feed/core/gateway/duckdb/utils.pyx":56
+ * # intended for preprocess_req
+ * # ==========================================
+ * cdef str _parse_date(int64_t val, bint is_end):             # <<<<<<<<<<<<<<
+ *     """
+ *      ISO String ( Timestamp / YYYYMMDD)
+*/
+
+static PyObject *__pyx_f_8rpc_feed_4core_7gateway_6duckdb_5utils__parse_date(int64_t __pyx_v_val, int __pyx_v_is_end) {
+  int __pyx_v_y;
+  int __pyx_v_m;
+  int __pyx_v_d;
+  time_t __pyx_v_t_val;
+  struct tm __pyx_v_timeinfo;
+  struct tm *__pyx_v_ret_ptr;
+  char __pyx_v_buffer[32];
+  PyObject *__pyx_r = NULL;
+  __Pyx_RefNannyDeclarations
+  int __pyx_t_1;
+  PyObject *__pyx_t_2 = NULL;
+  PyObject *__pyx_t_3 = NULL;
+  PyObject *__pyx_t_4 = NULL;
+  PyObject *__pyx_t_5[6];
+  PyObject *__pyx_t_6 = NULL;
+  Py_ssize_t __pyx_t_7;
+  int __pyx_lineno = 0;
+  const char *__pyx_filename = NULL;
+  int __pyx_clineno = 0;
+  __Pyx_RefNannySetupContext("_parse_date", 0);
+
+  /* "rpc_feed/core/gateway/duckdb/utils.pyx":66
+ *     cdef char buffer[32]
+ * 
+ *     if val <= 99991231:             # <<<<<<<<<<<<<<
+ *         y = val // 10000
+ *         m = (val % 10000) // 100
+*/
+  __pyx_t_1 = (__pyx_v_val <= 0x5F5BEBF);
+  if (__pyx_t_1) {
+
+    /* "rpc_feed/core/gateway/duckdb/utils.pyx":67
+ * 
+ *     if val <= 99991231:
+ *         y = val // 10000             # <<<<<<<<<<<<<<
+ *         m = (val % 10000) // 100
+ *         d = val % 100
+*/
+    __pyx_v_y = (__pyx_v_val / 0x2710);
+
+    /* "rpc_feed/core/gateway/duckdb/utils.pyx":68
+ *     if val <= 99991231:
+ *         y = val // 10000
+ *         m = (val % 10000) // 100             # <<<<<<<<<<<<<<
+ *         d = val % 100
+ *         if is_end:
+*/
+    __pyx_v_m = ((__pyx_v_val % 0x2710) / 0x64);
+
+    /* "rpc_feed/core/gateway/duckdb/utils.pyx":69
+ *         y = val // 10000
+ *         m = (val % 10000) // 100
+ *         d = val % 100             # <<<<<<<<<<<<<<
+ *         if is_end:
+ *             return f"{y:04d}-{m:02d}-{d:02d} 23:59:59"
+*/
+    __pyx_v_d = (__pyx_v_val % 0x64);
+
+    /* "rpc_feed/core/gateway/duckdb/utils.pyx":70
+ *         m = (val % 10000) // 100
+ *         d = val % 100
+ *         if is_end:             # <<<<<<<<<<<<<<
+ *             return f"{y:04d}-{m:02d}-{d:02d} 23:59:59"
+ *         else:
+*/
+    if (__pyx_v_is_end) {
+
+      /* "rpc_feed/core/gateway/duckdb/utils.pyx":71
+ *         d = val % 100
+ *         if is_end:
+ *             return f"{y:04d}-{m:02d}-{d:02d} 23:59:59"             # <<<<<<<<<<<<<<
+ *         else:
+ *             return f"{y:04d}-{m:02d}-{d:02d} 00:00:00"
+*/
+      __Pyx_XDECREF(__pyx_r);
+      __pyx_t_2 = __Pyx_PyUnicode_From_int(__pyx_v_y, 4, '0', 'd'); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 71, __pyx_L1_error)
+      __Pyx_GOTREF(__pyx_t_2);
+      __pyx_t_3 = __Pyx_PyUnicode_From_int(__pyx_v_m, 2, '0', 'd'); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 71, __pyx_L1_error)
+      __Pyx_GOTREF(__pyx_t_3);
+      __pyx_t_4 = __Pyx_PyUnicode_From_int(__pyx_v_d, 2, '0', 'd'); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 71, __pyx_L1_error)
+      __Pyx_GOTREF(__pyx_t_4);
+      __pyx_t_5[0] = __pyx_t_2;
+      __pyx_t_5[1] = __pyx_mstate_global->__pyx_kp_u_;
+      __pyx_t_5[2] = __pyx_t_3;
+      __pyx_t_5[3] = __pyx_mstate_global->__pyx_kp_u_;
+      __pyx_t_5[4] = __pyx_t_4;
+      __pyx_t_5[5] = __pyx_mstate_global->__pyx_kp_u_23_59_59;
+      __pyx_t_6 = __Pyx_PyUnicode_Join(__pyx_t_5, 6, __Pyx_PyUnicode_GET_LENGTH(__pyx_t_2) + 1 * 2 + __Pyx_PyUnicode_GET_LENGTH(__pyx_t_3) + __Pyx_PyUnicode_GET_LENGTH(__pyx_t_4) + 9, 127);
+      if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 71, __pyx_L1_error)
+      __Pyx_GOTREF(__pyx_t_6);
+      __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
+      __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
+      __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
+      __pyx_r = ((PyObject*)__pyx_t_6);
+      __pyx_t_6 = 0;
+      goto __pyx_L0;
+
+      /* "rpc_feed/core/gateway/duckdb/utils.pyx":70
+ *         m = (val % 10000) // 100
+ *         d = val % 100
+ *         if is_end:             # <<<<<<<<<<<<<<
+ *             return f"{y:04d}-{m:02d}-{d:02d} 23:59:59"
+ *         else:
+*/
+    }
+
+    /* "rpc_feed/core/gateway/duckdb/utils.pyx":73
+ *             return f"{y:04d}-{m:02d}-{d:02d} 23:59:59"
+ *         else:
+ *             return f"{y:04d}-{m:02d}-{d:02d} 00:00:00"             # <<<<<<<<<<<<<<
+ *     else:
+ *         # Unix Timestamp
+*/
+    /*else*/ {
+      __Pyx_XDECREF(__pyx_r);
+      __pyx_t_6 = __Pyx_PyUnicode_From_int(__pyx_v_y, 4, '0', 'd'); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 73, __pyx_L1_error)
+      __Pyx_GOTREF(__pyx_t_6);
+      __pyx_t_4 = __Pyx_PyUnicode_From_int(__pyx_v_m, 2, '0', 'd'); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 73, __pyx_L1_error)
+      __Pyx_GOTREF(__pyx_t_4);
+      __pyx_t_3 = __Pyx_PyUnicode_From_int(__pyx_v_d, 2, '0', 'd'); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 73, __pyx_L1_error)
+      __Pyx_GOTREF(__pyx_t_3);
+      __pyx_t_5[0] = __pyx_t_6;
+      __pyx_t_5[1] = __pyx_mstate_global->__pyx_kp_u_;
+      __pyx_t_5[2] = __pyx_t_4;
+      __pyx_t_5[3] = __pyx_mstate_global->__pyx_kp_u_;
+      __pyx_t_5[4] = __pyx_t_3;
+      __pyx_t_5[5] = __pyx_mstate_global->__pyx_kp_u_00_00_00;
+      __pyx_t_2 = __Pyx_PyUnicode_Join(__pyx_t_5, 6, __Pyx_PyUnicode_GET_LENGTH(__pyx_t_6) + 1 * 2 + __Pyx_PyUnicode_GET_LENGTH(__pyx_t_4) + __Pyx_PyUnicode_GET_LENGTH(__pyx_t_3) + 9, 127);
+      if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 73, __pyx_L1_error)
+      __Pyx_GOTREF(__pyx_t_2);
+      __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
+      __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
+      __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
+      __pyx_r = ((PyObject*)__pyx_t_2);
+      __pyx_t_2 = 0;
+      goto __pyx_L0;
+    }
+
+    /* "rpc_feed/core/gateway/duckdb/utils.pyx":66
+ *     cdef char buffer[32]
+ * 
+ *     if val <= 99991231:             # <<<<<<<<<<<<<<
+ *         y = val // 10000
+ *         m = (val % 10000) // 100
+*/
+  }
+
+  /* "rpc_feed/core/gateway/duckdb/utils.pyx":76
+ *     else:
+ *         # Unix Timestamp
+ *         val = val - 28800 # asia -> utc             # <<<<<<<<<<<<<<
+ *         if val > 100000000000000000:
+ *             val = val // 1000000000
+*/
+  /*else*/ {
+    __pyx_v_val = (__pyx_v_val - 0x7080);
+
+    /* "rpc_feed/core/gateway/duckdb/utils.pyx":77
+ *         # Unix Timestamp
+ *         val = val - 28800 # asia -> utc
+ *         if val > 100000000000000000:             # <<<<<<<<<<<<<<
+ *             val = val // 1000000000
+ *         elif val > 100000000000000:
+*/
+    __pyx_t_2 = __Pyx_PyLong_From_int64_t(__pyx_v_val); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 77, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_2);
+    __pyx_t_3 = PyObject_RichCompare(__pyx_t_2, __pyx_mstate_global->__pyx_int_0x16345785d8a0000, Py_GT); __Pyx_XGOTREF(__pyx_t_3); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 77, __pyx_L1_error)
+    __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
+    __pyx_t_1 = __Pyx_PyObject_IsTrue(__pyx_t_3); if (unlikely((__pyx_t_1 < 0))) __PYX_ERR(0, 77, __pyx_L1_error)
+    __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
+    if (__pyx_t_1) {
+
+      /* "rpc_feed/core/gateway/duckdb/utils.pyx":78
+ *         val = val - 28800 # asia -> utc
+ *         if val > 100000000000000000:
+ *             val = val // 1000000000             # <<<<<<<<<<<<<<
+ *         elif val > 100000000000000:
+ *             val = val // 1000000
+*/
+      __pyx_v_val = (__pyx_v_val / 0x3B9ACA00);
+
+      /* "rpc_feed/core/gateway/duckdb/utils.pyx":77
+ *         # Unix Timestamp
+ *         val = val - 28800 # asia -> utc
+ *         if val > 100000000000000000:             # <<<<<<<<<<<<<<
+ *             val = val // 1000000000
+ *         elif val > 100000000000000:
+*/
+      goto __pyx_L5;
+    }
+
+    /* "rpc_feed/core/gateway/duckdb/utils.pyx":79
+ *         if val > 100000000000000000:
+ *             val = val // 1000000000
+ *         elif val > 100000000000000:             # <<<<<<<<<<<<<<
+ *             val = val // 1000000
+ *         elif val > 100000000000:
+*/
+    __pyx_t_3 = __Pyx_PyLong_From_int64_t(__pyx_v_val); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 79, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_3);
+    __pyx_t_2 = PyObject_RichCompare(__pyx_t_3, __pyx_mstate_global->__pyx_int_0x5af3107a4000, Py_GT); __Pyx_XGOTREF(__pyx_t_2); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 79, __pyx_L1_error)
+    __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
+    __pyx_t_1 = __Pyx_PyObject_IsTrue(__pyx_t_2); if (unlikely((__pyx_t_1 < 0))) __PYX_ERR(0, 79, __pyx_L1_error)
+    __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
+    if (__pyx_t_1) {
+
+      /* "rpc_feed/core/gateway/duckdb/utils.pyx":80
+ *             val = val // 1000000000
+ *         elif val > 100000000000000:
+ *             val = val // 1000000             # <<<<<<<<<<<<<<
+ *         elif val > 100000000000:
+ *             val = val // 1000
+*/
+      __pyx_v_val = (__pyx_v_val / 0xF4240);
+
+      /* "rpc_feed/core/gateway/duckdb/utils.pyx":79
+ *         if val > 100000000000000000:
+ *             val = val // 1000000000
+ *         elif val > 100000000000000:             # <<<<<<<<<<<<<<
+ *             val = val // 1000000
+ *         elif val > 100000000000:
+*/
+      goto __pyx_L5;
+    }
+
+    /* "rpc_feed/core/gateway/duckdb/utils.pyx":81
+ *         elif val > 100000000000000:
+ *             val = val // 1000000
+ *         elif val > 100000000000:             # <<<<<<<<<<<<<<
+ *             val = val // 1000
+ * 
+*/
+    __pyx_t_2 = __Pyx_PyLong_From_int64_t(__pyx_v_val); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 81, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_2);
+    __pyx_t_3 = PyObject_RichCompare(__pyx_t_2, __pyx_mstate_global->__pyx_int_100000000000, Py_GT); __Pyx_XGOTREF(__pyx_t_3); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 81, __pyx_L1_error)
+    __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
+    __pyx_t_1 = __Pyx_PyObject_IsTrue(__pyx_t_3); if (unlikely((__pyx_t_1 < 0))) __PYX_ERR(0, 81, __pyx_L1_error)
+    __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
+    if (__pyx_t_1) {
+
+      /* "rpc_feed/core/gateway/duckdb/utils.pyx":82
+ *             val = val // 1000000
+ *         elif val > 100000000000:
+ *             val = val // 1000             # <<<<<<<<<<<<<<
+ * 
+ *         t_val = <time_t>val
+*/
+      __pyx_v_val = (__pyx_v_val / 0x3E8);
+
+      /* "rpc_feed/core/gateway/duckdb/utils.pyx":81
+ *         elif val > 100000000000000:
+ *             val = val // 1000000
+ *         elif val > 100000000000:             # <<<<<<<<<<<<<<
+ *             val = val // 1000
+ * 
+*/
+    }
+    __pyx_L5:;
+
+    /* "rpc_feed/core/gateway/duckdb/utils.pyx":84
+ *             val = val // 1000
+ * 
+ *         t_val = <time_t>val             # <<<<<<<<<<<<<<
+ *         ret_ptr = localtime_r(&t_val, &timeinfo)
+ * 
+*/
+    __pyx_v_t_val = ((time_t)__pyx_v_val);
+
+    /* "rpc_feed/core/gateway/duckdb/utils.pyx":85
+ * 
+ *         t_val = <time_t>val
+ *         ret_ptr = localtime_r(&t_val, &timeinfo)             # <<<<<<<<<<<<<<
+ * 
+ *         if ret_ptr == NULL:
+*/
+    __pyx_v_ret_ptr = localtime_r((&__pyx_v_t_val), (&__pyx_v_timeinfo));
+
+    /* "rpc_feed/core/gateway/duckdb/utils.pyx":87
+ *         ret_ptr = localtime_r(&t_val, &timeinfo)
+ * 
+ *         if ret_ptr == NULL:             # <<<<<<<<<<<<<<
+ *             return "1970-01-01 23:59:59" if is_end else "1970-01-01 00:00:00"
+ * 
+*/
+    __pyx_t_1 = (__pyx_v_ret_ptr == NULL);
+    if (__pyx_t_1) {
+
+      /* "rpc_feed/core/gateway/duckdb/utils.pyx":88
+ * 
+ *         if ret_ptr == NULL:
+ *             return "1970-01-01 23:59:59" if is_end else "1970-01-01 00:00:00"             # <<<<<<<<<<<<<<
+ * 
+ *         strftime(buffer, sizeof(buffer), "%Y-%m-%d %H:%M:%S", &timeinfo)
+*/
+      __Pyx_XDECREF(__pyx_r);
+      if (__pyx_v_is_end) {
+        __Pyx_INCREF(__pyx_mstate_global->__pyx_kp_u_1970_01_01_23_59_59);
+        __pyx_t_3 = __pyx_mstate_global->__pyx_kp_u_1970_01_01_23_59_59;
+      } else {
+        __Pyx_INCREF(__pyx_mstate_global->__pyx_kp_u_1970_01_01_00_00_00);
+        __pyx_t_3 = __pyx_mstate_global->__pyx_kp_u_1970_01_01_00_00_00;
+      }
+      __pyx_r = ((PyObject*)__pyx_t_3);
+      __pyx_t_3 = 0;
+      goto __pyx_L0;
+
+      /* "rpc_feed/core/gateway/duckdb/utils.pyx":87
+ *         ret_ptr = localtime_r(&t_val, &timeinfo)
+ * 
+ *         if ret_ptr == NULL:             # <<<<<<<<<<<<<<
+ *             return "1970-01-01 23:59:59" if is_end else "1970-01-01 00:00:00"
+ * 
+*/
+    }
+
+    /* "rpc_feed/core/gateway/duckdb/utils.pyx":90
+ *             return "1970-01-01 23:59:59" if is_end else "1970-01-01 00:00:00"
+ * 
+ *         strftime(buffer, sizeof(buffer), "%Y-%m-%d %H:%M:%S", &timeinfo)             # <<<<<<<<<<<<<<
+ *         return buffer.decode("utf-8")
+ * 
+*/
+    (void)(strftime(__pyx_v_buffer, (sizeof(__pyx_v_buffer)), __pyx_k_Y_m_d_H_M_S, (&__pyx_v_timeinfo)));
+
+    /* "rpc_feed/core/gateway/duckdb/utils.pyx":91
+ * 
+ *         strftime(buffer, sizeof(buffer), "%Y-%m-%d %H:%M:%S", &timeinfo)
+ *         return buffer.decode("utf-8")             # <<<<<<<<<<<<<<
+ * 
+ * 
+*/
+    __Pyx_XDECREF(__pyx_r);
+    __pyx_t_7 = __Pyx_ssize_strlen(__pyx_v_buffer); if (unlikely(__pyx_t_7 == ((Py_ssize_t)-1))) __PYX_ERR(0, 91, __pyx_L1_error)
+    __pyx_t_3 = __Pyx_decode_c_string(__pyx_v_buffer, 0, __pyx_t_7, NULL, NULL, PyUnicode_DecodeUTF8); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 91, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_3);
+    __pyx_r = ((PyObject*)__pyx_t_3);
+    __pyx_t_3 = 0;
+    goto __pyx_L0;
+  }
+
+  /* "rpc_feed/core/gateway/duckdb/utils.pyx":56
+ * # intended for preprocess_req
+ * # ==========================================
+ * cdef str _parse_date(int64_t val, bint is_end):             # <<<<<<<<<<<<<<
+ *     """
+ *      ISO String ( Timestamp / YYYYMMDD)
+*/
+
+  /* function exit code */
+  __pyx_L1_error:;
+  __Pyx_XDECREF(__pyx_t_2);
+  __Pyx_XDECREF(__pyx_t_3);
+  __Pyx_XDECREF(__pyx_t_4);
+  __Pyx_XDECREF(__pyx_t_6);
+  __Pyx_AddTraceback("rpc_feed.core.gateway.duckdb.utils._parse_date", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __pyx_r = 0;
+  __pyx_L0:;
+  __Pyx_XGIVEREF(__pyx_r);
+  __Pyx_RefNannyFinishContext();
+  return __pyx_r;
+}
+
+/* "rpc_feed/core/gateway/duckdb/utils.pyx":94
  * 
  * 
  * cpdef list schema_range(Request req):             # <<<<<<<<<<<<<<
  *     """
- *         : 20250402, 20260101
+ *     : 20250402  1774972800 ()
 */
 
 static PyObject *__pyx_pw_8rpc_feed_4core_7gateway_6duckdb_5utils_1schema_range(PyObject *__pyx_self, 
@@ -3662,12 +4346,14 @@ PyObject *__pyx_args, PyObject *__pyx_kwds
 #endif
 ); /*proto*/
 static PyObject *__pyx_f_8rpc_feed_4core_7gateway_6duckdb_5utils_schema_range(struct __pyx_t_8rpc_feed_4core_7gateway_6duckdb_5utils_Request __pyx_v_req, CYTHON_UNUSED int __pyx_skip_dispatch) {
-  int __pyx_v_start_date;
-  int __pyx_v_end_date;
+  int64_t __pyx_v_start_date;
+  int64_t __pyx_v_end_date;
   int __pyx_v_y;
   int __pyx_v_m;
+  int __pyx_v_d;
   int __pyx_v_ey;
   int __pyx_v_em;
+  int __pyx_v_ed;
   PyObject *__pyx_v_result = 0;
   int __pyx_v_q_num;
   PyObject *__pyx_v_q_str = 0;
@@ -3686,75 +4372,57 @@ static PyObject *__pyx_f_8rpc_feed_4core_7gateway_6duckdb_5utils_schema_range(st
   int __pyx_clineno = 0;
   __Pyx_RefNannySetupContext("schema_range", 0);
 
-  /* "rpc_feed/core/gateway/duckdb/utils.pyx":16
+  /* "rpc_feed/core/gateway/duckdb/utils.pyx":99
  * 
  *     """
- *     cdef int start_date = req.start_date             # <<<<<<<<<<<<<<
- *     cdef int end_date = req.end_date
+ *     cdef int64_t start_date = req.start_date             # <<<<<<<<<<<<<<
+ *     cdef int64_t end_date = req.end_date
  * 
 */
   __pyx_t_1 = __pyx_v_req.start_date;
   __pyx_v_start_date = __pyx_t_1;
 
-  /* "rpc_feed/core/gateway/duckdb/utils.pyx":17
+  /* "rpc_feed/core/gateway/duckdb/utils.pyx":100
  *     """
- *     cdef int start_date = req.start_date
- *     cdef int end_date = req.end_date             # <<<<<<<<<<<<<<
+ *     cdef int64_t start_date = req.start_date
+ *     cdef int64_t end_date = req.end_date             # <<<<<<<<<<<<<<
  * 
- *     cdef int y = start_date // 10000
+ *     cdef int y, m, d
 */
   __pyx_t_1 = __pyx_v_req.end_date;
   __pyx_v_end_date = __pyx_t_1;
 
-  /* "rpc_feed/core/gateway/duckdb/utils.pyx":19
- *     cdef int end_date = req.end_date
+  /* "rpc_feed/core/gateway/duckdb/utils.pyx":105
+ *     cdef int ey, em, ed
  * 
- *     cdef int y = start_date // 10000             # <<<<<<<<<<<<<<
- *     cdef int m = (start_date % 10000) // 100
- * 
-*/
-  __pyx_v_y = (__pyx_v_start_date / 0x2710);
-
-  /* "rpc_feed/core/gateway/duckdb/utils.pyx":20
- * 
- *     cdef int y = start_date // 10000
- *     cdef int m = (start_date % 10000) // 100             # <<<<<<<<<<<<<<
- * 
- *     cdef int ey = end_date // 10000
-*/
-  __pyx_v_m = ((__pyx_v_start_date % 0x2710) / 0x64);
-
-  /* "rpc_feed/core/gateway/duckdb/utils.pyx":22
- *     cdef int m = (start_date % 10000) // 100
- * 
- *     cdef int ey = end_date // 10000             # <<<<<<<<<<<<<<
- *     cdef int em = (end_date % 10000) // 100
+ *     _parse_to_ymd(start_date, &y, &m, &d)             # <<<<<<<<<<<<<<
+ *     _parse_to_ymd(end_date, &ey, &em, &ed)
  * 
 */
-  __pyx_v_ey = (__pyx_v_end_date / 0x2710);
+  __pyx_f_8rpc_feed_4core_7gateway_6duckdb_5utils__parse_to_ymd(__pyx_v_start_date, (&__pyx_v_y), (&__pyx_v_m), (&__pyx_v_d)); if (unlikely(PyErr_Occurred())) __PYX_ERR(0, 105, __pyx_L1_error)
 
-  /* "rpc_feed/core/gateway/duckdb/utils.pyx":23
+  /* "rpc_feed/core/gateway/duckdb/utils.pyx":106
  * 
- *     cdef int ey = end_date // 10000
- *     cdef int em = (end_date % 10000) // 100             # <<<<<<<<<<<<<<
+ *     _parse_to_ymd(start_date, &y, &m, &d)
+ *     _parse_to_ymd(end_date, &ey, &em, &ed)             # <<<<<<<<<<<<<<
  * 
- *     cdef list result = []
+ *     cdef list result =[]
 */
-  __pyx_v_em = ((__pyx_v_end_date % 0x2710) / 0x64);
+  __pyx_f_8rpc_feed_4core_7gateway_6duckdb_5utils__parse_to_ymd(__pyx_v_end_date, (&__pyx_v_ey), (&__pyx_v_em), (&__pyx_v_ed)); if (unlikely(PyErr_Occurred())) __PYX_ERR(0, 106, __pyx_L1_error)
 
-  /* "rpc_feed/core/gateway/duckdb/utils.pyx":25
- *     cdef int em = (end_date % 10000) // 100
+  /* "rpc_feed/core/gateway/duckdb/utils.pyx":108
+ *     _parse_to_ymd(end_date, &ey, &em, &ed)
  * 
- *     cdef list result = []             # <<<<<<<<<<<<<<
+ *     cdef list result =[]             # <<<<<<<<<<<<<<
  *     cdef int q_num
  *     cdef str q_str, m_str
 */
-  __pyx_t_2 = PyList_New(0); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 25, __pyx_L1_error)
+  __pyx_t_2 = PyList_New(0); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 108, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
   __pyx_v_result = ((PyObject*)__pyx_t_2);
   __pyx_t_2 = 0;
 
-  /* "rpc_feed/core/gateway/duckdb/utils.pyx":29
+  /* "rpc_feed/core/gateway/duckdb/utils.pyx":112
  *     cdef str q_str, m_str
  * 
  *     while y < ey or (y == ey and m <= em):             # <<<<<<<<<<<<<<
@@ -3779,7 +4447,7 @@ static PyObject *__pyx_f_8rpc_feed_4core_7gateway_6duckdb_5utils_schema_range(st
     __pyx_L5_bool_binop_done:;
     if (!__pyx_t_3) break;
 
-    /* "rpc_feed/core/gateway/duckdb/utils.pyx":30
+    /* "rpc_feed/core/gateway/duckdb/utils.pyx":113
  * 
  *     while y < ey or (y == ey and m <= em):
  *         q_num = ((m - 1) // 3) + 1             # <<<<<<<<<<<<<<
@@ -3788,63 +4456,63 @@ static PyObject *__pyx_f_8rpc_feed_4core_7gateway_6duckdb_5utils_schema_range(st
 */
     __pyx_v_q_num = (((__pyx_v_m - 1) / 3) + 1);
 
-    /* "rpc_feed/core/gateway/duckdb/utils.pyx":31
+    /* "rpc_feed/core/gateway/duckdb/utils.pyx":114
  *     while y < ey or (y == ey and m <= em):
  *         q_num = ((m - 1) // 3) + 1
  *         q_str = f"Q{q_num}"             # <<<<<<<<<<<<<<
  *         m_str = f"{y}{m:02d}"
  * 
 */
-    __pyx_t_2 = __Pyx_PyUnicode_From_int(__pyx_v_q_num, 0, ' ', 'd'); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 31, __pyx_L1_error)
+    __pyx_t_2 = __Pyx_PyUnicode_From_int(__pyx_v_q_num, 0, ' ', 'd'); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 114, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_2);
-    __pyx_t_5 = __Pyx_PyUnicode_Concat(__pyx_mstate_global->__pyx_n_u_Q, __pyx_t_2); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 31, __pyx_L1_error)
+    __pyx_t_5 = __Pyx_PyUnicode_Concat(__pyx_mstate_global->__pyx_n_u_Q, __pyx_t_2); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 114, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_5);
     __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
     __Pyx_XDECREF_SET(__pyx_v_q_str, ((PyObject*)__pyx_t_5));
     __pyx_t_5 = 0;
 
-    /* "rpc_feed/core/gateway/duckdb/utils.pyx":32
+    /* "rpc_feed/core/gateway/duckdb/utils.pyx":115
  *         q_num = ((m - 1) // 3) + 1
  *         q_str = f"Q{q_num}"
  *         m_str = f"{y}{m:02d}"             # <<<<<<<<<<<<<<
  * 
  *         result.append((y, q_str, m_str))
 */
-    __pyx_t_5 = __Pyx_PyUnicode_From_int(__pyx_v_y, 0, ' ', 'd'); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 32, __pyx_L1_error)
+    __pyx_t_5 = __Pyx_PyUnicode_From_int(__pyx_v_y, 0, ' ', 'd'); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 115, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_5);
-    __pyx_t_2 = __Pyx_PyUnicode_From_int(__pyx_v_m, 2, '0', 'd'); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 32, __pyx_L1_error)
+    __pyx_t_2 = __Pyx_PyUnicode_From_int(__pyx_v_m, 2, '0', 'd'); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 115, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_2);
-    __pyx_t_6 = __Pyx_PyUnicode_Concat__Pyx_ReferenceSharing_OwnStrongReferenceInPlace(__pyx_t_5, __pyx_t_2); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 32, __pyx_L1_error)
+    __pyx_t_6 = __Pyx_PyUnicode_Concat__Pyx_ReferenceSharing_OwnStrongReferenceInPlace(__pyx_t_5, __pyx_t_2); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 115, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_6);
     __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
     __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
     __Pyx_XDECREF_SET(__pyx_v_m_str, ((PyObject*)__pyx_t_6));
     __pyx_t_6 = 0;
 
-    /* "rpc_feed/core/gateway/duckdb/utils.pyx":34
+    /* "rpc_feed/core/gateway/duckdb/utils.pyx":117
  *         m_str = f"{y}{m:02d}"
  * 
  *         result.append((y, q_str, m_str))             # <<<<<<<<<<<<<<
  *         if m == 12:
  *             y += 1
 */
-    __pyx_t_6 = __Pyx_PyLong_From_int(__pyx_v_y); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 34, __pyx_L1_error)
+    __pyx_t_6 = __Pyx_PyLong_From_int(__pyx_v_y); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 117, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_6);
-    __pyx_t_2 = PyTuple_New(3); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 34, __pyx_L1_error)
+    __pyx_t_2 = PyTuple_New(3); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 117, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_2);
     __Pyx_GIVEREF(__pyx_t_6);
-    if (__Pyx_PyTuple_SET_ITEM(__pyx_t_2, 0, __pyx_t_6) != (0)) __PYX_ERR(0, 34, __pyx_L1_error);
+    if (__Pyx_PyTuple_SET_ITEM(__pyx_t_2, 0, __pyx_t_6) != (0)) __PYX_ERR(0, 117, __pyx_L1_error);
     __Pyx_INCREF(__pyx_v_q_str);
     __Pyx_GIVEREF(__pyx_v_q_str);
-    if (__Pyx_PyTuple_SET_ITEM(__pyx_t_2, 1, __pyx_v_q_str) != (0)) __PYX_ERR(0, 34, __pyx_L1_error);
+    if (__Pyx_PyTuple_SET_ITEM(__pyx_t_2, 1, __pyx_v_q_str) != (0)) __PYX_ERR(0, 117, __pyx_L1_error);
     __Pyx_INCREF(__pyx_v_m_str);
     __Pyx_GIVEREF(__pyx_v_m_str);
-    if (__Pyx_PyTuple_SET_ITEM(__pyx_t_2, 2, __pyx_v_m_str) != (0)) __PYX_ERR(0, 34, __pyx_L1_error);
+    if (__Pyx_PyTuple_SET_ITEM(__pyx_t_2, 2, __pyx_v_m_str) != (0)) __PYX_ERR(0, 117, __pyx_L1_error);
     __pyx_t_6 = 0;
-    __pyx_t_7 = __Pyx_PyList_Append(__pyx_v_result, __pyx_t_2); if (unlikely(__pyx_t_7 == ((int)-1))) __PYX_ERR(0, 34, __pyx_L1_error)
+    __pyx_t_7 = __Pyx_PyList_Append(__pyx_v_result, __pyx_t_2); if (unlikely(__pyx_t_7 == ((int)-1))) __PYX_ERR(0, 117, __pyx_L1_error)
     __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
 
-    /* "rpc_feed/core/gateway/duckdb/utils.pyx":35
+    /* "rpc_feed/core/gateway/duckdb/utils.pyx":118
  * 
  *         result.append((y, q_str, m_str))
  *         if m == 12:             # <<<<<<<<<<<<<<
@@ -3854,7 +4522,7 @@ static PyObject *__pyx_f_8rpc_feed_4core_7gateway_6duckdb_5utils_schema_range(st
     __pyx_t_3 = (__pyx_v_m == 12);
     if (__pyx_t_3) {
 
-      /* "rpc_feed/core/gateway/duckdb/utils.pyx":36
+      /* "rpc_feed/core/gateway/duckdb/utils.pyx":119
  *         result.append((y, q_str, m_str))
  *         if m == 12:
  *             y += 1             # <<<<<<<<<<<<<<
@@ -3863,7 +4531,7 @@ static PyObject *__pyx_f_8rpc_feed_4core_7gateway_6duckdb_5utils_schema_range(st
 */
       __pyx_v_y = (__pyx_v_y + 1);
 
-      /* "rpc_feed/core/gateway/duckdb/utils.pyx":37
+      /* "rpc_feed/core/gateway/duckdb/utils.pyx":120
  *         if m == 12:
  *             y += 1
  *             m = 1             # <<<<<<<<<<<<<<
@@ -3872,7 +4540,7 @@ static PyObject *__pyx_f_8rpc_feed_4core_7gateway_6duckdb_5utils_schema_range(st
 */
       __pyx_v_m = 1;
 
-      /* "rpc_feed/core/gateway/duckdb/utils.pyx":35
+      /* "rpc_feed/core/gateway/duckdb/utils.pyx":118
  * 
  *         result.append((y, q_str, m_str))
  *         if m == 12:             # <<<<<<<<<<<<<<
@@ -3882,7 +4550,7 @@ static PyObject *__pyx_f_8rpc_feed_4core_7gateway_6duckdb_5utils_schema_range(st
       goto __pyx_L8;
     }
 
-    /* "rpc_feed/core/gateway/duckdb/utils.pyx":39
+    /* "rpc_feed/core/gateway/duckdb/utils.pyx":122
  *             m = 1
  *         else:
  *             m += 1             # <<<<<<<<<<<<<<
@@ -3895,7 +4563,7 @@ static PyObject *__pyx_f_8rpc_feed_4core_7gateway_6duckdb_5utils_schema_range(st
     __pyx_L8:;
   }
 
-  /* "rpc_feed/core/gateway/duckdb/utils.pyx":40
+  /* "rpc_feed/core/gateway/duckdb/utils.pyx":123
  *         else:
  *             m += 1
  *     return result             # <<<<<<<<<<<<<<
@@ -3907,12 +4575,12 @@ static PyObject *__pyx_f_8rpc_feed_4core_7gateway_6duckdb_5utils_schema_range(st
   __pyx_r = __pyx_v_result;
   goto __pyx_L0;
 
-  /* "rpc_feed/core/gateway/duckdb/utils.pyx":11
+  /* "rpc_feed/core/gateway/duckdb/utils.pyx":94
  * 
  * 
  * cpdef list schema_range(Request req):             # <<<<<<<<<<<<<<
  *     """
- *         : 20250402, 20260101
+ *     : 20250402  1774972800 ()
 */
 
   /* function exit code */
@@ -3939,7 +4607,7 @@ PyObject *const *__pyx_args, Py_ssize_t __pyx_nargs, PyObject *__pyx_kwds
 PyObject *__pyx_args, PyObject *__pyx_kwds
 #endif
 ); /*proto*/
-PyDoc_STRVAR(__pyx_doc_8rpc_feed_4core_7gateway_6duckdb_5utils_schema_range, "\n        \350\276\223\345\205\245\347\244\272\344\276\213: 20250402, 20260101 \n        \350\256\241\347\256\227\346\227\245\346\234\237\350\214\203\345\233\264\345\206\205\347\232\204\345\271\264\343\200\201\345\255\243\345\272\246\343\200\201\346\234\210\344\273\275\345\255\227\347\254\246\344\270\262\n    ");
+PyDoc_STRVAR(__pyx_doc_8rpc_feed_4core_7gateway_6duckdb_5utils_schema_range, "\n    \350\276\223\345\205\245\347\244\272\344\276\213: 20250402 \346\210\226 1774972800 (\345\235\207\345\205\274\345\256\271)\n    \350\256\241\347\256\227\346\227\245\346\234\237\350\214\203\345\233\264\345\206\205\347\232\204\345\271\264\343\200\201\345\255\243\345\272\246\343\200\201\346\234\210\344\273\275\345\255\227\347\254\246\344\270\262\n    ");
 static PyMethodDef __pyx_mdef_8rpc_feed_4core_7gateway_6duckdb_5utils_1schema_range = {"schema_range", (PyCFunction)(void(*)(void))(__Pyx_PyCFunction_FastCallWithKeywords)__pyx_pw_8rpc_feed_4core_7gateway_6duckdb_5utils_1schema_range, __Pyx_METH_FASTCALL|METH_KEYWORDS, __pyx_doc_8rpc_feed_4core_7gateway_6duckdb_5utils_schema_range};
 static PyObject *__pyx_pw_8rpc_feed_4core_7gateway_6duckdb_5utils_1schema_range(PyObject *__pyx_self, 
 #if CYTHON_METH_FASTCALL
@@ -3971,32 +4639,32 @@ PyObject *__pyx_args, PyObject *__pyx_kwds
   {
     PyObject ** const __pyx_pyargnames[] = {&__pyx_mstate_global->__pyx_n_u_req,0};
     const Py_ssize_t __pyx_kwds_len = (__pyx_kwds) ? __Pyx_NumKwargs_FASTCALL(__pyx_kwds) : 0;
-    if (unlikely(__pyx_kwds_len) < 0) __PYX_ERR(0, 11, __pyx_L3_error)
+    if (unlikely(__pyx_kwds_len) < 0) __PYX_ERR(0, 94, __pyx_L3_error)
     if (__pyx_kwds_len > 0) {
       switch (__pyx_nargs) {
         case  1:
         values[0] = __Pyx_ArgRef_FASTCALL(__pyx_args, 0);
-        if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[0])) __PYX_ERR(0, 11, __pyx_L3_error)
+        if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[0])) __PYX_ERR(0, 94, __pyx_L3_error)
         CYTHON_FALLTHROUGH;
         case  0: break;
         default: goto __pyx_L5_argtuple_error;
       }
       const Py_ssize_t kwd_pos_args = __pyx_nargs;
-      if (__Pyx_ParseKeywords(__pyx_kwds, __pyx_kwvalues, __pyx_pyargnames, 0, values, kwd_pos_args, __pyx_kwds_len, "schema_range", 0) < (0)) __PYX_ERR(0, 11, __pyx_L3_error)
+      if (__Pyx_ParseKeywords(__pyx_kwds, __pyx_kwvalues, __pyx_pyargnames, 0, values, kwd_pos_args, __pyx_kwds_len, "schema_range", 0) < (0)) __PYX_ERR(0, 94, __pyx_L3_error)
       for (Py_ssize_t i = __pyx_nargs; i < 1; i++) {
-        if (unlikely(!values[i])) { __Pyx_RaiseArgtupleInvalid("schema_range", 1, 1, 1, i); __PYX_ERR(0, 11, __pyx_L3_error) }
+        if (unlikely(!values[i])) { __Pyx_RaiseArgtupleInvalid("schema_range", 1, 1, 1, i); __PYX_ERR(0, 94, __pyx_L3_error) }
       }
     } else if (unlikely(__pyx_nargs != 1)) {
       goto __pyx_L5_argtuple_error;
     } else {
       values[0] = __Pyx_ArgRef_FASTCALL(__pyx_args, 0);
-      if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[0])) __PYX_ERR(0, 11, __pyx_L3_error)
+      if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[0])) __PYX_ERR(0, 94, __pyx_L3_error)
     }
-    __pyx_v_req = __pyx_convert__from_py_struct____pyx_t_8rpc_feed_4core_7gateway_6duckdb_5utils_Request(values[0]); if (unlikely(PyErr_Occurred())) __PYX_ERR(0, 11, __pyx_L3_error)
+    __pyx_v_req = __pyx_convert__from_py_struct____pyx_t_8rpc_feed_4core_7gateway_6duckdb_5utils_Request(values[0]); if (unlikely(PyErr_Occurred())) __PYX_ERR(0, 94, __pyx_L3_error)
   }
   goto __pyx_L6_skip;
   __pyx_L5_argtuple_error:;
-  __Pyx_RaiseArgtupleInvalid("schema_range", 1, 1, 1, __pyx_nargs); __PYX_ERR(0, 11, __pyx_L3_error)
+  __Pyx_RaiseArgtupleInvalid("schema_range", 1, 1, 1, __pyx_nargs); __PYX_ERR(0, 94, __pyx_L3_error)
   __pyx_L6_skip:;
   goto __pyx_L4_argument_unpacking_done;
   __pyx_L3_error:;
@@ -4026,7 +4694,7 @@ static PyObject *__pyx_pf_8rpc_feed_4core_7gateway_6duckdb_5utils_schema_range(C
   int __pyx_clineno = 0;
   __Pyx_RefNannySetupContext("schema_range", 0);
   __Pyx_XDECREF(__pyx_r);
-  __pyx_t_1 = __pyx_f_8rpc_feed_4core_7gateway_6duckdb_5utils_schema_range(__pyx_v_req, 1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 11, __pyx_L1_error)
+  __pyx_t_1 = __pyx_f_8rpc_feed_4core_7gateway_6duckdb_5utils_schema_range(__pyx_v_req, 1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 94, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   __pyx_r = __pyx_t_1;
   __pyx_t_1 = 0;
@@ -4043,7 +4711,7 @@ static PyObject *__pyx_pf_8rpc_feed_4core_7gateway_6duckdb_5utils_schema_range(C
   return __pyx_r;
 }
 
-/* "rpc_feed/core/gateway/duckdb/utils.pyx":43
+/* "rpc_feed/core/gateway/duckdb/utils.pyx":126
  * 
  * 
  * cpdef dict preprocess_req(Request req):             # <<<<<<<<<<<<<<
@@ -4062,15 +4730,10 @@ static PyObject *__pyx_f_8rpc_feed_4core_7gateway_6duckdb_5utils_preprocess_req(
   PyObject *__pyx_v_resp = 0;
   int64_t __pyx_v_start;
   int64_t __pyx_v_end;
-  int __pyx_v_s_y;
-  int __pyx_v_s_m;
-  int __pyx_v_s_d;
-  int __pyx_v_e_y;
-  int __pyx_v_e_m;
-  int __pyx_v_e_d;
-  PyObject *__pyx_v_str_sids = 0;
+  PyObject *__pyx_v_start_str = 0;
+  PyObject *__pyx_v_end_str = 0;
   PyObject *__pyx_v_byte_sid = 0;
-  PyObject *__pyx_v_py_sid = 0;
+  PyObject *__pyx_v_str_sids = 0;
   PyObject *__pyx_r = NULL;
   __Pyx_RefNannyDeclarations
   int64_t __pyx_t_1;
@@ -4078,232 +4741,132 @@ static PyObject *__pyx_f_8rpc_feed_4core_7gateway_6duckdb_5utils_preprocess_req(
   std::vector<std::string> ::iterator __pyx_t_3;
   std::string __pyx_t_4;
   int __pyx_t_5;
-  PyObject *__pyx_t_6 = NULL;
-  PyObject *__pyx_t_7 = NULL;
-  PyObject *__pyx_t_8 = NULL;
-  PyObject *__pyx_t_9[6];
-  PyObject *__pyx_t_10 = NULL;
   int __pyx_lineno = 0;
   const char *__pyx_filename = NULL;
   int __pyx_clineno = 0;
   __Pyx_RefNannySetupContext("preprocess_req", 0);
 
-  /* "rpc_feed/core/gateway/duckdb/utils.pyx":48
+  /* "rpc_feed/core/gateway/duckdb/utils.pyx":131
  *     """
  *     cdef dict resp
  *     cdef int64_t start = req.start_date             # <<<<<<<<<<<<<<
  *     cdef int64_t end = req.end_date
- * 
+ *     cdef str start_str, end_str
 */
   __pyx_t_1 = __pyx_v_req.start_date;
   __pyx_v_start = __pyx_t_1;
 
-  /* "rpc_feed/core/gateway/duckdb/utils.pyx":49
+  /* "rpc_feed/core/gateway/duckdb/utils.pyx":132
  *     cdef dict resp
  *     cdef int64_t start = req.start_date
  *     cdef int64_t end = req.end_date             # <<<<<<<<<<<<<<
+ *     cdef str start_str, end_str
  * 
- *     cdef int s_y = start // 10000
 */
   __pyx_t_1 = __pyx_v_req.end_date;
   __pyx_v_end = __pyx_t_1;
 
-  /* "rpc_feed/core/gateway/duckdb/utils.pyx":51
- *     cdef int64_t end = req.end_date
+  /* "rpc_feed/core/gateway/duckdb/utils.pyx":136
  * 
- *     cdef int s_y = start // 10000             # <<<<<<<<<<<<<<
- *     cdef int s_m = (start % 10000) // 100
- *     cdef int s_d = start % 100
-*/
-  __pyx_v_s_y = (__pyx_v_start / 0x2710);
-
-  /* "rpc_feed/core/gateway/duckdb/utils.pyx":52
- * 
- *     cdef int s_y = start // 10000
- *     cdef int s_m = (start % 10000) // 100             # <<<<<<<<<<<<<<
- *     cdef int s_d = start % 100
- * 
-*/
-  __pyx_v_s_m = ((__pyx_v_start % 0x2710) / 0x64);
-
-  /* "rpc_feed/core/gateway/duckdb/utils.pyx":53
- *     cdef int s_y = start // 10000
- *     cdef int s_m = (start % 10000) // 100
- *     cdef int s_d = start % 100             # <<<<<<<<<<<<<<
- * 
- *     cdef int e_y = end // 10000
-*/
-  __pyx_v_s_d = (__pyx_v_start % 0x64);
-
-  /* "rpc_feed/core/gateway/duckdb/utils.pyx":55
- *     cdef int s_d = start % 100
- * 
- *     cdef int e_y = end // 10000             # <<<<<<<<<<<<<<
- *     cdef int e_m = (end % 10000) // 100
- *     cdef int e_d = end % 100
-*/
-  __pyx_v_e_y = (__pyx_v_end / 0x2710);
-
-  /* "rpc_feed/core/gateway/duckdb/utils.pyx":56
- * 
- *     cdef int e_y = end // 10000
- *     cdef int e_m = (end % 10000) // 100             # <<<<<<<<<<<<<<
- *     cdef int e_d = end % 100
- * 
-*/
-  __pyx_v_e_m = ((__pyx_v_end % 0x2710) / 0x64);
-
-  /* "rpc_feed/core/gateway/duckdb/utils.pyx":57
- *     cdef int e_y = end // 10000
- *     cdef int e_m = (end % 10000) // 100
- *     cdef int e_d = end % 100             # <<<<<<<<<<<<<<
- * 
- *     cdef list str_sids = []
-*/
-  __pyx_v_e_d = (__pyx_v_end % 0x64);
-
-  /* "rpc_feed/core/gateway/duckdb/utils.pyx":59
- *     cdef int e_d = end % 100
- * 
- *     cdef list str_sids = []             # <<<<<<<<<<<<<<
  *     cdef bytes byte_sid
- *     cdef str py_sid
+ *     cdef list str_sids = []             # <<<<<<<<<<<<<<
+ * 
+ *     start_str = _parse_date(start, False)
 */
-  __pyx_t_2 = PyList_New(0); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 59, __pyx_L1_error)
+  __pyx_t_2 = PyList_New(0); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 136, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
   __pyx_v_str_sids = ((PyObject*)__pyx_t_2);
   __pyx_t_2 = 0;
 
-  /* "rpc_feed/core/gateway/duckdb/utils.pyx":65
+  /* "rpc_feed/core/gateway/duckdb/utils.pyx":138
+ *     cdef list str_sids = []
+ * 
+ *     start_str = _parse_date(start, False)             # <<<<<<<<<<<<<<
+ *     end_str = _parse_date(end, True)
+ * 
+*/
+  __pyx_t_2 = __pyx_f_8rpc_feed_4core_7gateway_6duckdb_5utils__parse_date(__pyx_v_start, 0); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 138, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_2);
+  __pyx_v_start_str = ((PyObject*)__pyx_t_2);
+  __pyx_t_2 = 0;
+
+  /* "rpc_feed/core/gateway/duckdb/utils.pyx":139
+ * 
+ *     start_str = _parse_date(start, False)
+ *     end_str = _parse_date(end, True)             # <<<<<<<<<<<<<<
+ * 
+ *     # cython auto transformt to (for auto& / const auto& v in ***)
+*/
+  __pyx_t_2 = __pyx_f_8rpc_feed_4core_7gateway_6duckdb_5utils__parse_date(__pyx_v_end, 1); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 139, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_2);
+  __pyx_v_end_str = ((PyObject*)__pyx_t_2);
+  __pyx_t_2 = 0;
+
+  /* "rpc_feed/core/gateway/duckdb/utils.pyx":143
  *     # cython auto transformt to (for auto& / const auto& v in ***)
  *     # for (std::vector<std::string>::iterator it = funk.begin(); it != funk.end(); ++it)
  *     for byte_sid in req.sid:             # <<<<<<<<<<<<<<
- *         py_sid = byte_sid.decode("utf-8") # bytes --> str avoid base64 encoding
- *         str_sids.append(py_sid) # avoid repr auto add b prefix
+ *         str_sids.append(byte_sid.decode("utf-8")) # bytes --> str avoid base64 encoding avoid repr auto add b prefix
+ * 
 */
   __pyx_t_3 = __pyx_v_req.sid.begin();
   for (; __pyx_t_3 != __pyx_v_req.sid.end(); ++__pyx_t_3) {
     __pyx_t_4 = *__pyx_t_3;
-    __pyx_t_2 = __pyx_convert_PyBytes_string_to_py_6libcpp_6string_std__in_string(__pyx_t_4); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 65, __pyx_L1_error)
+    __pyx_t_2 = __pyx_convert_PyBytes_string_to_py_6libcpp_6string_std__in_string(__pyx_t_4); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 143, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_2);
     __Pyx_XDECREF_SET(__pyx_v_byte_sid, ((PyObject*)__pyx_t_2));
     __pyx_t_2 = 0;
 
-    /* "rpc_feed/core/gateway/duckdb/utils.pyx":66
+    /* "rpc_feed/core/gateway/duckdb/utils.pyx":144
  *     # for (std::vector<std::string>::iterator it = funk.begin(); it != funk.end(); ++it)
  *     for byte_sid in req.sid:
- *         py_sid = byte_sid.decode("utf-8") # bytes --> str avoid base64 encoding             # <<<<<<<<<<<<<<
- *         str_sids.append(py_sid) # avoid repr auto add b prefix
+ *         str_sids.append(byte_sid.decode("utf-8")) # bytes --> str avoid base64 encoding avoid repr auto add b prefix             # <<<<<<<<<<<<<<
  * 
+ *     # DuckDB support ISO TIMESTAMP
 */
     if (unlikely(__pyx_v_byte_sid == Py_None)) {
       PyErr_Format(PyExc_AttributeError, "'NoneType' object has no attribute '%.30s'", "decode");
-      __PYX_ERR(0, 66, __pyx_L1_error)
+      __PYX_ERR(0, 144, __pyx_L1_error)
     }
-    __pyx_t_2 = __Pyx_decode_bytes(__pyx_v_byte_sid, 0, PY_SSIZE_T_MAX, NULL, NULL, PyUnicode_DecodeUTF8); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 66, __pyx_L1_error)
+    __pyx_t_2 = __Pyx_decode_bytes(__pyx_v_byte_sid, 0, PY_SSIZE_T_MAX, NULL, NULL, PyUnicode_DecodeUTF8); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 144, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_2);
-    __Pyx_XDECREF_SET(__pyx_v_py_sid, ((PyObject*)__pyx_t_2));
-    __pyx_t_2 = 0;
+    __pyx_t_5 = __Pyx_PyList_Append(__pyx_v_str_sids, __pyx_t_2); if (unlikely(__pyx_t_5 == ((int)-1))) __PYX_ERR(0, 144, __pyx_L1_error)
+    __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
 
-    /* "rpc_feed/core/gateway/duckdb/utils.pyx":67
- *     for byte_sid in req.sid:
- *         py_sid = byte_sid.decode("utf-8") # bytes --> str avoid base64 encoding
- *         str_sids.append(py_sid) # avoid repr auto add b prefix             # <<<<<<<<<<<<<<
- * 
- *     # DuckDB support ISO TIMESTAMP
-*/
-    __pyx_t_5 = __Pyx_PyList_Append(__pyx_v_str_sids, __pyx_v_py_sid); if (unlikely(__pyx_t_5 == ((int)-1))) __PYX_ERR(0, 67, __pyx_L1_error)
-
-    /* "rpc_feed/core/gateway/duckdb/utils.pyx":65
+    /* "rpc_feed/core/gateway/duckdb/utils.pyx":143
  *     # cython auto transformt to (for auto& / const auto& v in ***)
  *     # for (std::vector<std::string>::iterator it = funk.begin(); it != funk.end(); ++it)
  *     for byte_sid in req.sid:             # <<<<<<<<<<<<<<
- *         py_sid = byte_sid.decode("utf-8") # bytes --> str avoid base64 encoding
- *         str_sids.append(py_sid) # avoid repr auto add b prefix
+ *         str_sids.append(byte_sid.decode("utf-8")) # bytes --> str avoid base64 encoding avoid repr auto add b prefix
+ * 
 */
   }
 
-  /* "rpc_feed/core/gateway/duckdb/utils.pyx":70
+  /* "rpc_feed/core/gateway/duckdb/utils.pyx":147
  * 
  *     # DuckDB support ISO TIMESTAMP
- *     resp = {"start_str": f"{s_y:04d}-{s_m:02d}-{s_d:02d} 00:00:00",             # <<<<<<<<<<<<<<
- *            "end_str": f"{e_y:04d}-{e_m:02d}-{e_d:02d} 23:59:59",
- *            "sids": str_sids}
+ *     resp = {"start_str": start_str, "end_str": end_str, "sids": str_sids}             # <<<<<<<<<<<<<<
+ *     return resp
 */
-  __pyx_t_2 = __Pyx_PyDict_NewPresized(3); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 70, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_PyDict_NewPresized(3); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 147, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
-  __pyx_t_6 = __Pyx_PyUnicode_From_int(__pyx_v_s_y, 4, '0', 'd'); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 70, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_6);
-  __pyx_t_7 = __Pyx_PyUnicode_From_int(__pyx_v_s_m, 2, '0', 'd'); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 70, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_7);
-  __pyx_t_8 = __Pyx_PyUnicode_From_int(__pyx_v_s_d, 2, '0', 'd'); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 70, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_8);
-  __pyx_t_9[0] = __pyx_t_6;
-  __pyx_t_9[1] = __pyx_mstate_global->__pyx_kp_u_;
-  __pyx_t_9[2] = __pyx_t_7;
-  __pyx_t_9[3] = __pyx_mstate_global->__pyx_kp_u_;
-  __pyx_t_9[4] = __pyx_t_8;
-  __pyx_t_9[5] = __pyx_mstate_global->__pyx_kp_u_00_00_00;
-  __pyx_t_10 = __Pyx_PyUnicode_Join(__pyx_t_9, 6, __Pyx_PyUnicode_GET_LENGTH(__pyx_t_6) + 1 * 2 + __Pyx_PyUnicode_GET_LENGTH(__pyx_t_7) + __Pyx_PyUnicode_GET_LENGTH(__pyx_t_8) + 9, 127);
-  if (unlikely(!__pyx_t_10)) __PYX_ERR(0, 70, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_10);
-  __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
-  __Pyx_DECREF(__pyx_t_7); __pyx_t_7 = 0;
-  __Pyx_DECREF(__pyx_t_8); __pyx_t_8 = 0;
-  if (PyDict_SetItem(__pyx_t_2, __pyx_mstate_global->__pyx_n_u_start_str, __pyx_t_10) < (0)) __PYX_ERR(0, 70, __pyx_L1_error)
-  __Pyx_DECREF(__pyx_t_10); __pyx_t_10 = 0;
-
-  /* "rpc_feed/core/gateway/duckdb/utils.pyx":71
- *     # DuckDB support ISO TIMESTAMP
- *     resp = {"start_str": f"{s_y:04d}-{s_m:02d}-{s_d:02d} 00:00:00",
- *            "end_str": f"{e_y:04d}-{e_m:02d}-{e_d:02d} 23:59:59",             # <<<<<<<<<<<<<<
- *            "sids": str_sids}
- *     return resp
-*/
-  __pyx_t_10 = __Pyx_PyUnicode_From_int(__pyx_v_e_y, 4, '0', 'd'); if (unlikely(!__pyx_t_10)) __PYX_ERR(0, 71, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_10);
-  __pyx_t_8 = __Pyx_PyUnicode_From_int(__pyx_v_e_m, 2, '0', 'd'); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 71, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_8);
-  __pyx_t_7 = __Pyx_PyUnicode_From_int(__pyx_v_e_d, 2, '0', 'd'); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 71, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_7);
-  __pyx_t_9[0] = __pyx_t_10;
-  __pyx_t_9[1] = __pyx_mstate_global->__pyx_kp_u_;
-  __pyx_t_9[2] = __pyx_t_8;
-  __pyx_t_9[3] = __pyx_mstate_global->__pyx_kp_u_;
-  __pyx_t_9[4] = __pyx_t_7;
-  __pyx_t_9[5] = __pyx_mstate_global->__pyx_kp_u_23_59_59;
-  __pyx_t_6 = __Pyx_PyUnicode_Join(__pyx_t_9, 6, __Pyx_PyUnicode_GET_LENGTH(__pyx_t_10) + 1 * 2 + __Pyx_PyUnicode_GET_LENGTH(__pyx_t_8) + __Pyx_PyUnicode_GET_LENGTH(__pyx_t_7) + 9, 127);
-  if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 71, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_6);
-  __Pyx_DECREF(__pyx_t_10); __pyx_t_10 = 0;
-  __Pyx_DECREF(__pyx_t_8); __pyx_t_8 = 0;
-  __Pyx_DECREF(__pyx_t_7); __pyx_t_7 = 0;
-  if (PyDict_SetItem(__pyx_t_2, __pyx_mstate_global->__pyx_n_u_end_str, __pyx_t_6) < (0)) __PYX_ERR(0, 70, __pyx_L1_error)
-  __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
-
-  /* "rpc_feed/core/gateway/duckdb/utils.pyx":72
- *     resp = {"start_str": f"{s_y:04d}-{s_m:02d}-{s_d:02d} 00:00:00",
- *            "end_str": f"{e_y:04d}-{e_m:02d}-{e_d:02d} 23:59:59",
- *            "sids": str_sids}             # <<<<<<<<<<<<<<
- *     return resp
- * 
-*/
-  if (PyDict_SetItem(__pyx_t_2, __pyx_mstate_global->__pyx_n_u_sids, __pyx_v_str_sids) < (0)) __PYX_ERR(0, 70, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_2, __pyx_mstate_global->__pyx_n_u_start_str, __pyx_v_start_str) < (0)) __PYX_ERR(0, 147, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_2, __pyx_mstate_global->__pyx_n_u_end_str, __pyx_v_end_str) < (0)) __PYX_ERR(0, 147, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_2, __pyx_mstate_global->__pyx_n_u_sids, __pyx_v_str_sids) < (0)) __PYX_ERR(0, 147, __pyx_L1_error)
   __pyx_v_resp = ((PyObject*)__pyx_t_2);
   __pyx_t_2 = 0;
 
-  /* "rpc_feed/core/gateway/duckdb/utils.pyx":73
- *            "end_str": f"{e_y:04d}-{e_m:02d}-{e_d:02d} 23:59:59",
- *            "sids": str_sids}
+  /* "rpc_feed/core/gateway/duckdb/utils.pyx":148
+ *     # DuckDB support ISO TIMESTAMP
+ *     resp = {"start_str": start_str, "end_str": end_str, "sids": str_sids}
  *     return resp             # <<<<<<<<<<<<<<
- * 
 */
   __Pyx_XDECREF(__pyx_r);
   __Pyx_INCREF(__pyx_v_resp);
   __pyx_r = __pyx_v_resp;
   goto __pyx_L0;
 
-  /* "rpc_feed/core/gateway/duckdb/utils.pyx":43
+  /* "rpc_feed/core/gateway/duckdb/utils.pyx":126
  * 
  * 
  * cpdef dict preprocess_req(Request req):             # <<<<<<<<<<<<<<
@@ -4314,17 +4877,14 @@ static PyObject *__pyx_f_8rpc_feed_4core_7gateway_6duckdb_5utils_preprocess_req(
   /* function exit code */
   __pyx_L1_error:;
   __Pyx_XDECREF(__pyx_t_2);
-  __Pyx_XDECREF(__pyx_t_6);
-  __Pyx_XDECREF(__pyx_t_7);
-  __Pyx_XDECREF(__pyx_t_8);
-  __Pyx_XDECREF(__pyx_t_10);
   __Pyx_AddTraceback("rpc_feed.core.gateway.duckdb.utils.preprocess_req", __pyx_clineno, __pyx_lineno, __pyx_filename);
   __pyx_r = 0;
   __pyx_L0:;
   __Pyx_XDECREF(__pyx_v_resp);
-  __Pyx_XDECREF(__pyx_v_str_sids);
+  __Pyx_XDECREF(__pyx_v_start_str);
+  __Pyx_XDECREF(__pyx_v_end_str);
   __Pyx_XDECREF(__pyx_v_byte_sid);
-  __Pyx_XDECREF(__pyx_v_py_sid);
+  __Pyx_XDECREF(__pyx_v_str_sids);
   __Pyx_XGIVEREF(__pyx_r);
   __Pyx_RefNannyFinishContext();
   return __pyx_r;
@@ -4370,32 +4930,32 @@ PyObject *__pyx_args, PyObject *__pyx_kwds
   {
     PyObject ** const __pyx_pyargnames[] = {&__pyx_mstate_global->__pyx_n_u_req,0};
     const Py_ssize_t __pyx_kwds_len = (__pyx_kwds) ? __Pyx_NumKwargs_FASTCALL(__pyx_kwds) : 0;
-    if (unlikely(__pyx_kwds_len) < 0) __PYX_ERR(0, 43, __pyx_L3_error)
+    if (unlikely(__pyx_kwds_len) < 0) __PYX_ERR(0, 126, __pyx_L3_error)
     if (__pyx_kwds_len > 0) {
       switch (__pyx_nargs) {
         case  1:
         values[0] = __Pyx_ArgRef_FASTCALL(__pyx_args, 0);
-        if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[0])) __PYX_ERR(0, 43, __pyx_L3_error)
+        if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[0])) __PYX_ERR(0, 126, __pyx_L3_error)
         CYTHON_FALLTHROUGH;
         case  0: break;
         default: goto __pyx_L5_argtuple_error;
       }
       const Py_ssize_t kwd_pos_args = __pyx_nargs;
-      if (__Pyx_ParseKeywords(__pyx_kwds, __pyx_kwvalues, __pyx_pyargnames, 0, values, kwd_pos_args, __pyx_kwds_len, "preprocess_req", 0) < (0)) __PYX_ERR(0, 43, __pyx_L3_error)
+      if (__Pyx_ParseKeywords(__pyx_kwds, __pyx_kwvalues, __pyx_pyargnames, 0, values, kwd_pos_args, __pyx_kwds_len, "preprocess_req", 0) < (0)) __PYX_ERR(0, 126, __pyx_L3_error)
       for (Py_ssize_t i = __pyx_nargs; i < 1; i++) {
-        if (unlikely(!values[i])) { __Pyx_RaiseArgtupleInvalid("preprocess_req", 1, 1, 1, i); __PYX_ERR(0, 43, __pyx_L3_error) }
+        if (unlikely(!values[i])) { __Pyx_RaiseArgtupleInvalid("preprocess_req", 1, 1, 1, i); __PYX_ERR(0, 126, __pyx_L3_error) }
       }
     } else if (unlikely(__pyx_nargs != 1)) {
       goto __pyx_L5_argtuple_error;
     } else {
       values[0] = __Pyx_ArgRef_FASTCALL(__pyx_args, 0);
-      if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[0])) __PYX_ERR(0, 43, __pyx_L3_error)
+      if (!CYTHON_ASSUME_SAFE_MACROS && unlikely(!values[0])) __PYX_ERR(0, 126, __pyx_L3_error)
     }
-    __pyx_v_req = __pyx_convert__from_py_struct____pyx_t_8rpc_feed_4core_7gateway_6duckdb_5utils_Request(values[0]); if (unlikely(PyErr_Occurred())) __PYX_ERR(0, 43, __pyx_L3_error)
+    __pyx_v_req = __pyx_convert__from_py_struct____pyx_t_8rpc_feed_4core_7gateway_6duckdb_5utils_Request(values[0]); if (unlikely(PyErr_Occurred())) __PYX_ERR(0, 126, __pyx_L3_error)
   }
   goto __pyx_L6_skip;
   __pyx_L5_argtuple_error:;
-  __Pyx_RaiseArgtupleInvalid("preprocess_req", 1, 1, 1, __pyx_nargs); __PYX_ERR(0, 43, __pyx_L3_error)
+  __Pyx_RaiseArgtupleInvalid("preprocess_req", 1, 1, 1, __pyx_nargs); __PYX_ERR(0, 126, __pyx_L3_error)
   __pyx_L6_skip:;
   goto __pyx_L4_argument_unpacking_done;
   __pyx_L3_error:;
@@ -4425,7 +4985,7 @@ static PyObject *__pyx_pf_8rpc_feed_4core_7gateway_6duckdb_5utils_2preprocess_re
   int __pyx_clineno = 0;
   __Pyx_RefNannySetupContext("preprocess_req", 0);
   __Pyx_XDECREF(__pyx_r);
-  __pyx_t_1 = __pyx_f_8rpc_feed_4core_7gateway_6duckdb_5utils_preprocess_req(__pyx_v_req, 1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 43, __pyx_L1_error)
+  __pyx_t_1 = __pyx_f_8rpc_feed_4core_7gateway_6duckdb_5utils_preprocess_req(__pyx_v_req, 1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 126, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   __pyx_r = __pyx_t_1;
   __pyx_t_1 = 0;
@@ -4491,12 +5051,12 @@ static int __Pyx_modinit_function_export_code(__pyx_mstatetype *__pyx_mstate) {
   {
     __pyx_t_1 = __Pyx_ApiExport_GetApiDict(); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 1, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_1);
-    const char * __pyx_export_signature = __Pyx_PyBytes_AsString(__pyx_mstate_global->__pyx_kp_b_PyObject_struct___pyx_t_8rpc_fee);
+    const char * __pyx_export_signature = __Pyx_PyBytes_AsString(__pyx_mstate_global->__pyx_kp_b_PyObject_int64_t_int_PyObject_st);
     #if !CYTHON_ASSUME_SAFE_MACROS
     if (unlikely(!__pyx_export_signature)) __PYX_ERR(0, 1, __pyx_L1_error)
     #endif
-    const char * __pyx_export_name = __pyx_export_signature + 101;
-    void (*const __pyx_export_pointers[])(void) = {(void (*)(void))&__pyx_f_8rpc_feed_4core_7gateway_6duckdb_5utils_preprocess_req, (void (*)(void))&__pyx_f_8rpc_feed_4core_7gateway_6duckdb_5utils_schema_range, (void (*)(void)) NULL};
+    const char * __pyx_export_name = __pyx_export_signature + 162;
+    void (*const __pyx_export_pointers[])(void) = {(void (*)(void))&__pyx_f_8rpc_feed_4core_7gateway_6duckdb_5utils__parse_date, (void (*)(void))&__pyx_f_8rpc_feed_4core_7gateway_6duckdb_5utils_preprocess_req, (void (*)(void))&__pyx_f_8rpc_feed_4core_7gateway_6duckdb_5utils_schema_range, (void (*)(void))&__pyx_f_8rpc_feed_4core_7gateway_6duckdb_5utils__parse_to_ymd, (void (*)(void)) NULL};
     void (*const *__pyx_export_pointer)(void) = __pyx_export_pointers;
     const char *__pyx_export_current_signature = __pyx_export_signature;
     while (*__pyx_export_pointer) {
@@ -4818,40 +5378,40 @@ __Pyx_RefNannySetupContext("PyInit_utils", 0);
   (void)__Pyx_modinit_function_import_code(__pyx_mstate);
   /*--- Execution code ---*/
 
-  /* "rpc_feed/core/gateway/duckdb/utils.pyx":11
+  /* "rpc_feed/core/gateway/duckdb/utils.pyx":94
  * 
  * 
  * cpdef list schema_range(Request req):             # <<<<<<<<<<<<<<
  *     """
- *         : 20250402, 20260101
+ *     : 20250402  1774972800 ()
 */
-  __pyx_t_2 = __Pyx_CyFunction_New(&__pyx_mdef_8rpc_feed_4core_7gateway_6duckdb_5utils_1schema_range, 0, __pyx_mstate_global->__pyx_n_u_schema_range, NULL, __pyx_mstate_global->__pyx_n_u_rpc_feed_core_gateway_duckdb_uti, __pyx_mstate_global->__pyx_d, ((PyObject *)__pyx_mstate_global->__pyx_codeobj_tab[0])); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 11, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_CyFunction_New(&__pyx_mdef_8rpc_feed_4core_7gateway_6duckdb_5utils_1schema_range, 0, __pyx_mstate_global->__pyx_n_u_schema_range, NULL, __pyx_mstate_global->__pyx_n_u_rpc_feed_core_gateway_duckdb_uti, __pyx_mstate_global->__pyx_d, ((PyObject *)__pyx_mstate_global->__pyx_codeobj_tab[0])); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 94, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
   #if CYTHON_COMPILING_IN_CPYTHON && PY_VERSION_HEX >= 0x030E0000
   PyUnstable_Object_EnableDeferredRefcount(__pyx_t_2);
   #endif
-  if (PyDict_SetItem(__pyx_mstate_global->__pyx_d, __pyx_mstate_global->__pyx_n_u_schema_range, __pyx_t_2) < (0)) __PYX_ERR(0, 11, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_mstate_global->__pyx_d, __pyx_mstate_global->__pyx_n_u_schema_range, __pyx_t_2) < (0)) __PYX_ERR(0, 94, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
 
-  /* "rpc_feed/core/gateway/duckdb/utils.pyx":43
+  /* "rpc_feed/core/gateway/duckdb/utils.pyx":126
  * 
  * 
  * cpdef dict preprocess_req(Request req):             # <<<<<<<<<<<<<<
  *     """
  *         ISO and sid_bytes
 */
-  __pyx_t_2 = __Pyx_CyFunction_New(&__pyx_mdef_8rpc_feed_4core_7gateway_6duckdb_5utils_3preprocess_req, 0, __pyx_mstate_global->__pyx_n_u_preprocess_req, NULL, __pyx_mstate_global->__pyx_n_u_rpc_feed_core_gateway_duckdb_uti, __pyx_mstate_global->__pyx_d, ((PyObject *)__pyx_mstate_global->__pyx_codeobj_tab[1])); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 43, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_CyFunction_New(&__pyx_mdef_8rpc_feed_4core_7gateway_6duckdb_5utils_3preprocess_req, 0, __pyx_mstate_global->__pyx_n_u_preprocess_req, NULL, __pyx_mstate_global->__pyx_n_u_rpc_feed_core_gateway_duckdb_uti, __pyx_mstate_global->__pyx_d, ((PyObject *)__pyx_mstate_global->__pyx_codeobj_tab[1])); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 126, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
   #if CYTHON_COMPILING_IN_CPYTHON && PY_VERSION_HEX >= 0x030E0000
   PyUnstable_Object_EnableDeferredRefcount(__pyx_t_2);
   #endif
-  if (PyDict_SetItem(__pyx_mstate_global->__pyx_d, __pyx_mstate_global->__pyx_n_u_preprocess_req, __pyx_t_2) < (0)) __PYX_ERR(0, 43, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_mstate_global->__pyx_d, __pyx_mstate_global->__pyx_n_u_preprocess_req, __pyx_t_2) < (0)) __PYX_ERR(0, 126, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
 
   /* "rpc_feed/core/gateway/duckdb/utils.pyx":1
- * #!/usr/bin/env python3             # <<<<<<<<<<<<<<
- * # -*- coding: utf-8 -*-
- * # cython: language_level=3
+ * # cython: language_level=3             # <<<<<<<<<<<<<<
+ * # cython: boundscheck=False
+ * # cython: wraparound=False
 */
   __pyx_t_2 = __Pyx_PyDict_NewPresized(0); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 1, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
@@ -4918,34 +5478,34 @@ static int __Pyx_InitCachedConstants(__pyx_mstatetype *__pyx_mstate) {
 static int __Pyx_InitConstants(__pyx_mstatetype *__pyx_mstate) {
   CYTHON_UNUSED_VAR(__pyx_mstate);
   {
-    const struct { const unsigned int length: 8; } index[] = {{1},{9},{3},{3},{9},{52},{50},{45},{1},{38},{20},{1},{18},{18},{8},{7},{8},{13},{5},{8},{10},{8},{3},{14},{12},{12},{3},{34},{12},{12},{10},{3},{4},{10},{9},{8},{6},{128},{176},{177}};
-    #if (CYTHON_COMPRESS_STRINGS) == 2 /* compression: bz2 (720 bytes) */
-const char* const cstring = "BZh91AY&SYk\344\216\022\000\000S\177\373\377\377}\370x\377\377\360\275\203\374\000\277\377\377\340@@@@@@@\000\000@@\000@\000@\002Xk\263\255X\341\244\324jj\0326F\247\250y4\312yA\350\236\241\240\000d\032\000\032=OQ\243F\021\265\006P\214M\002hL\206\3224\000\006\200\000\320\000\000\000\0004\032i\032E=\032\2314h\000\000\000\000\000\000\000\000\r\033H\320e\t\244jm&\364\221\223d\231\001\2404\300!\243### \000\006\203L\213\371d\260\2368\004\017\217\345Z\323V/\230*\222\377\321\374\010$\224$\031\020W\201{\312\nn\n\026\230\242\367\261\257\006\244P\203\024v(le\014\301C\\9\003\200r\210>\016\014^c\013\340\225t|U\001M'\247\342}\244R\316\024\\\251\034C5\0344\375\240\363?f9\325\344\233\325\236\367r\356\231\313\002(\t\364\r\352\21036\363RL\0300\2208(#\204+\307\007\r\252\36082$%\0104R\022\025\013\003V\252H\363l\020U}\340\247?\n\2374\251\303p\341mr\224R\2235O\253\326\211\262\256B\243I$\026PkH\222FC\310\025\004AR8\331]*?DF'\036@\033+\021\\?1\235\003\021x\301\374e\300\372!\031?O\226\330\351\221*py\360\342\312\205ouu\3669M`\021\330\222`\325\227\3201\021\031p\037\306T\254E\037t\3132\224\t\315\273\321:#\274\252m\310f5\314?\263\301d=\215Q\264\010l\315\220%\242p\203\371F\001rh\024$n\270\347\315\000\374,\023l\225\372D\331$\231(W\250\240\242\234\344\323j$\201=\263\237\232J\030\013\rI\264\247\302c}y\013+,\010\254QDX\247H\306C\301\371\022P[\025\364\260D+,\244\264\211\323\337I\206e\030A%\300\222\242\220\241?\016\030\245\260!\271\234\3523c\274X\270\303\005\327jd\345a\317\2442\004\260z\260\311 \025l \006\331j\225t\034\204\226\252\271I\225\211\001D,)\205 1fK\307(\006\200R\232\2274\352U\233\236$\034\270#\224h\220\230\203\030E\023|\005w\374,\201w\313f\375\274^\240H @\364\366)%\374A\006(x\374\005\321\303\317r\225\314.\375Z\010\346\025c\261v\277\336.\261y\353\313V\037\330\014A\004\010\301\000\266\261\302\210p\376\242G\336*n\332q\251\224jfk1,K\211j\236\273\302\314\321\253\023\365\352):0\301\214\231\306\200\224\346,\251\231\241e\024J\202B\377\213\271\"\234(H5\362G\t\000";
-    PyObject *data = __Pyx_DecompressString(cstring, 720, 2);
+    const struct { const unsigned int length: 8; } index[] = {{1},{9},{3},{3},{19},{19},{9},{52},{50},{45},{1},{38},{20},{1},{18},{18},{8},{7},{8},{13},{5},{8},{10},{8},{3},{14},{12},{12},{3},{34},{12},{12},{10},{3},{4},{10},{9},{8},{6},{215},{95},{173}};
+    #if (CYTHON_COMPRESS_STRINGS) == 2 /* compression: bz2 (727 bytes) */
+const char* const cstring = "BZh91AY&SY/\250\215w\000\000T\377\377\377\377}\234\376\367\377\360\274\213\374\000\277\377\377\340@@@@@@\000@@\000\000@@\000@\000@\002N\000\004\206\246\246\212\014\2326\243\324\364\023h\010\r\003\023M\r\0304\004\032\017(\332\206\232z\231\232P\341\240\000\032\r\006\200\301\00044\323 \032\0324\310\001\210\032\0008h\000\006\203A\2400@\r\r4\310\006\206\2152\000b\006\200\006B\004L\0053 \3256\211=M3S\324\036\211\200\000L\231\032\006L\2156$\361=R~\250\324\206\221\003\2147A\023zo:4:\022\017\231\004D4\214h\023BFMB\001\020.\241\222\361t\321\222l\203\341\251J\205\021\023\344T(\260\203\230:\001\341\225n>\317\370\216\277lx\330\207\036\311\020?#\310h\246\233\031Y%\021\302Y;c\374\241X\211(b\265\036\370\232\215\2319\177\267\271\315\347\037\220\222\nF`\030I\001\271\002\242\323m\321\017{\374\241\343\320>\230d\001v\202g\010=\031\202\030\000\3578O-b\232\220(\314\225;$\004`\032\375\345\370O[(\233 c\227\t\363\310l\205\010U\017+\370\370\267\037\027\375\230\205/\236x9\251\t\3159\235\350\035\264\024\0161 \246i\241\372\206t\253^\2170\253iy\376`D\274Yh\244\361\255dr\234\247V\303\216\255ebr\362\014M\224\033\364\340-\322&1\274\301\336\337\353\031\332B Q\271e\314\362\210:\223-&r>f\265\210\242\235\373v\364\310\013J\016\201\330\360\364\313Rm\340v\n\315\307\240h\347\306~\020\356\246\022\264\211]*\202\310V\020\363Hg5\236\211]\0328h\032\3517\330~Z\2548\030\033N\355X\260\260\217\364C\010i\315\323\017\002\213s\2658\026P\"&\340c\365\272\001l\204c\003\003\020\204\351)na\257\177=\346\262\036#H\265\212\034\215\205\263T1yR\344\351t\302\"}BF\323\020\246`\245\212\206\034\034\\T\221\000%\236\204\315u\242\304}\302\261\275>--f##\324Fe\210\327\023VS^\003t\004\001#2(\373U\316\260dE32m\2246E@b\025\341-*\005\2577\334g\001\3003;V\341\336\352\355\342/5h\270\356\230\0240\371\211EO0\006b\364\370\371\001\227\317\243\373\324!\243\006\375\310Ph\347\r\346\330\211\341\021\316\353\237*\271\241\217\273B\215\214\241tO\013\223\030\377?J;\331\332\316\362\301g U\232\347We\0247\237\370AL\327\014l\354[F\315\020\320\340\210\262W\243""\005\010\325+\017\374]\311\024\341B@\276\2425\334";
+    PyObject *data = __Pyx_DecompressString(cstring, 727, 2);
     if (unlikely(!data)) __PYX_ERR(0, 1, __pyx_L1_error)
     const char* const bytes = __Pyx_PyBytes_AsString(data);
     #if !CYTHON_ASSUME_SAFE_MACROS
     if (likely(bytes)); else { Py_DECREF(data); __PYX_ERR(0, 1, __pyx_L1_error) }
     #endif
-    #elif (CYTHON_COMPRESS_STRINGS) != 0 /* compression: zlib (626 bytes) */
-const char* const cstring = "x\332\225\221;W\3330\024\307cH\332\264I{p\302\001Z\026\003CJ\037y\361ha\351\tp\350TJ\002\273\216\"\313\301%\361K2\220\255\243\307;j\364\230\221\217\3431\037!\037\241\222\235\364\261\265>:\322\225t\377W\277\377\365\007\243\331<NG\263m6\367M\243\275w|p$\307\205k\334\341aH\r\346Qb[65\r\313\r\014\306\203\220p\003s\036\330\375\220S\243\3068\016821\247\265\177\326P\307\374O\005\263\315\332\347\300#\310\242\324l\0207\240\215\201,p\217\307\r3$\267f\277\021r{\310\352\336\370\001\241K9]\216\317l\302\321\005}\340=ju1\033;\304v\353R\351\312L\20722\2243\262\035\304\003Lh\037\223\333\005\225Z%\001BV\350\020\204\220\315\320/\231\315\351\210!4\302R(\277\221k\206C\252\"\007\217\344\352\271\236\027P/p\te\014\005\324\227G\022\206`\317VI~\210\207Y\242\274Z\270QL\264>wS\317\334\324S7\214\334\320\021F\001v\006R\302(\237\277\"#\223Z8\034r\331\0265~\377\203,J\351\325\006\241\264\275\354r\374\255\377\235\312\226\276}3\357m\006\306\321\247\005\006\332W\034\350\343\034\004\035f$\350 EA=\352\313:\374\275a;\0131\273\265=d\332\314\303\234\334\354\346r\177;\317\375I\377C\233=\317\025^\213\252\350$\371u`bk\232\257\302a\266_\205s\261-\276\304{1N\322\323\212h\251\353}\225\247\256\317\304\222\250\305\325\270\223\244\247\201\320\247\371WB\237\225s\205gQ\031N\301O\212:l\210\365X\213\365\244\270\002O\301\027\332\354I\256\360\"\372\252\252\211Sq\027wc2Y\233\370\217\313\217\255\244\264\006}\241\311\347\317\343-\371\2565\351L\256\036\265\244T\205V\222/E\255\214wS\354\210n\222\337\020\313\nH\207MY\307O\362\025x'z\342^\226\223\034\025\330\025{\"\005?\022'b\020_M\264\251\264\350\317\212\271B)\332\216N\"\002\253\320\223^v\304u\\I]\026+\260\r'@$\300\251\0102\346ehAG\005K\260\005m\350\002\006\177Z|\031\rRmM%\225\242vt\005ZR\326AO\312+\240M\323H\001\377\004\031\332l\216";
-    PyObject *data = __Pyx_DecompressString(cstring, 626, 1);
+    #elif (CYTHON_COMPRESS_STRINGS) != 0 /* compression: zlib (618 bytes) */
+const char* const cstring = "x\332\225Q\315R\023A\020\336\350\"\321 E\320\322*\265\312\005\265\"\024\344\217?\341b\001Vy\260D\210\336\273&\263\023\030\223\354\337\314\"{\363\270\3079\316q\217<\202G\037c\217y\004\036\301\236M\202p\323\255\256\231o\272\373\353\376\272w\335i6\367\nk\266\335\346\246\333\332\335i\2567[h\327\201\033\256\366\306\336\326.\33258\362\235s2\210\231#\002Fy\2173\327\351\371\221#d\024S\351\020)#\336\215%sjB\222H\202K$\253\3753\207y\356\1772\004wk\357\243\200B\2171\267A\375\2105N\261\300\017\2224\334\230\366\335n#\226| \352Ar\001p\214\307q\362\201S\tG\354BvX\357\204\210\304\243\334\257#\323\307L\217\t:\300\023\270\0072\"\224u\t\355OU\231\033\025\000\364b\217\002\000\027pM\343\222\r\005\300\220 \021\277\241\357\306\003f\220G\206x\007~\020D,\210|\312\204\200\210\205\350B1\224\004\334$\2051\031\214\02314\235\306hb\365\3114\365\3614\365b\032A\317\330\220@D\274S\244\010&']\020\271\254G\342\201\304\265\030\373\373\017\306\250Po\036\000\305z\305q\362\245\373\235\341JW\337rOno\202\\s\020\254X7\002\223\245\217\025Kx7\325\007\233F \354L\024\302\366X\"l\025\032\241\303Bl0\2567!\213>\017\300\345\" \222\236\255X\326\271\317]\347Vcg\365\366\265bA@\"\301\212\031\254\333+\264n\256a\232'}H\206\356\317\322\325\003k\346\231~\244\367s\373\251\022z\351\252l\336\325\221\275\240*\272\245?f\255\334\236O\373\272\252\337\350\320\004\357\247s\352P\205yyA\315\252P\227\263\331,\274,]\335\263f\036\246\237\365\363\354\323e\362\253\374\273\224\333\225\2645.\377R\323\254\232\333/\364!V\300\367\242\252\2525M\264\310\226\262\215\214danW\321\265\252\367\365\267\254\232\2756\256\221\375D\021\323\256\222.\247\007)U\217U\007\345\275\302\214EC\312\313\213jY\035(\212\322\017u\204\365Q\317]\325R\373\006\334QK\252\255N\024Q\341\250<\237\236\026\334\232I\252\244\355\364\253*\345s\3301\237[P\245Q\201\214\330?j\024oF";
+    PyObject *data = __Pyx_DecompressString(cstring, 618, 1);
     if (unlikely(!data)) __PYX_ERR(0, 1, __pyx_L1_error)
     const char* const bytes = __Pyx_PyBytes_AsString(data);
     #if !CYTHON_ASSUME_SAFE_MACROS
     if (likely(bytes)); else { Py_DECREF(data); __PYX_ERR(0, 1, __pyx_L1_error) }
     #endif
-    #else /* compression: none (968 bytes) */
-const char* const bytes = "- 00:00:0002d04d 23:59:59No value specified for struct attribute 'start_date'No value specified for struct attribute 'end_date'No value specified for struct attribute 'sid'?rpc_feed/core/gateway/duckdb/utils.pyx__Pyx_PyDict_NextRefQasyncio.coroutinescline_in_tracebackend_dateend_str__func___is_coroutineitems__main____module____name__poppreprocess_req__pyx_capi____qualname__reqrpc_feed.core.gateway.duckdb.utilsschema_range__set_name__setdefaultsidsidsstart_datestart_str__test__valuesPyObject *(struct __pyx_t_8rpc_feed_4core_7gateway_6duckdb_5utils_Request, int __pyx_skip_dispatch)\000\000preprocess_req\000schema_range\200\001\360\n\000\005\032\230\023\230A\330\004\027\220s\230!\340\004\023\2206\230\023\230A\330\004\024\220F\230\"\230G\2403\240a\330\004\023\2206\230\022\2301\340\004\023\2204\220s\230!\330\004\024\220D\230\002\230'\240\023\240A\330\004\023\2204\220r\230\021\340\004\031\230\021\360\014\000\005\t\210\014\220C\220q\330\010\021\220\030\230\027\240\001\240\021\330\010\020\220\007\220q\230\001\360\006\000\005\r\210M\230\022\2301\230C\230v\240Q\240c\250\026\250q\260\003\2601\330\013\026\220b\230\001\230\023\230F\240!\2403\240f\250A\250S\260\001\330\013\023\2201\330\004\013\2101\200\001\360\n\000\005\033\230#\230Q\330\004\030\230\003\2301\340\004\021\220\033\230C\230q\330\004\022\220+\230R\230w\240c\250\021\340\004\022\220)\2303\230a\330\004\023\2209\230B\230g\240S\250\001\340\004\027\220q\360\010\000\005\013\210\"\210B\210c\220\024\220R\220s\230#\230T\240\022\2403\240a\330\010\022\220\"\220B\220c\230\023\230C\230r\240\021\330\010\020\220\003\2201\220A\330\010\020\220\002\220!\2202\220Q\220a\220q\340\010\016\210g\220R\220s\230'\240\021\330\010\013\2102\210S\220\001\330\014\021\220\021\330\014\020\220\001\340\014\021\220\021\330\004\013\2101";
+    #else /* compression: none (1008 bytes) */
+const char* const bytes = "- 00:00:0002d04d1970-01-01 00:00:001970-01-01 23:59:59 23:59:59No value specified for struct attribute 'start_date'No value specified for struct attribute 'end_date'No value specified for struct attribute 'sid'?rpc_feed/core/gateway/duckdb/utils.pyx__Pyx_PyDict_NextRefQasyncio.coroutinescline_in_tracebackend_dateend_str__func___is_coroutineitems__main____module____name__poppreprocess_req__pyx_capi____qualname__reqrpc_feed.core.gateway.duckdb.utilsschema_range__set_name__setdefaultsidsidsstart_datestart_str__test__valuesPyObject *(int64_t, int)\000PyObject *(struct __pyx_t_8rpc_feed_4core_7gateway_6duckdb_5utils_Request, int __pyx_skip_dispatch)\000\000void (int64_t, int *, int *, int *)\000_parse_date\000preprocess_req\000schema_range\000_parse_to_ymd\200\001\360\n\000\005\032\230\023\230A\330\004\027\220s\230!\360\010\000\005\032\230\021\340\004\020\220\013\2301\230G\2401\330\004\016\210k\230\021\230%\230q\360\010\000\005\t\210\014\220C\220q\330\010\020\220\007\220q\230\010\240\007\240q\250\001\360\006\000\005\r\210M\230\033\240K\250y\270\010\300\001\330\004\013\2101\200\001\360\n\000\005\037\230c\240\021\330\004\034\230C\230q\360\n\000\005\022\220\021\220,\230a\230s\240!\2403\240a\240q\330\004\021\220\021\220*\230A\230T\240\021\240$\240a\240q\340\004\026\220a\360\010\000\005\013\210\"\210B\210c\220\024\220R\220s\230#\230T\240\022\2403\240a\330\010\022\220\"\220B\220c\230\023\230C\230r\240\021\330\010\020\220\003\2201\220A\330\010\020\220\002\220!\2202\220Q\220a\220q\340\010\016\210g\220R\220s\230'\240\021\330\010\013\2102\210S\220\001\330\014\021\220\021\330\014\020\220\001\340\014\021\220\021\330\004\013\2101";
     PyObject *data = NULL;
     CYTHON_UNUSED_VAR(__Pyx_DecompressString);
     #endif
     PyObject **stringtab = __pyx_mstate->__pyx_string_tab;
     Py_ssize_t pos = 0;
-    for (int i = 0; i < 37; i++) {
+    for (int i = 0; i < 39; i++) {
       Py_ssize_t bytes_length = index[i].length;
       PyObject *string = PyUnicode_DecodeUTF8(bytes + pos, bytes_length, NULL);
-      if (likely(string) && i >= 10) PyUnicode_InternInPlace(&string);
+      if (likely(string) && i >= 12) PyUnicode_InternInPlace(&string);
       if (unlikely(!string)) {
         Py_XDECREF(data);
         __PYX_ERR(0, 1, __pyx_L1_error)
@@ -4953,7 +5513,7 @@ const char* const bytes = "- 00:00:0002d04d 23:59:59No value specified for struc
       stringtab[i] = string;
       pos += bytes_length;
     }
-    for (int i = 37; i < 40; i++) {
+    for (int i = 39; i < 42; i++) {
       Py_ssize_t bytes_length = index[i].length;
       PyObject *string = PyBytes_FromStringAndSize(bytes + pos, bytes_length);
       stringtab[i] = string;
@@ -4964,14 +5524,14 @@ const char* const bytes = "- 00:00:0002d04d 23:59:59No value specified for struc
       }
     }
     Py_XDECREF(data);
-    for (Py_ssize_t i = 0; i < 40; i++) {
+    for (Py_ssize_t i = 0; i < 42; i++) {
       if (unlikely(PyObject_Hash(stringtab[i]) == -1)) {
         __PYX_ERR(0, 1, __pyx_L1_error)
       }
     }
     #if CYTHON_IMMORTAL_CONSTANTS
     {
-      PyObject **table = stringtab + 37;
+      PyObject **table = stringtab + 39;
       for (Py_ssize_t i=0; i<3; ++i) {
         #if CYTHON_COMPILING_IN_CPYTHON_FREETHREADING
         Py_SET_REFCNT(table[i], _Py_IMMORTAL_REFCNT_LOCAL);
@@ -4982,6 +5542,26 @@ const char* const bytes = "- 00:00:0002d04d 23:59:59No value specified for struc
     }
     #endif
   }
+  {
+    PyObject **numbertab = __pyx_mstate->__pyx_number_tab + 0;
+    int64_t const cint_constants_8[] = {100000000000LL,100000000000000LL,100000000000000000LL};
+    for (int i = 0; i < 3; i++) {
+      numbertab[i] = PyLong_FromLongLong(cint_constants_8[i - 0]);
+      if (unlikely(!numbertab[i])) __PYX_ERR(0, 1, __pyx_L1_error)
+    }
+  }
+  #if CYTHON_IMMORTAL_CONSTANTS
+  {
+    PyObject **table = __pyx_mstate->__pyx_number_tab;
+    for (Py_ssize_t i=0; i<3; ++i) {
+      #if CYTHON_COMPILING_IN_CPYTHON_FREETHREADING
+      Py_SET_REFCNT(table[i], _Py_IMMORTAL_REFCNT_LOCAL);
+      #else
+      Py_SET_REFCNT(table[i], _Py_IMMORTAL_INITIAL_REFCNT);
+      #endif
+    }
+  }
+  #endif
   return 0;
   __pyx_L1_error:;
   return -1;
@@ -4993,7 +5573,7 @@ typedef struct {
     unsigned int num_kwonly_args : 1;
     unsigned int nlocals : 1;
     unsigned int flags : 10;
-    unsigned int first_line : 6;
+    unsigned int first_line : 7;
 } __Pyx_PyCode_New_function_description;
 /* NewCodeObj.proto */
 static PyObject* __Pyx_PyCode_New(
@@ -5010,14 +5590,14 @@ static int __Pyx_CreateCodeObjects(__pyx_mstatetype *__pyx_mstate) {
   PyObject* tuple_dedup_map = PyDict_New();
   if (unlikely(!tuple_dedup_map)) return -1;
   {
-    const __Pyx_PyCode_New_function_description descr = {1, 0, 0, 1, (unsigned int)(CO_OPTIMIZED|CO_NEWLOCALS), 11};
+    const __Pyx_PyCode_New_function_description descr = {1, 0, 0, 1, (unsigned int)(CO_OPTIMIZED|CO_NEWLOCALS), 94};
     PyObject* const varnames[] = {__pyx_mstate->__pyx_n_u_req};
-    __pyx_mstate_global->__pyx_codeobj_tab[0] = __Pyx_PyCode_New(descr, varnames, __pyx_mstate->__pyx_kp_u_rpc_feed_core_gateway_duckdb_uti_2, __pyx_mstate->__pyx_n_u_schema_range, __pyx_mstate->__pyx_kp_b_iso88591_Q_1_Cq_Rwc_3a_9BgS_q_Bc_Rs_T_3a, tuple_dedup_map); if (unlikely(!__pyx_mstate_global->__pyx_codeobj_tab[0])) goto bad;
+    __pyx_mstate_global->__pyx_codeobj_tab[0] = __Pyx_PyCode_New(descr, varnames, __pyx_mstate->__pyx_kp_u_rpc_feed_core_gateway_duckdb_uti_2, __pyx_mstate->__pyx_n_u_schema_range, __pyx_mstate->__pyx_kp_b_iso88591_c_Cq_as_3aq_AT_aq_a_Bc_Rs_T_3a, tuple_dedup_map); if (unlikely(!__pyx_mstate_global->__pyx_codeobj_tab[0])) goto bad;
   }
   {
-    const __Pyx_PyCode_New_function_description descr = {1, 0, 0, 1, (unsigned int)(CO_OPTIMIZED|CO_NEWLOCALS), 43};
+    const __Pyx_PyCode_New_function_description descr = {1, 0, 0, 1, (unsigned int)(CO_OPTIMIZED|CO_NEWLOCALS), 126};
     PyObject* const varnames[] = {__pyx_mstate->__pyx_n_u_req};
-    __pyx_mstate_global->__pyx_codeobj_tab[1] = __Pyx_PyCode_New(descr, varnames, __pyx_mstate->__pyx_kp_u_rpc_feed_core_gateway_duckdb_uti_2, __pyx_mstate->__pyx_n_u_preprocess_req, __pyx_mstate->__pyx_kp_b_iso88591_A_s_6_A_F_G3a_6_1_4s_D_A_4r_Cq, tuple_dedup_map); if (unlikely(!__pyx_mstate_global->__pyx_codeobj_tab[1])) goto bad;
+    __pyx_mstate_global->__pyx_codeobj_tab[1] = __Pyx_PyCode_New(descr, varnames, __pyx_mstate->__pyx_kp_u_rpc_feed_core_gateway_duckdb_uti_2, __pyx_mstate->__pyx_n_u_preprocess_req, __pyx_mstate->__pyx_kp_b_iso88591_A_s_1G1_k_q_Cq_q_q_M_Ky_1, tuple_dedup_map); if (unlikely(!__pyx_mstate_global->__pyx_codeobj_tab[1])) goto bad;
   }
   Py_DECREF(tuple_dedup_map);
   return 0;
@@ -5867,6 +6447,117 @@ static CYTHON_INLINE PyObject* __Pyx____Pyx_PyUnicode_From_int(int value, Py_ssi
         return PyUnicode_FromOrdinal(*dpos);
     }
     return __Pyx_PyUnicode_BuildFromAscii(ulength, dpos, (int) length, prepend_sign, padding_char);
+}
+
+/* JoinPyUnicode */
+static PyObject* __Pyx_PyUnicode_Join(PyObject** values, Py_ssize_t value_count, Py_ssize_t result_ulength,
+                                      Py_UCS4 max_char) {
+#if CYTHON_USE_UNICODE_INTERNALS && CYTHON_ASSUME_SAFE_MACROS && !CYTHON_AVOID_BORROWED_REFS
+    PyObject *result_uval;
+    int result_ukind, kind_shift;
+    Py_ssize_t i, char_pos;
+    void *result_udata;
+    if (max_char > 1114111) max_char = 1114111;
+    result_uval = PyUnicode_New(result_ulength, max_char);
+    if (unlikely(!result_uval)) return NULL;
+    result_ukind = (max_char <= 255) ? PyUnicode_1BYTE_KIND : (max_char <= 65535) ? PyUnicode_2BYTE_KIND : PyUnicode_4BYTE_KIND;
+    kind_shift = (result_ukind == PyUnicode_4BYTE_KIND) ? 2 : result_ukind - 1;
+    result_udata = PyUnicode_DATA(result_uval);
+    assert(kind_shift == 2 || kind_shift == 1 || kind_shift == 0);
+    if (unlikely((PY_SSIZE_T_MAX >> kind_shift) - result_ulength < 0))
+        goto overflow;
+    char_pos = 0;
+    for (i=0; i < value_count; i++) {
+        int ukind;
+        Py_ssize_t ulength;
+        void *udata;
+        PyObject *uval = values[i];
+        #if !CYTHON_COMPILING_IN_LIMITED_API
+        if (__Pyx_PyUnicode_READY(uval) == (-1))
+            goto bad;
+        #endif
+        ulength = __Pyx_PyUnicode_GET_LENGTH(uval);
+        #if !CYTHON_ASSUME_SAFE_SIZE
+        if (unlikely(ulength < 0)) goto bad;
+        #endif
+        if (unlikely(!ulength))
+            continue;
+        if (unlikely((PY_SSIZE_T_MAX >> kind_shift) - ulength < char_pos))
+            goto overflow;
+        ukind = __Pyx_PyUnicode_KIND(uval);
+        udata = __Pyx_PyUnicode_DATA(uval);
+        if (ukind == result_ukind) {
+            memcpy((char *)result_udata + (char_pos << kind_shift), udata, (size_t) (ulength << kind_shift));
+        } else {
+            #if PY_VERSION_HEX >= 0x030d0000
+            if (unlikely(PyUnicode_CopyCharacters(result_uval, char_pos, uval, 0, ulength) < 0)) goto bad;
+            #elif CYTHON_COMPILING_IN_CPYTHON || defined(_PyUnicode_FastCopyCharacters)
+            _PyUnicode_FastCopyCharacters(result_uval, char_pos, uval, 0, ulength);
+            #else
+            Py_ssize_t j;
+            for (j=0; j < ulength; j++) {
+                Py_UCS4 uchar = __Pyx_PyUnicode_READ(ukind, udata, j);
+                __Pyx_PyUnicode_WRITE(result_ukind, result_udata, char_pos+j, uchar);
+            }
+            #endif
+        }
+        char_pos += ulength;
+    }
+    return result_uval;
+overflow:
+    PyErr_SetString(PyExc_OverflowError, "join() result is too long for a Python string");
+bad:
+    Py_DECREF(result_uval);
+    return NULL;
+#else
+    Py_ssize_t i;
+    PyObject *result = NULL;
+    PyObject *value_tuple = PyTuple_New(value_count);
+    if (unlikely(!value_tuple)) return NULL;
+    CYTHON_UNUSED_VAR(max_char);
+    CYTHON_UNUSED_VAR(result_ulength);
+    for (i=0; i<value_count; i++) {
+        if (__Pyx_PyTuple_SET_ITEM(value_tuple, i, values[i]) != (0)) goto bad;
+        Py_INCREF(values[i]);
+    }
+    result = PyUnicode_Join(__pyx_mstate_global->__pyx_empty_unicode, value_tuple);
+bad:
+    Py_DECREF(value_tuple);
+    return result;
+#endif
+}
+
+/* decode_c_string */
+static CYTHON_INLINE PyObject* __Pyx_decode_c_string(
+         const char* cstring, Py_ssize_t start, Py_ssize_t stop,
+         const char* encoding, const char* errors,
+         PyObject* (*decode_func)(const char *s, Py_ssize_t size, const char *errors)) {
+    Py_ssize_t length;
+    if (unlikely((start < 0) | (stop < 0))) {
+        size_t slen = strlen(cstring);
+        if (unlikely(slen > (size_t) PY_SSIZE_T_MAX)) {
+            PyErr_SetString(PyExc_OverflowError,
+                            "c-string too long to convert to Python");
+            return NULL;
+        }
+        length = (Py_ssize_t) slen;
+        if (start < 0) {
+            start += length;
+            if (start < 0)
+                start = 0;
+        }
+        if (stop < 0)
+            stop += length;
+    }
+    if (unlikely(stop <= start))
+        return __Pyx_NewRef(__pyx_mstate_global->__pyx_empty_unicode);
+    length = stop - start;
+    cstring += start;
+    if (decode_func) {
+        return decode_func(cstring, length, errors);
+    } else {
+        return PyUnicode_Decode(cstring, length, encoding, errors);
+    }
 }
 
 /* UnicodeConcatInPlace */
@@ -6884,84 +7575,6 @@ static CYTHON_INLINE PyObject* __Pyx_decode_c_bytes(
     } else {
         return PyUnicode_Decode(cstring, length, encoding, errors);
     }
-}
-
-/* JoinPyUnicode */
-static PyObject* __Pyx_PyUnicode_Join(PyObject** values, Py_ssize_t value_count, Py_ssize_t result_ulength,
-                                      Py_UCS4 max_char) {
-#if CYTHON_USE_UNICODE_INTERNALS && CYTHON_ASSUME_SAFE_MACROS && !CYTHON_AVOID_BORROWED_REFS
-    PyObject *result_uval;
-    int result_ukind, kind_shift;
-    Py_ssize_t i, char_pos;
-    void *result_udata;
-    if (max_char > 1114111) max_char = 1114111;
-    result_uval = PyUnicode_New(result_ulength, max_char);
-    if (unlikely(!result_uval)) return NULL;
-    result_ukind = (max_char <= 255) ? PyUnicode_1BYTE_KIND : (max_char <= 65535) ? PyUnicode_2BYTE_KIND : PyUnicode_4BYTE_KIND;
-    kind_shift = (result_ukind == PyUnicode_4BYTE_KIND) ? 2 : result_ukind - 1;
-    result_udata = PyUnicode_DATA(result_uval);
-    assert(kind_shift == 2 || kind_shift == 1 || kind_shift == 0);
-    if (unlikely((PY_SSIZE_T_MAX >> kind_shift) - result_ulength < 0))
-        goto overflow;
-    char_pos = 0;
-    for (i=0; i < value_count; i++) {
-        int ukind;
-        Py_ssize_t ulength;
-        void *udata;
-        PyObject *uval = values[i];
-        #if !CYTHON_COMPILING_IN_LIMITED_API
-        if (__Pyx_PyUnicode_READY(uval) == (-1))
-            goto bad;
-        #endif
-        ulength = __Pyx_PyUnicode_GET_LENGTH(uval);
-        #if !CYTHON_ASSUME_SAFE_SIZE
-        if (unlikely(ulength < 0)) goto bad;
-        #endif
-        if (unlikely(!ulength))
-            continue;
-        if (unlikely((PY_SSIZE_T_MAX >> kind_shift) - ulength < char_pos))
-            goto overflow;
-        ukind = __Pyx_PyUnicode_KIND(uval);
-        udata = __Pyx_PyUnicode_DATA(uval);
-        if (ukind == result_ukind) {
-            memcpy((char *)result_udata + (char_pos << kind_shift), udata, (size_t) (ulength << kind_shift));
-        } else {
-            #if PY_VERSION_HEX >= 0x030d0000
-            if (unlikely(PyUnicode_CopyCharacters(result_uval, char_pos, uval, 0, ulength) < 0)) goto bad;
-            #elif CYTHON_COMPILING_IN_CPYTHON || defined(_PyUnicode_FastCopyCharacters)
-            _PyUnicode_FastCopyCharacters(result_uval, char_pos, uval, 0, ulength);
-            #else
-            Py_ssize_t j;
-            for (j=0; j < ulength; j++) {
-                Py_UCS4 uchar = __Pyx_PyUnicode_READ(ukind, udata, j);
-                __Pyx_PyUnicode_WRITE(result_ukind, result_udata, char_pos+j, uchar);
-            }
-            #endif
-        }
-        char_pos += ulength;
-    }
-    return result_uval;
-overflow:
-    PyErr_SetString(PyExc_OverflowError, "join() result is too long for a Python string");
-bad:
-    Py_DECREF(result_uval);
-    return NULL;
-#else
-    Py_ssize_t i;
-    PyObject *result = NULL;
-    PyObject *value_tuple = PyTuple_New(value_count);
-    if (unlikely(!value_tuple)) return NULL;
-    CYTHON_UNUSED_VAR(max_char);
-    CYTHON_UNUSED_VAR(result_ulength);
-    for (i=0; i<value_count; i++) {
-        if (__Pyx_PyTuple_SET_ITEM(value_tuple, i, values[i]) != (0)) goto bad;
-        Py_INCREF(values[i]);
-    }
-    result = PyUnicode_Join(__pyx_mstate_global->__pyx_empty_unicode, value_tuple);
-bad:
-    Py_DECREF(value_tuple);
-    return result;
-#endif
 }
 
 /* FunctionExport */
@@ -9204,6 +9817,75 @@ CYTHON_UNUSED static int __Pyx_VectorcallBuilder_AddArg_Check(PyObject *key, PyO
     return PyDict_SetItem(builder, key, value);
 }
 #endif
+
+/* CIntToPy */
+static CYTHON_INLINE PyObject* __Pyx_PyLong_From_int64_t(int64_t value) {
+#ifdef __Pyx_HAS_GCC_DIAGNOSTIC
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wconversion"
+#endif
+    const int64_t neg_one = (int64_t) -1, const_zero = (int64_t) 0;
+#ifdef __Pyx_HAS_GCC_DIAGNOSTIC
+#pragma GCC diagnostic pop
+#endif
+    const int is_unsigned = neg_one > const_zero;
+    if (is_unsigned) {
+        if (sizeof(int64_t) < sizeof(long)) {
+            return PyLong_FromLong((long) value);
+        } else if (sizeof(int64_t) <= sizeof(unsigned long)) {
+            return PyLong_FromUnsignedLong((unsigned long) value);
+#if !CYTHON_COMPILING_IN_PYPY
+        } else if (sizeof(int64_t) <= sizeof(unsigned PY_LONG_LONG)) {
+            return PyLong_FromUnsignedLongLong((unsigned PY_LONG_LONG) value);
+#endif
+        }
+    } else {
+        if (sizeof(int64_t) <= sizeof(long)) {
+            return PyLong_FromLong((long) value);
+        } else if (sizeof(int64_t) <= sizeof(PY_LONG_LONG)) {
+            return PyLong_FromLongLong((PY_LONG_LONG) value);
+        }
+    }
+    {
+        unsigned char *bytes = (unsigned char *)&value;
+#if !CYTHON_COMPILING_IN_LIMITED_API && PY_VERSION_HEX >= 0x030d00A4
+        if (is_unsigned) {
+            return PyLong_FromUnsignedNativeBytes(bytes, sizeof(value), -1);
+        } else {
+            return PyLong_FromNativeBytes(bytes, sizeof(value), -1);
+        }
+#elif !CYTHON_COMPILING_IN_LIMITED_API && PY_VERSION_HEX < 0x030d0000
+        int one = 1; int little = (int)*(unsigned char *)&one;
+        return _PyLong_FromByteArray(bytes, sizeof(int64_t),
+                                     little, !is_unsigned);
+#else
+        int one = 1; int little = (int)*(unsigned char *)&one;
+        PyObject *from_bytes, *result = NULL, *kwds = NULL;
+        PyObject *py_bytes = NULL, *order_str = NULL;
+        from_bytes = PyObject_GetAttrString((PyObject*)&PyLong_Type, "from_bytes");
+        if (!from_bytes) return NULL;
+        py_bytes = PyBytes_FromStringAndSize((char*)bytes, sizeof(int64_t));
+        if (!py_bytes) goto limited_bad;
+        order_str = PyUnicode_FromString(little ? "little" : "big");
+        if (!order_str) goto limited_bad;
+        {
+            PyObject *args[3+(CYTHON_VECTORCALL ? 1 : 0)] = { NULL, py_bytes, order_str };
+            if (!is_unsigned) {
+                kwds = __Pyx_MakeVectorcallBuilderKwds(1);
+                if (!kwds) goto limited_bad;
+                if (__Pyx_VectorcallBuilder_AddArgStr("signed", __Pyx_NewRef(Py_True), kwds, args+3, 0) < 0) goto limited_bad;
+            }
+            result = __Pyx_Object_Vectorcall_CallFromBuilder(from_bytes, args+1, 2 | __Pyx_PY_VECTORCALL_ARGUMENTS_OFFSET, kwds);
+        }
+        limited_bad:
+        Py_XDECREF(kwds);
+        Py_XDECREF(order_str);
+        Py_XDECREF(py_bytes);
+        Py_XDECREF(from_bytes);
+        return result;
+#endif
+    }
+}
 
 /* CIntToPy */
 static CYTHON_INLINE PyObject* __Pyx_PyLong_From_int(int value) {
