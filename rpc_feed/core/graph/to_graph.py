@@ -36,11 +36,11 @@ class Graph(object):
         self.w_node: NamedNode = None
         self.edges = None
         
-        # 并发配置
+        # concurrency settings
         self.procs = int(os.getenv("CONCURRENT_PROCS", max(1, int(os.cpu_count() * 0.5))))
         self.consumer_workers = int(os.getenv("CONSUMER_WORKERS", 4))
         
-        # 内存与队列管理
+        # memory management
         self.memory_mgr = GraphMemoryManager()
         self.queue = None
         self.loop = None

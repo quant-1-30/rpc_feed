@@ -15,6 +15,9 @@
 # blob to transform string to bytes
 # alembic init alembic --template gener / async 
 # alembic revision -m "change sid and name from str to bytes"
+# alembic upgrade head / trade@head
+# alembic heads
+# alembic revision --head 30aae0684ec1 -m "revise unqiue order_id in order_bit"
 
 # python -m grpc_tools.protoc -I . --python_out=. --pyi_out=. --grpc_python_out=. service.proto 
 
@@ -90,9 +93,9 @@ UCRT：全称 Universal C Runtime（通用 C 运行时），是 Windows 10/11 �
 rsync -avzP --delete src dst
 
 # smb sever message block \\电脑IP\共享文件夹名
+# msys2 cd /c/
 # rsync -avzP minute/ hengxinliu@192.168.64.1:/Users/hengxinliu/Downloads/rsync/
 
-# msys2 cd /c/
 # 临时挂载（当前会话有效）
 mkdir -p /c
 mount C:/ /c

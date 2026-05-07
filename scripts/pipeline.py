@@ -40,13 +40,13 @@ if __name__ == "__main__":
     args = parse_args()
 
     # struct
-    # dataset_path = Path("~/Downloads/rsync/202603").expanduser()
+    # dataset_path = Path("~/Downloads/rsync/202604").expanduser()
     # xml = "../xml/tick.graphml"
     # bt_feed.load(xml, str(dataset_path), prefix=".01_stock")
 
-    # dataset_path = Path("~/Downloads/rsync/202603").expanduser() 
-    # xml = "../xml/fund.graphml"
-    # bt_feed.load(xml, str(dataset_path), prefix=".01_fund")
+    dataset_path = Path("~/Downloads/rsync/202604").expanduser() 
+    xml = "../xml/fund.graphml"
+    bt_feed.load(xml, str(dataset_path), prefix=".01_fund")
    
     # # dataset csv
     # dataset_path = Path("~/Downloads/raw_data/csv/stock/2022").expanduser()
@@ -62,7 +62,7 @@ if __name__ == "__main__":
     # xml = "../xml/benchmark_csv.graphml"
     # bt_feed.load(xml, str(dataset_path), prefix="csv_benchmark")
 
-    # test
-    dataset_path = Path("~/Downloads/rsync/202603").expanduser()
-    xml = "../xml/test.graphml"
-    bt_feed.load(xml, str(dataset_path), prefix=".01_stock")
+    # # test
+    # dataset_path = Path("~/Downloads/rsync/202604").expanduser()
+    # xml = "../xml/test.graphml"
+    # bt_feed.load(xml, str(dataset_path), prefix=".01_stock")
