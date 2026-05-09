@@ -44,14 +44,16 @@ if __name__ == "__main__":
     # xml = "../xml/tick.graphml"
     # bt_feed.load(xml, str(dataset_path), prefix=".01_stock")
 
-    dataset_path = Path("~/Downloads/rsync/202604").expanduser() 
-    xml = "../xml/fund.graphml"
-    bt_feed.load(xml, str(dataset_path), prefix=".01_fund")
+    # dataset_path = Path("~/Downloads/rsync/202604").expanduser() 
+    # xml = "../xml/fund.graphml"
+    # bt_feed.load(xml, str(dataset_path), prefix=".01_fund")
    
-    # # dataset csv
-    # dataset_path = Path("~/Downloads/raw_data/csv/stock/2022").expanduser()
-    # xml = "../xml/tick_csv.graphml"
-    # bt_feed.load(xml, str(dataset_path), prefix="csv_stock")
+    # dataset csv
+    year = 2004
+    dataset_path = Path(f"~/Downloads/raw_data/csv/stock/{year}").expanduser()
+    xml = "../xml/tick_csv.graphml"
+    bt_feed.load(xml, str(dataset_path), prefix="csv_stock", parallel=True)
+    print(f"Finished loading {year} stock csv data")
    
     # dataset_path = Path("~/Downloads/raw_data/csv/fund/2022").expanduser()
     # xml = "../xml/fund_csv.graphml"

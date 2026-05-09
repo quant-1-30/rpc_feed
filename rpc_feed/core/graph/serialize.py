@@ -5,13 +5,17 @@ import os
 import gc
 import time
 import psutil
+import traceback
 import threading
 import numpy as np
+from collections import namedtuple
 from typing import List, Dict, Any, Tuple
 from rpc_feed.utils.io import build_from_cfg
 
 
 _WORKER_PIPELINE: List[Any] = []
+
+NamedNode = namedtuple("Node", ["instance", "params"])
 
 
 def convert_node_to_serializable(named_node) -> Tuple[str, Dict]:
@@ -44,9 +48,12 @@ def run_sync_pipeline_global(item: Any) -> Any:
         current_data = item
         for node in _WORKER_PIPELINE:
             current_data = node.next(current_data)
-            if current_data is None: # 如果中间节点返回 None，终止链条
+            if current_data is None: # break in none in chain 
                 return None
         return current_data
     except Exception as e:
-        print(f"❌ [Worker] 处理数据出错: {e}")
+        print(f"❌ [Worker] run_sync_pipeline_global: {e}")
+        traceback.print_exc()
         return None
+    finally:
+        gc.collect() # locky reuse process

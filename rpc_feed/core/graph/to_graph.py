@@ -5,29 +5,36 @@ import json
 import asyncio
 import os
 import networkx as nx
-from collections import namedtuple
 from typing import List, Any, Iterable
-from loky import get_reusable_executor  # 强大的进程池，内置 cloudpickle 支持
+from loky import get_reusable_executor, backend
 from pyvis.network import Network
 
 from .node import *
 from .util import fix_macos_mp, signal_handler
-from .serialize import init_worker, convert_node_to_serializable, run_sync_pipeline_global
+from .serialize import NamedNode, init_worker, convert_node_to_serializable, run_sync_pipeline_global
 from .monitor import GraphMemoryManager
 from rpc_feed.utils.loader import get_module_by_module_path
 from rpc_feed.utils.io import build_from_cfg
 from rpc_feed.utils.wrapper import singleton
 
-NamedNode = namedtuple("Node", ["instance", "params"])
-
+# spawn not fork
 fix_macos_mp()
+backend.context.set_start_method('spawn', force=True) 
+
+# avoid deadlock due to mp in child process
+os.environ["OMP_NUM_THREADS"] = "1"
+os.environ["OPENBLAS_NUM_THREADS"] = "1"
+os.environ["MKL_NUM_THREADS"] = "1"
+os.environ["VECLIB_MAXIMUM_THREADS"] = "1"
+os.environ["NUMEXPR_NUM_THREADS"] = "1"
+
 
 @singleton
 class Graph(object):
     """
     DAG 调度引擎：
-    1. CPU 密集型任务由 loky (ProcessPool) 处理。
-    2. I/O 密集型/异步 Writer 任务由 asyncio 协程处理。
+    1. CPU 密集型任务由 loky ProcessPool
+    2. I/O 密集型/异步 Writer asyncio
     """
     cfg_cache = {}
 
@@ -37,7 +44,10 @@ class Graph(object):
         self.edges = None
         
         # concurrency settings
-        self.procs = int(os.getenv("CONCURRENT_PROCS", max(1, int(os.cpu_count() * 0.5))))
+        procs = int(os.getenv("CONCURRENT_PROCS", max(1, int(os.cpu_count() * 0.2))))
+        self.sem_size = procs * 2 # control the number of concurrent tasks to avoid OOM
+        self.q_size = int(os.getenv("QUEUE_SIZE", procs * 2))
+        self.procs = procs
         self.consumer_workers = int(os.getenv("CONSUMER_WORKERS", 4))
         
         # memory management
@@ -49,8 +59,7 @@ class Graph(object):
 
     def _init_async_resource(self, loop):
         self.loop = loop
-        # 初始化队列，maxsize 起到背压(backpressure)作用
-        self.queue = asyncio.Queue(maxsize=self.memory_mgr.q_size)
+        self.queue = asyncio.Queue(maxsize=self.q_size) # pressure control
 
     @classmethod
     def get_cfg(cls, cfg_path):
@@ -81,7 +90,6 @@ class Graph(object):
         if not self.w_node:
             print("Warning: No writer node defined in the graph.")
 
-    # --- 监控逻辑 ---
     async def monitor_background(self):
         """监控内存使用情况，必要时触发 GC"""
         while not self._gc_event.is_set():
@@ -89,7 +97,7 @@ class Graph(object):
             await asyncio.sleep(self.memory_check_interval)
         self.memory_mgr.cleanup_gc()
 
-    # --- 消费者逻辑 (Async Tail/Writer) ---
+    # --- Async Tail/Writer ---
     async def async_consume_worker(self):
         """Writer Node"""
         instance = self.w_node.instance
@@ -101,7 +109,7 @@ class Graph(object):
             
             try:
                 if instance.p.is_async:
-                    await instance.next(item)
+                    await instance.next(item) # may raise exception, should be caught to avoid worker crash
                 else:
                     await self.loop.run_in_executor(None, instance.next, item)
             except Exception as e:
@@ -110,28 +118,45 @@ class Graph(object):
                 self.queue.task_done()
 
     async def async_produce_parallel(self, iterables: Iterable):
+        pending_tasks = set()
         serialized_configs = [convert_node_to_serializable(n) for n in self.graph]
         
-        executor = get_reusable_executor(
+        executor = get_reusable_executor( # loky ProcessPoolExecutor support worker reuse and  initializer / cloudpickle
             max_workers=self.procs,
             initializer=init_worker,
             initargs=(serialized_configs,),
             timeout=None
         )
         loop = asyncio.get_running_loop()
-        tasks = []
 
+        sem = asyncio.Semaphore(self.sem_size) # avoid oom cause task killed
+        async def wrapped_task(item):
+            async with sem:
+                return await loop.run_in_executor(executor, run_sync_pipeline_global, item)
+    
         for item in iterables:
-            fut = loop.run_in_executor(executor, run_sync_pipeline_global, item)
-            tasks.append(fut)
+            task = asyncio.create_task(wrapped_task(item))
+            pending_tasks.add(task)
+            task.add_done_callback(pending_tasks.discard)  
 
-        for task in asyncio.as_completed(tasks):
-            try:
-                processed_item = await task
-                if processed_item is not None:
+            if len(pending_tasks) >= self.procs * 2:
+                done, _ = await asyncio.wait(pending_tasks, return_when=asyncio.FIRST_COMPLETED) # core key --- one in one out
+                for t in done:
+                    try:
+                        processed_item = await t 
+                        if processed_item is not None:
+                            await self.queue.put(processed_item)
+                    except Exception as e:
+                        # 重点：捕获到 TerminatedWorkerError，记录日志，而不是让整个程序崩溃或丢弃
+                        print(f"[Worker Error] 任务执行失败: {type(e).__name__} - {e}")
+
+        if pending_tasks:
+            results = await asyncio.gather(*pending_tasks, return_exceptions=True) # waited to be completed
+            for processed_item in results:
+                if isinstance(processed_item, Exception):
+                    print(f"[Worker Error] 任务执行失败: {type(processed_item).__name__} - {processed_item}")
+                elif processed_item is not None:
                     await self.queue.put(processed_item)
-            except Exception as e:
-                print(f"Task execution failed: {e}")
 
         for _ in range(self.consumer_workers):
             await self.queue.put(None)
@@ -173,7 +198,7 @@ class Graph(object):
         finally:
             loop.close()
 
-    def to_execute(self, graph_xml, iterables, parallel=True):
+    def to_execute(self, graph_xml, iterables, parallel=True): 
         self._build_graph(graph_xml) 
         self.run(iterables, parallel)
 
