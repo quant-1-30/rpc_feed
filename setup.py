@@ -43,9 +43,8 @@ extensions = [
         )
 ]
 
-
 setup(
-    name="rpc_feed_lib",
+    name="rpc_feed",
     ext_modules=cythonize(
         extensions,
         compiler_directives={

@@ -48,21 +48,21 @@ if __name__ == "__main__":
     # xml = "../xml/fund.graphml"
     # bt_feed.load(xml, str(dataset_path), prefix=".01_fund")
    
-    # dataset csv
-    year = 2004
-    dataset_path = Path(f"~/Downloads/raw_data/csv/stock/{year}").expanduser()
-    xml = "../xml/tick_csv.graphml"
-    bt_feed.load(xml, str(dataset_path), prefix="csv_stock", parallel=True)
-    print(f"Finished loading {year} stock csv data")
+    # # dataset csv
+    # year = 2000
+    # dataset_path = Path(f"~/Downloads/raw_data/csv/stock/{year}").expanduser()
+    # xml = "../xml/tick_csv.graphml"
+    # bt_feed.load(xml, str(dataset_path), prefix="csv_stock", parallel=True)
+    # print(f"Finished loading {year} stock csv data")
    
     # dataset_path = Path("~/Downloads/raw_data/csv/fund/2022").expanduser()
     # xml = "../xml/fund_csv.graphml"
     # bt_feed.load(xml, str(dataset_path), prefix="csv_fund")
 
-    # # benchmark csv
-    # dataset_path = Path("~/Downloads/raw_data/csv/benchmark_2026").expanduser()
-    # xml = "../xml/benchmark_csv.graphml"
-    # bt_feed.load(xml, str(dataset_path), prefix="csv_benchmark")
+    # benchmark csv
+    dataset_path = Path("~/Downloads/raw/benchmark2026/regenerate").expanduser()
+    xml = "../xml/benchmark_csv.graphml"
+    bt_feed.load(xml, str(dataset_path), prefix="csv_benchmark")
 
     # # test
     # dataset_path = Path("~/Downloads/rsync/202604").expanduser()

@@ -190,3 +190,8 @@ os.environ["NUMEXPR_NUM_THREADS"] = "1"  -->
 *   **Python 空间**：`def func()`，`class`，`list`，`dict`。这些是 Python 对象，带引用计数，性能有损耗，但能被外部 `import`。
 
 `struct` 属于绝对的 C 空间，因此只能在 Cython 内部通过 `cimport` 互相调用
+
+# airflow 重构 rpc_feed dag 功能
+poetry add apache-airflow
+airflow db migrate # initialize db
+airflow scheduler # dags / plugins

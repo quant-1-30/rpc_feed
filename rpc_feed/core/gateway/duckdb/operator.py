@@ -72,7 +72,7 @@ class DuckDBManager:
         self.regex_rules = {
             "stock": re.compile(b"^(6|0|3)\d{5}"), # encode('ascii') 
             "fund": re.compile(b"^(51|15|16)\d{4}"),
-            "benchmark": re.compile(b"^(000001|000688|399001|399006)")
+            "benchmark": re.compile(b"^(1A0001|1B0688|2A01|399006)") # 上证/科创/深证/创业 
         }
 
         max_connections = int(os.getenv("DUCKCONNECTION", 10))
@@ -82,28 +82,27 @@ class DuckDBManager:
     async def __aenter__(self):
         return self
         
-    async def __aexit__(self, exc_type, exc_val, exc_tb):
-        return False
-
     def _glob_path(self, req: dict) -> list:
         ranges = schema_range(req) 
         exact_globs =[]
         
         for sid_bytes in req["sid"]:
-            cat_name = None
+
+            # Determine category based on regex matching
+            type_name = None
             for name, regex in self.regex_rules.items():
                 if regex.match(sid_bytes):
-                    cat_name = name
+                    type_name = name
                     break
                     
-            if not cat_name:
+            if not type_name:
                 continue 
                 
             sid_str = sid_bytes.decode("utf-8")
             for y, q, ym in ranges:
                 dir_path = os.path.join(
                     self.dataset_root, 
-                    cat_name, 
+                    type_name, 
                     f"year={y}", 
                     f"quarter={q}", 
                     f"sid={sid_str}", 
@@ -114,24 +113,6 @@ class DuckDBManager:
                     exact_globs.append(os.path.join(dir_path, "*.parquet"))
         return exact_globs
     
-    def _glob_experiment_path(self, req: dict) -> list:
-        ranges = schema_range(req) 
-        exact_globs =[]
-                
-        for y, q, ym in ranges:
-            dir_path = os.path.join(
-                self.dataset_root, 
-                "experiment",
-                req["sid"][0], # experiment_id --- sid
-                f"year={y}", 
-                f"quarter={q}", 
-                f"date={ym}"
-            )
-            
-        if os.path.exists(dir_path): # os cache
-            exact_globs.append(os.path.join(dir_path, "*.parquet"))
-        return exact_globs
-
     async def query(self, req: dict, raw_template: str):
         conn = self.connection_pool.get_connection()
         try:
@@ -159,6 +140,9 @@ class DuckDBManager:
                     break
         finally:
             self.connection_pool.return_connection(conn)
+    
+    async def __aexit__(self, exc_type, exc_val, exc_tb):
+        return False
 
 
 _duck_inst = None
