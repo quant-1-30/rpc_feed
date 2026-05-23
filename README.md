@@ -195,3 +195,5 @@ os.environ["NUMEXPR_NUM_THREADS"] = "1"  -->
 poetry add apache-airflow
 airflow db migrate # initialize db
 airflow scheduler # dags / plugins
+
+find bt_core -type f \( -name "*.so" -o -name "*.cpp" \)  -print0 | xargs -0 rm -f
