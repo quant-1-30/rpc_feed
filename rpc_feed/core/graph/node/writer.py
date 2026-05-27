@@ -259,7 +259,6 @@ class ParquetWriter(Node):
         # import pdb; pdb.set_trace()
         table = pa.Table.from_pandas(meta, schema=schema, preserve_index=False)
 
-            
         ds.write_dataset(
             data=table,
             base_dir=expand_path(self.p.root_path),

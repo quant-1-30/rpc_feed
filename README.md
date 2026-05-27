@@ -197,3 +197,47 @@ airflow db migrate # initialize db
 airflow scheduler # dags / plugins
 
 find bt_core -type f \( -name "*.so" -o -name "*.cpp" \)  -print0 | xargs -0 rm -f
+
+
+# postgres first time
+sudo -i -u postgres / psql -U postgres # postgres is admin
+
+ALTER USER postgres WITH PASSWORD '****';
+
+CREATE USER myuser WITH PASSWORD '****';
+
+CREATE DATABASE mydb OWNER myuser;
+
+GRANT ALL PRIVILEGES ON DATABASE mydb TO myuser;
+
+PostgreSQL 默认采用 peer 或 ident 认证（即只信任操作系统同名用户）, 通过工具用用户名+密码的方式登录，必须修改pg_hba.conf 配置文件
+
+/etc/postgresql/版本号/main/ 或 /var/lib/pgsql/data/ 
+
+sudo nano /etc/postgresql/15/main/pg_hba.conf
+
+# TYPE  DATABASE        USER            ADDRESS                 METHOD
+
+# 本地通过 Unix 套接字连接（将 peer 改为 scram-sha-256）
+local   all             all                                     scram-sha-256
+
+# 本地 IPv4 连接（将 ident 改为 scram-sha-256）
+host    all             all             127.0.0.1/32            scram-sha-256
+
+需要允许远程工具连接：
+
+host  all  all  0.0.0.0/0  scram-sha-256
+
+打开同目录下的 postgresql.conf #listen_addresses = 'localhost' 改为 listen_addresses = '*'
+
+# Ubuntu / Debian
+sudo systemctl restart postgresql
+
+# CentOS / RHEL
+sudo systemctl restart postgresql-15
+
+# macOS (Homebrew)
+brew services restart postgresql
+
+# for test
+psql -U myuser -d mydb -h 127.0.0.1 -W
