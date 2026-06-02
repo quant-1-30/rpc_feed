@@ -45,24 +45,28 @@ async def serve() -> None:
         pass
 
     address = os.getenv("GRPC_SERVER")
-    MAX_MESSAGE_LENGTH = int(os.getenv("MAX_MESSAGE_LENGTH", 1024 * 1024 * 1024))
+    MAX_MESSAGE_LENGTH = int(os.getenv("MAX_MESSAGE_LENGTH", 512 * 1024 * 1024))
 
     server_options = [
-        ("grpc.keepalive_time_ms", 15000),  # ⏱ 每 15 秒向客户端 ping 一次
-        ("grpc.keepalive_timeout_ms", 10000),  # ⏳ ping 超时 10 秒断开
-        # ("grpc.http2.min_ping_interval_without_data_ms", 5000), # 防止dos攻击 
-        ("grpc.keepalive_permit_without_calls", 1),  # 允许客户端空闲时发 ping
-        ("grpc.http2.max_pings_without_data", 0),  # 无限制
-        ("grpc.http2.min_time_between_pings_ms", 10000),  # 防止 ping 滥用
-        
-        # 🚫 防止空闲断开
-        ("grpc.max_connection_idle_ms", 86400000),  # 24h / 0
-        ("grpc.max_connection_age_ms", 86400000),  # 24h /  0
-        ("grpc.max_connection_age_grace_ms", 86400000),
-    
-        # 📨 消息大小配置
+        # message 512MB same as client
         ("grpc.max_send_message_length", MAX_MESSAGE_LENGTH),
         ("grpc.max_receive_message_length", MAX_MESSAGE_LENGTH),
+
+        # tcp stream control http2 
+        ("grpc.http2.initial_window_size", 64 * 1024 * 1024),       # 64MB Stream Window
+        ("grpc.http2.initial_connection_window_size", 128 * 1024 * 1024), # 128MB Connection Window 
+
+        # ⏱ Keepalive 
+        ("grpc.keepalive_time_ms", 30000),             # Active Ping (30s)
+        ("grpc.keepalive_timeout_ms", 10000),          # Ping Wait 10s
+        ("grpc.keepalive_permit_without_calls", 1),    # 
+        ("grpc.http2.min_time_between_pings_ms", 10000),# 10s Client Ping
+        ("grpc.http2.max_pings_without_data", 0),      # ideal Ping 
+
+        # avoid break idle connection,
+        ("grpc.max_connection_idle_ms", 86400000),       # 24h
+        ("grpc.max_connection_age_ms", 86400000),        # 24h
+        ("grpc.max_connection_age_grace_ms", 86400000),  # 24h
     ]
 
     server = grpc.aio.server(ThreadPoolExecutor(), compression=grpc.Compression.Gzip, 

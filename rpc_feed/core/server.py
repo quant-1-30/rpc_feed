@@ -18,7 +18,7 @@ class RpcServer(service_pb2_grpc.btDataFeedServicer):
 
         # NoCompression / Gzip
         # context is_active to check if the request is cancelled
-        context.set_compression(grpc.Compression.Deflate)
+        # context.set_compression(grpc.Compression.Deflate)
         context.set_trailing_metadata(
             (
                 ("checksum-bin", b"I agree"),
