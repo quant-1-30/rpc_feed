@@ -10,7 +10,6 @@ import pandas as pd
 import pyarrow as pa
 import pyarrow.parquet as pq
 import pyarrow.dataset as ds
-import asyncio
 
 from typing import Any, Union, List, Optional
 from avro.datafile import DataFileReader, DataFileWriter
@@ -141,20 +140,19 @@ class WriterStringIO(Node):
         ("is_writer", True),
         ("is_async", True)
         )
-    # output.write('First line.\n')
-    # contents = output.getvalue()
-    # output.close()
-    # sys.stdout = output / print redirect to getvalue
 
     def __init__(self):
         super(WriterStringIO, self).__init__()
 
     def reset(self):
-        # super(WriterStringIO, self).stop()
         # Leave the file positioned at the beginning
         self.out.seek(0)
 
     def next(self, meta):
+        # output.write('First line.\n')
+        # contents = output.getvalue()
+        # output.close()
+        # sys.stdout = output / print redirect to getvalue
         fd = self.p.fd()
         if isinstance(meta, str):
             fd.write(meta)

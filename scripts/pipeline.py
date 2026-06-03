@@ -1,10 +1,18 @@
 #! /usr/bin/env python3
 # -*- coding: utf-8 -*-
+
+import multiprocessing
+
+try:
+    multiprocessing.set_start_method('spawn', force=True)
+    print("✅ Multiprocessing start method set to 'spawn'")
+except RuntimeError:
+    pass # 如果已经设置过则忽略
+
 import argparse
+
 from pathlib import Path
 from dotenv import load_dotenv
-
-load_dotenv()
 
 from rpc_feed.core.rpc.feed import bt_feed
 
@@ -37,6 +45,8 @@ def parse_args():
 
 if __name__ == "__main__":
 
+    load_dotenv()
+
     args = parse_args()
 
     # struct
@@ -48,21 +58,21 @@ if __name__ == "__main__":
     # xml = "../xml/fund.graphml"
     # bt_feed.load(xml, str(dataset_path), prefix=".01_fund")
    
-    # # dataset csv
-    # year = 2000
+    # dataset csv
+    year = 2007
     # dataset_path = Path(f"~/Downloads/raw_data/csv/stock/{year}").expanduser()
     # xml = "../xml/tick_csv.graphml"
     # bt_feed.load(xml, str(dataset_path), prefix="csv_stock", parallel=True)
     # print(f"Finished loading {year} stock csv data")
    
-    # dataset_path = Path("~/Downloads/raw_data/csv/fund/2022").expanduser()
-    # xml = "../xml/fund_csv.graphml"
-    # bt_feed.load(xml, str(dataset_path), prefix="csv_fund")
+    dataset_path = Path(f"~/Downloads/raw_data/csv/fund/{year}").expanduser()
+    xml = "../xml/fund_csv.graphml"
+    bt_feed.load(xml, str(dataset_path), prefix="csv_fund")
 
-    # benchmark csv
-    dataset_path = Path("~/Downloads/raw/benchmark2026/regenerate").expanduser()
-    xml = "../xml/benchmark_csv.graphml"
-    bt_feed.load(xml, str(dataset_path), prefix="csv_benchmark")
+    # # benchmark csv
+    # dataset_path = Path("~/Downloads/raw/benchmark2026/regenerate").expanduser()
+    # xml = "../xml/benchmark_csv.graphml"
+    # bt_feed.load(xml, str(dataset_path), prefix="csv_benchmark")
 
     # # test
     # dataset_path = Path("~/Downloads/rsync/202604").expanduser()

@@ -10,7 +10,8 @@ from libc.time cimport time_t, strftime, tm
 # C cdef 
 # ==========================================
 cdef extern from "time.h" nogil: # tm already no need struct
-    tm* localtime_r(const time_t *timep, tm *result)
+    # tm* localtime_r(const time_t *timep, tm *result) # binding to os timezone
+    tm* gmtime_r(const time_t *timep, tm *result) # utc
 
 
 # ==========================================
@@ -18,7 +19,7 @@ cdef extern from "time.h" nogil: # tm already no need struct
 # ==========================================
 cdef void _parse_to_ymd(int64_t val, int* y, int* m, int* d):
     """
-    YYYYMMDD / 时间戳, 统一提取出年月日写入到指针内存
+    YYYYMMDD / Timestamp ---> ptr
     """
     cdef time_t t_val
     cdef tm timeinfo
@@ -29,17 +30,19 @@ cdef void _parse_to_ymd(int64_t val, int* y, int* m, int* d):
         m[0] = (val % 10000) // 100
         d[0] = val % 100
     else:
-        # 兼容 Unix Timestamp
-        if val > 100000000000000000: # 纳秒级 ns
+        # Unix Timestamp
+        if val > 100000000000000000: # ns
             val = val // 1000000000
-        elif val > 100000000000000:  # 微秒级 us
+        elif val > 100000000000000:  # us
             val = val // 1000000
-        elif val > 100000000000:     # 毫秒级 ms
+        elif val > 100000000000:     # ms
             val = val // 1000
 
+        # Hive y/m asia/shanghai UTC + 28800
+        val += 28800 
         t_val = <time_t>val
-        ret_ptr = localtime_r(&t_val, &timeinfo)
-        
+        ret_ptr = gmtime_r(&t_val, &timeinfo)
+ 
         if ret_ptr != NULL:
             y[0] = timeinfo.tm_year + 1900
             m[0] = timeinfo.tm_mon + 1
@@ -59,7 +62,7 @@ cdef str _parse_date(int64_t val, bint is_end):
     """
     cdef int y, m, d
     cdef time_t t_val
-    cdef tm timeinfo      # 实体结构体非未初始化的指针
+    cdef tm timeinfo     
     cdef tm* ret_ptr
     cdef char buffer[32]  
 
@@ -67,13 +70,19 @@ cdef str _parse_date(int64_t val, bint is_end):
         y = val // 10000
         m = (val % 10000) // 100
         d = val % 100
+
+        # if is_end:
+        #     return f"{y:04d}-{m:02d}-{d:02d} 23:59:59"
+        # else:
+        #     return f"{y:04d}-{m:02d}-{d:02d} 00:00:00"
+
+        # YYYYMMDD 北京时间 +08:00
         if is_end:
-            return f"{y:04d}-{m:02d}-{d:02d} 23:59:59"
+            return f"{y:04d}-{m:02d}-{d:02d} 23:59:59+08:00"
         else:
-            return f"{y:04d}-{m:02d}-{d:02d} 00:00:00"
+            return f"{y:04d}-{m:02d}-{d:02d} 00:00:00+08:00"
     else:
-        # Unix Timestamp
-        val = val - 28800 # asia -> utc
+        # UTC 
         if val > 100000000000000000:
             val = val // 1000000000
         elif val > 100000000000000: 
@@ -82,19 +91,19 @@ cdef str _parse_date(int64_t val, bint is_end):
             val = val // 1000
 
         t_val = <time_t>val
-        ret_ptr = localtime_r(&t_val, &timeinfo)
+        ret_ptr = gmtime_r(&t_val, &timeinfo) # UTC
         
         if ret_ptr == NULL:
-            return "1970-01-01 23:59:59" if is_end else "1970-01-01 00:00:00"
+            return "1970-01-01 23:59:59+00:00" if is_end else "1970-01-01 00:00:00+00:00"
         
-        strftime(buffer, sizeof(buffer), "%Y-%m-%d %H:%M:%S", &timeinfo)
+        # UTC (+00:00)
+        strftime(buffer, sizeof(buffer), "%Y-%m-%d %H:%M:%S+00:00", &timeinfo)
         return buffer.decode("utf-8")
 
 
 cpdef list schema_range(Request req):
     """
-    输入示例: 20250402 或 1774972800 (均兼容)
-    计算日期范围内的年、季度、月份字符串
+        20250402 / 1774972800 
     """
     cdef int64_t start_date = req.start_date
     cdef int64_t end_date = req.end_date

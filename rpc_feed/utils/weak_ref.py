@@ -6,7 +6,6 @@ Created on Tue Mar 12 15:37:47 2019
 """
 from collections import Sequence, OrderedDict
 from itertools import compress
-# 弱引用 以及沙盒函数需要研究一下 、gcc回收机制
 from weakref import WeakKeyDictionary, ref
 from threading import Lock
 from functools import wraps

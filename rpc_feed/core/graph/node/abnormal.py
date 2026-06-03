@@ -10,65 +10,57 @@ from rpc_feed.utils.wrapper import registry
 
 @registry
 class ProcessNa(Node):
-
     """Process Nan"""
-
     params = (
         ("na", 0),
         ("exclude", ["tick"]), 
-        )
-
-    def prenext(self, df):
-        # Convert only numeric columns to float to handle NaN
-        numeric_cols = df.select_dtypes(include=[np.number]).columns
-        numeric_df = df[numeric_cols].astype(float)
-        
-        # Create mask for NaN values in numeric columns
-        nan_select = np.isnan(numeric_df.values)
-        
-        # Apply mask only to non-excluded columns
-        exclude_mask = ~numeric_df.columns.isin(self.p.exclude)
-        nan_select[:, exclude_mask] = False
-        
-        # Fill NaN values
-        df.loc[:, numeric_cols] = numeric_df.values
-        df.loc[:, numeric_cols][nan_select] = self.p.na
-        
-        return df
+    )
 
     def next(self, meta: pd.DataFrame):
-        # inf and na
-        if len(meta):
-            meta = self.prenext(meta)  
+        if meta.empty:
+            return meta
+            
+        # abandon Numpy boolean mask 
+        cols_to_fill = meta.columns.difference(self.p.exclude)
+        numeric_cols = meta[cols_to_fill].select_dtypes(include=[np.number]).columns
+        
+        # Pandas fillna
+        if len(numeric_cols) > 0:
+            meta[numeric_cols] = meta[numeric_cols].fillna(self.p.na)
         return meta
 
 
 @registry
 class ProcessInf(Node):
-
     """Process infinity"""
-
     params = (
         ("inf", "mean"),
         ("lines", ["open", "high", "low", "close", "volume", "amount"])
-        )
-
-    def prenext(self, df):
-        try:
-            proc = getattr(np, self.p.inf)
-        except AttributeError:
-            proc = lambda x: 0
-
-        for col in self.p.lines:
-            # FIXME: Such behavior is very weird
-            # df[col] = df[col].replace([np.inf, -np.inf], df[col][~np.isinf(df[col])].mean())
-            df[col] = df[col].replace([np.inf, -np.inf], proc(df[col][~np.isinf(df[col])]))
-        df.sort_index(inplace=True)
-        return df
+    )
 
     def next(self, meta: pd.DataFrame):
-        # # validate columns
-        if len(meta):
-            meta = self.prenext(meta)
+        if meta.empty:
+            return meta
+            
+        valid_cols = [c for c in self.p.lines if c in meta.columns]
+        if not valid_cols:
+            return meta
+
+        # inf -> nan optimized C 
+        meta[valid_cols] = meta[valid_cols].replace([np.inf, -np.inf], np.nan)
+        
+        # mean() median() ...  auto ignore Nan ---> ~np.isinf() avoid slice 
+        if self.p.inf in ['mean', 'median', 'min', 'max']:
+            replacement_vals = getattr(meta[valid_cols], self.p.inf)()
+        else:
+            # fallback
+            try:
+                proc = getattr(np, self.p.inf)
+                replacement_vals = {col: proc(meta[col].dropna()) for col in valid_cols}
+            except AttributeError:
+                replacement_vals = {col: 0 for col in valid_cols}
+
+        # bulk fill with fillna 
+        meta[valid_cols] = meta[valid_cols].fillna(replacement_vals)
+        meta.sort_index(inplace=True)
         return meta
-    
