@@ -10,8 +10,8 @@ from sqlalchemy.orm import sessionmaker
 from contextlib import asynccontextmanager, AbstractAsyncContextManager
 from typing import Union, List, Iterable, Any, AsyncGenerator
 
-from .schema import Base
 from rpc_feed.utils.wrapper import singleton
+from bt_protocol.orm.market import Base
 
 
 class AsyncStreamProxy:

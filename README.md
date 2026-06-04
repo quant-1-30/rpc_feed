@@ -338,3 +338,22 @@ export AIRFLOW__CORE__DEFAULT_TIMEZONE=Asia/Shanghai
 
 poetry run airflow scheduler -D
 poetry run airflow webserver -p 8080 -D
+
+# postgres export
+
+
+# -s 代表 --schema-only (只导出结构)
+pg_dump -U postgres -d table -t users --schema-only mydb > schema.sql
+pg_dump -U postgres -d my_db -s -f only_schema.sql
+
+# -a 代表 --data-only (只导出数据)
+pg_dump -U postgres -d table -t users --data-only mydb > data.sql # --format=custom
+pg_dump -U postgres -d my_db -a -f only_data.sql
+
+# -t 代表 --table
+pg_dump -U postgres -d my_db -t adjustment -f adj_table.sql
+
+# load
+psql -h 192.168.x.x -p 5432 -U postgres -d my_db -f data.sql
+
+DROP TABLE IF EXISTS adjustment CASCADE;

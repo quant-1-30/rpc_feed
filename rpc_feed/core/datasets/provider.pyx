@@ -18,6 +18,8 @@ from rpc_feed.core.gateway import *
 from rpc_feed.utils.dateintern cimport intdt2ts
 
 from bt_protocol.serialize.pb import bt_service_pb2
+from bt_protocol.template.duckdb_template import *
+from bt_protocol.orm.market import *
 
 cdef cpp_string tz_info = b"Asia/Shanghai"
 

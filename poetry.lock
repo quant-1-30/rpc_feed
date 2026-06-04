@@ -150,16 +150,17 @@ reference = "tuna"
 
 [[package]]
 name = "bt-protocol"
-version = "0.1.3"
-description = "extract build pkg from dependencies"
+version = "0.1.5"
+description = "add schema and template"
 optional = false
 python-versions = ">=3.11,<3.15"
 files = [
-    {file = "bt_protocol-0.1.3-cp311-cp311-macosx_26_0_arm64.whl", hash = "sha256:68c4d9d04a2b54c06edc897f959a42dd2a5dec935676a359259634c61d2584c2"},
+    {file = "bt_protocol-0.1.5-cp311-cp311-macosx_26_0_arm64.whl", hash = "sha256:27e79307b3f1387f59a2df4a636b148c69a1b7a5deb563ea00d18296aadd711e"},
 ]
 
 [package.dependencies]
 grpcio = ">=1.71.0,<2.0.0"
+sqlalchemy = ">=2.0.47,<3.0.0"
 
 [package.source]
 type = "legacy"
@@ -3547,4 +3548,4 @@ reference = "tuna"
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.11,<3.15"
-content-hash = "52cbc778e4362b55a9f63dbb19a86448433b82779cc805ffb04a6528a45d5966"
+content-hash = "a385588be41ae894851841c305e528fb994a93673c74138f6ec2c03eb979328b"

@@ -56,7 +56,8 @@ def upgrade():
 
 def downgrade() -> None:
     """Downgrade schema."""
-        # 逆向操作：将二进制转回字符串
+    
+    # bytes --> str
     op.alter_column('assets', 'name',
                existing_type=sa.LargeBinary(),
                type_=sa.String(),
