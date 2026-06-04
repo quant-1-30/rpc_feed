@@ -241,3 +241,100 @@ brew services restart postgresql
 
 # for test
 psql -U myuser -d mydb -h 127.0.0.1 -W
+
+
+
+airflow
+
+# Dag rpc处理 + extract_Feature + ray tune ----> dag
+
+@dag(
+    dag_id="fsm_wfo_pipeline_v2",
+    start_date=datetime(2023, 1, 1),
+    schedule=None,
+    catchup=False,
+    tags=["quant", "wfo"],
+    
+    max_active_runs=1,
+    
+    dagrun_timeout=timedelta(hours=3),
+    
+    # DAG Tasks
+    default_args={
+        "retries": 2,                  # 任何一个 Task 失败了，自动重试 2 次
+        "retry_delay": timedelta(seconds=60), # 重试间隔 60 秒
+        "owner": "hengxinliu"          # 负责人标签
+    }
+)
+
+<!-- schedule=None
+含义：调度策略（频次）
+
+常见配置
+
+None：不自动运行，只靠外部触发（非常适合你的量化参数调优 wfo 流水线）
+
+"@daily" 或 "0 0 * * *"：每天凌晨运行一次（适合收盘后日线级别因子挖掘）
+
+"@hourly"：每小时运行一次 -->
+
+    # num_rows = filter_df.height  
+    # num_samples = max(1, int(num_rows * frac))
+    # random_idx = np.random.choice(num_rows, size=num_samples, replace=False)
+    # sample_df = filter_df[random_idx]  
+    
+    # samples = sample_df["sid"].cast(pl.Binary).to_list()
+
+
+<!-- def generate_quarter(start_date: int, end_date: int, overlap_days: int = 15):
+    start_dt = datetime.strptime(str(start_date), "%Y%m%d")
+    end_dt = datetime.strptime(str(end_date), "%Y%m%d")
+    chunks =[]
+    curr_start = start_dt
+    
+    while curr_start <= end_dt:
+        curr_end = curr_start + relativedelta(months=3) - timedelta(days=1)
+        if curr_end > end_dt: curr_end = end_dt
+            
+        req_start = curr_start - timedelta(days=overlap_days)
+        chunks.append({
+            "req_start": int(req_start.strftime("%Y%m%d")),
+            "end_date": int(curr_end.strftime("%Y%m%d")),
+            "valid_start": int(curr_start.strftime("%Y%m%d"))
+        })
+        curr_start = curr_end + timedelta(days=1)
+    return chunks -->
+
+
+# airflow config  priority > cfg
+export AIRFLOW_HOME=$(pwd)/airflow_home
+export PYTHONPATH=$(pwd)
+export AIRFLOW__CORE__DAGS_FOLDER=$(pwd)/bt_studio/pipeline/dags
+export AIRFLOW__CORE__LOAD_EXAMPLES=False
+
+# consistent
+export AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=postgresql+psycopg2://quant_user:quant_password@127.0.0.1:5432/quant_db
+export AIRFLOW__CORE__EXECUTOR=LocalExecutor
+
+rm -f $AIRFLOW_HOME/airflow.db
+
+poetry run airflow db migrate
+
+poetry run airflow dags list
+
+poetry run airflow dags test fsm_wfo_pipeline_v3
+
+airflow db reset -y
+
+airflow dags delete example_bash_operator -y
+airflow dags delete example_branch_operator -y
+
+airflow dags report-import-errors
+
+poetry run airflow dags list-import-errors
+
+export AIRFLOW__WEBSERVER__WEB_SERVER_PORT=9000
+export AIRFLOW__CORE__DEFAULT_TIMEZONE=Asia/Shanghai
+
+poetry run airflow scheduler -D
+poetry run airflow webserver -p 8080 -D

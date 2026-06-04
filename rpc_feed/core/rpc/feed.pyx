@@ -5,8 +5,6 @@
 # cython: wraparound=False
 # cython: cdivision=True
 
-import os
-
 from rpc_feed.core.graph import Graph
 from rpc_feed.utils.io import recursive_glob
 

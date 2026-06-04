@@ -13,10 +13,11 @@ from libc.math cimport round
 from libc.stdint cimport uint8_t, int32_t, int64_t
 from libcpp.string cimport string as cpp_string
 
-from rpc_feed.core.rpc.serialize.pb import service_pb2
 from rpc_feed.core.gateway.duckdb.utils cimport Request
 from rpc_feed.core.gateway import *
 from rpc_feed.utils.dateintern cimport intdt2ts
+
+from bt_protocol.serialize.pb import bt_service_pb2
 
 cdef cpp_string tz_info = b"Asia/Shanghai"
 
@@ -32,7 +33,7 @@ cdef object batch_to_resp(object batch):
         writer.write_batch(batch) # writer.write_table(batch)
 
     buf = sink.getvalue()
-    resp = service_pb2.ArrowFrame(
+    resp = bt_service_pb2.ArrowFrame(
         payload=buf.to_pybytes()  # $O(N)$ copy ops 
     )
     return resp
@@ -97,11 +98,6 @@ cdef class Instrument:
 
                     if i >= CHUNK_SIZE:
                         yield self._flush(i, buf_sid, buf_name, buf_first_trading, buf_delist)
-                        # reallocate 
-                        buf_sid = [b''] * CHUNK_SIZE
-                        buf_name = [b''] * CHUNK_SIZE
-                        buf_first_trading = np.empty(CHUNK_SIZE, dtype=np.int32)
-                        buf_delist = np.empty(CHUNK_SIZE, dtype=np.int32)
                         i = 0
 
                 if i > 0:

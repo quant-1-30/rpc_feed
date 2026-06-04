@@ -2,6 +2,9 @@
 # -*- coding: utf-8 -*-
 
 import os
+
+os.environ['GRPC_ENABLE_FORK_SUPPORT'] = '0' 
+
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -15,9 +18,10 @@ import signal
 import logging
 import uvloop
 from concurrent.futures import ThreadPoolExecutor
-from core.rpc.serialize.pb import service_pb2_grpc
 from core.server import RpcServer
 from core.gateway import async_ops
+
+from bt_protocol.serialize.pb import bt_service_pb2_grpc
 
 
 async def serve() -> None:
@@ -71,7 +75,7 @@ async def serve() -> None:
 
     server = grpc.aio.server(ThreadPoolExecutor(), compression=grpc.Compression.Gzip, 
                              options=server_options, interceptors=[])
-    service_pb2_grpc.add_btDataFeedServicer_to_server(RpcServer(), server)
+    bt_service_pb2_grpc.add_btDataFeedServicer_to_server(RpcServer(), server)
     server.add_insecure_port(address)
     await server.start()
     logging.info("Server serving at %s", address)
