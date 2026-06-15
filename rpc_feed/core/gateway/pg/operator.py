@@ -11,7 +11,7 @@ from contextlib import asynccontextmanager, AbstractAsyncContextManager
 from typing import Union, List, Iterable, Any, AsyncGenerator
 
 from rpc_feed.utils.wrapper import singleton
-from bt_protocol.orm.market import Base
+from bt_protocol.schema.asset import Base
 
 
 class AsyncStreamProxy:

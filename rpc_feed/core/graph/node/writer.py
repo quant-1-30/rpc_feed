@@ -235,9 +235,10 @@ class ParquetWriter(Node):
             else:
                 data_fields.append(pa.field(col, pa.from_numpy_dtype(df[col].dtype)))
         
-        partition_fields = []
-        for col in self.p.partition_cols:
-            partition_fields.append(pa.field(col, pa.string()))
+        # partition_fields = []
+        # for col in self.p.partition_cols:
+        #     partition_fields.append(pa.field(col, pa.string()))
+        partition_fields = [pa.field(col, pa.string()) for col in self.p.partition_cols]
         return pa.schema(data_fields+partition_fields), pa.schema(partition_fields)
     
     def _make_partition(self, meta: pd.DataFrame) -> pd.DataFrame:

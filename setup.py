@@ -13,7 +13,8 @@ extensions = [
         sources=["rpc_feed/core/datasets/provider.pyx"],
         include_dirs=[np.get_include(), current_dir],
         language="c++",
-        extra_compile_args=["-O3", "-std=c++11"],
+        define_macros=[("NPY_NO_DEPRECATED_API", "NPY_1_7_API_VERSION")],
+        extra_compile_args=["-O3", "-std=c++11", "-Wno-unreachable-code"], # ignore unreachable code
         # "-Wno-unused-function",
         # "-Wno-unused-variable",
         # "-Wno-unused-but-set-variable",
@@ -25,21 +26,21 @@ extensions = [
         sources=["rpc_feed/core/rpc/feed.pyx"],
         include_dirs=[np.get_include(), current_dir],
         language="c++",
-        extra_compile_args=["-O3", "-std=c++11"],
+        extra_compile_args=["-O3", "-std=c++11", "-Wno-unreachable-code"],
     ),
      Extension(
         name="rpc_feed.core.gateway.duckdb.utils", 
         sources=["rpc_feed/core/gateway/duckdb/utils.pyx"],
         include_dirs=[np.get_include(), "."],  
         language="c++",                         
-        extra_compile_args=["-O3", "-std=c++11"]
+        extra_compile_args=["-O3", "-std=c++11", "-Wno-unreachable-code"]
     ),
     Extension(
         name="rpc_feed.utils.dateintern", 
         sources=["rpc_feed/utils/dateintern.pyx"],
         include_dirs=[np.get_include(), current_dir],
         language="c++", # vector/map
-        extra_compile_args=["-O3", "-std=c++11"],
+        extra_compile_args=["-O3", "-std=c++11", "-Wno-unreachable-code"],
         )
 ]
 

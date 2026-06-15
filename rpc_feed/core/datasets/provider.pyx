@@ -19,7 +19,7 @@ from rpc_feed.utils.dateintern cimport intdt2ts
 
 from bt_protocol.serialize.pb import bt_service_pb2
 from bt_protocol.template.duckdb_template import *
-from bt_protocol.orm.market import *
+from bt_protocol.schema.asset import *
 
 cdef cpp_string tz_info = b"Asia/Shanghai"
 
@@ -77,10 +77,13 @@ cdef class Instrument:
         buf_name = [b''] * CHUNK_SIZE
         buf_first_trading = np.empty(CHUNK_SIZE, dtype=np.int32)
         buf_delist = np.empty(CHUNK_SIZE, dtype=np.int32)
+        buf_merger = [b''] * CHUNK_SIZE
+        buf_ratio = np.empty(CHUNK_SIZE, dtype=np.float32)
 
         async with async_ops as ctx:
             stmt = select(
-                Asset.sid, Asset.name, Asset.first_trading, Asset.delist
+                Asset.sid, Asset.name, Asset.first_trading, 
+                Asset.delist, Asset.merger, Asset.ratio
             )
             
             if sids:
@@ -96,17 +99,22 @@ cdef class Instrument:
                     buf_name[i] = row[1]
                     buf_first_trading[i] = row[2]
                     buf_delist[i] = row[3]
+                    buf_merger[i] = row[4]
+                    buf_ratio[i] = row[5]
                     i += 1
 
                     if i >= CHUNK_SIZE:
-                        yield self._flush(i, buf_sid, buf_name, buf_first_trading, buf_delist)
+                        yield self._flush(i, buf_sid, buf_name, buf_first_trading, 
+                                            buf_delist, buf_merger, buf_ratio)
                         i = 0
 
                 if i > 0:
-                    yield self._flush(i, buf_sid, buf_name, buf_first_trading, buf_delist)
+                    yield self._flush(i, buf_sid, buf_name, buf_first_trading, 
+                                        buf_delist, buf_merger, buf_ratio)
 
     # protobuf extend slice copy avoid append --- zero_copy
-    cdef object _flush(self, int count, list buf_sid, list buf_name, object buf_first_trading, object buf_delist):
+    cdef object _flush(self, int count, list buf_sid, list buf_name, object buf_first_trading, 
+                            object buf_delist, object buf_merger, object buf_ratio):
  
         cdef dict metadata
         cdef object batch
@@ -117,8 +125,10 @@ cdef class Instrument:
                 pa.array(buf_name[:count], type=pa.binary()),
                 pa.array(buf_first_trading[:count], type=pa.int32()),
                 pa.array(buf_delist[:count], type=pa.int32()),
+                pa.array(buf_merger[:count], type=pa.binary()),
+                pa.array(buf_ratio[:count], type=pa.float32()),
             ],
-            names=["sid", "name", "first_trading", "delist"]
+            names=["sid", "name", "first_trading", "delist", "merger", "ratio"]
         )
         metadata = {
             b"rpc_type": b"instrument"

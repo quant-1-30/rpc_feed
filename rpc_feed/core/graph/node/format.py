@@ -9,6 +9,7 @@ from rpc_feed.utils.wrapper import registry
 from .node import Node
 
 
+@registry
 class StructDateParser(Node):
     params = (
         ("lines", ["dates", "sub_dates"]),

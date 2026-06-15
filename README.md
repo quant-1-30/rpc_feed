@@ -2,25 +2,6 @@
 # cython 重构 model and  util
 # cython 重构 rpc server
 
-    # register_date:登记日 ; ex_date:除权除息日 
-    # 股权登记日后的下一个交易日就是除权日或除息日，这一天购入该公司股票的股东不再享有公司此次分红配股
-    # 上交所证券的红股上市日为股权除权日的下一个交易日; 深交所证券的红股上市日为股权登记日后的第3个交易日
-    # bonus_share --- 送股 / transfer --- 转股 / bonus --- 股息
-
-    # register_date:登记日 ; ex_date:除权除息日; pay_date:除权除息日 ; effective_date:上市日期 
-    # 股权登记日后的下一个交易日就是除权日或除息日，这一天购入该公司股票的股东不再享有公司此次分红配股
-    # 上交所证券的红股上市日为股权除权日的下一个交易日; 深交所证券的红股上市日为股权登记日后的第3个交易日
-    # price --- 配股价格 / ratio --- 配股比例
-
-# blob to transform string to bytes
-# alembic init alembic --template gener / async 
-# alembic revision -m "change sid and name from str to bytes"
-# alembic upgrade head / trade@head
-# alembic heads
-# alembic revision --head 30aae0684ec1 -m "revise unqiue order_id in order_bit"
-
-# python -m grpc_tools.protoc -I . --python_out=. --pyi_out=. --grpc_python_out=. service.proto 
-
 # arrow string / bytes
 <!-- buffers[0] → validity bitmap
 buffers[1] → offsets (int32 / int64)
@@ -198,114 +179,6 @@ airflow scheduler # dags / plugins
 
 find bt_core -type f \( -name "*.so" -o -name "*.cpp" \)  -print0 | xargs -0 rm -f
 
-
-# postgres first time
-sudo -i -u postgres / psql -U postgres # postgres is admin
-
-ALTER USER postgres WITH PASSWORD '****';
-
-CREATE USER myuser WITH PASSWORD '****';
-
-CREATE DATABASE mydb OWNER myuser;
-
-GRANT ALL PRIVILEGES ON DATABASE mydb TO myuser;
-
-PostgreSQL 默认采用 peer 或 ident 认证（即只信任操作系统同名用户）, 通过工具用用户名+密码的方式登录，必须修改pg_hba.conf 配置文件
-
-/etc/postgresql/版本号/main/ 或 /var/lib/pgsql/data/ 
-
-sudo nano /etc/postgresql/15/main/pg_hba.conf
-
-# TYPE  DATABASE        USER            ADDRESS                 METHOD
-
-# 本地通过 Unix 套接字连接（将 peer 改为 scram-sha-256）
-local   all             all                                     scram-sha-256
-
-# 本地 IPv4 连接（将 ident 改为 scram-sha-256）
-host    all             all             127.0.0.1/32            scram-sha-256
-
-需要允许远程工具连接：
-
-host  all  all  0.0.0.0/0  scram-sha-256
-
-打开同目录下的 postgresql.conf #listen_addresses = 'localhost' 改为 listen_addresses = '*'
-
-# Ubuntu / Debian
-sudo systemctl restart postgresql
-
-# CentOS / RHEL
-sudo systemctl restart postgresql-15
-
-# macOS (Homebrew)
-brew services restart postgresql
-
-# for test
-psql -U myuser -d mydb -h 127.0.0.1 -W
-
-
-
-airflow
-
-# Dag rpc处理 + extract_Feature + ray tune ----> dag
-
-@dag(
-    dag_id="fsm_wfo_pipeline_v2",
-    start_date=datetime(2023, 1, 1),
-    schedule=None,
-    catchup=False,
-    tags=["quant", "wfo"],
-    
-    max_active_runs=1,
-    
-    dagrun_timeout=timedelta(hours=3),
-    
-    # DAG Tasks
-    default_args={
-        "retries": 2,                  # 任何一个 Task 失败了，自动重试 2 次
-        "retry_delay": timedelta(seconds=60), # 重试间隔 60 秒
-        "owner": "hengxinliu"          # 负责人标签
-    }
-)
-
-<!-- schedule=None
-含义：调度策略（频次）
-
-常见配置
-
-None：不自动运行，只靠外部触发（非常适合你的量化参数调优 wfo 流水线）
-
-"@daily" 或 "0 0 * * *"：每天凌晨运行一次（适合收盘后日线级别因子挖掘）
-
-"@hourly"：每小时运行一次 -->
-
-    # num_rows = filter_df.height  
-    # num_samples = max(1, int(num_rows * frac))
-    # random_idx = np.random.choice(num_rows, size=num_samples, replace=False)
-    # sample_df = filter_df[random_idx]  
-    
-    # samples = sample_df["sid"].cast(pl.Binary).to_list()
-
-
-<!-- def generate_quarter(start_date: int, end_date: int, overlap_days: int = 15):
-    start_dt = datetime.strptime(str(start_date), "%Y%m%d")
-    end_dt = datetime.strptime(str(end_date), "%Y%m%d")
-    chunks =[]
-    curr_start = start_dt
-    
-    while curr_start <= end_dt:
-        curr_end = curr_start + relativedelta(months=3) - timedelta(days=1)
-        if curr_end > end_dt: curr_end = end_dt
-            
-        req_start = curr_start - timedelta(days=overlap_days)
-        chunks.append({
-            "req_start": int(req_start.strftime("%Y%m%d")),
-            "end_date": int(curr_end.strftime("%Y%m%d")),
-            "valid_start": int(curr_start.strftime("%Y%m%d"))
-        })
-        curr_start = curr_end + timedelta(days=1)
-    return chunks -->
-
-
 # airflow config  priority > cfg
 export AIRFLOW_HOME=$(pwd)/airflow_home
 export PYTHONPATH=$(pwd)
@@ -338,22 +211,3 @@ export AIRFLOW__CORE__DEFAULT_TIMEZONE=Asia/Shanghai
 
 poetry run airflow scheduler -D
 poetry run airflow webserver -p 8080 -D
-
-# postgres export
-
-
-# -s 代表 --schema-only (只导出结构)
-pg_dump -U postgres -d table -t users --schema-only mydb > schema.sql
-pg_dump -U postgres -d my_db -s -f only_schema.sql
-
-# -a 代表 --data-only (只导出数据)
-pg_dump -U postgres -d table -t users --data-only mydb > data.sql # --format=custom
-pg_dump -U postgres -d my_db -a -f only_data.sql
-
-# -t 代表 --table
-pg_dump -U postgres -d my_db -t adjustment -f adj_table.sql
-
-# load
-psql -h 192.168.x.x -p 5432 -U postgres -d my_db -f data.sql
-
-DROP TABLE IF EXISTS adjustment CASCADE;

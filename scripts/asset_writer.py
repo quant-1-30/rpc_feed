@@ -8,7 +8,7 @@ from dotenv import load_dotenv
 from sqlalchemy import select, and_, or_ , text # SQLAlchemy 2.0.39 
 from pathlib import Path
 
-from bt_protocol.orm.market import Asset
+from bt_protocol.schema.asset import Asset
 from rpc_feed.core.gateway.pg.operator import async_ops
 
 
@@ -34,49 +34,16 @@ def write_benchmark(path: str, file):
     df.to_csv(_p_str, index=False)
 
 
-# def rewrite_asset():
-    # # 0
-    # # sz = pd.read_excel("/Users/hengxinliu/Downloads/raw_data/assets/sz.xls", engine="openpyxl")
-    # sz = pd.read_csv("/Users/hengxinliu/Downloads/raw_data/assets/sz.csv", index_col=False, dtype={"sid": str})
-    # sz["first_trading"] = pd.to_datetime(sz["first_trading"], errors="coerce")
-    # sz["first_trading"] = sz["first_trading"].dt.strftime("%Y%m%d").astype(int)    
+def writer_asset():
+    # df = pd.read_csv("/Users/hengxinliu/Downloads/raw_data/assets/202605/assets.csv", index_col=False, dtype={"sid": str})
+    df = pd.read_csv("/Users/hengxinliu/Downloads/raw_data/assets/202605/delist_assets.csv", index_col=False, dtype={"sid": str, "merger": str, "ratio": float})
 
-    # # # 6
-    # sh = pd.read_csv("/Users/hengxinliu/Downloads/raw_data/assets/sh.csv", index_col=False, dtype={"sid": str})
-
-    # # # 688
-    # sh_kcb = pd.read_csv("/Users/hengxinliu/Downloads/raw_data/assets/sh_kcb.csv", index_col=False, dtype={"sid": str})
-
-    # # # delist
-    # delist = pd.read_csv("/Users/hengxinliu/Downloads/raw_data/assets/delist.csv", index_col=False, dtype={"sid": str})
-
-    # # concat
-    # assets = pd.concat([sz, sh, sh_kcb, delist])
-    # assets["sid"] = assets["sid"].astype(str).str.zfill(6)
-    # assets["delist"] = assets["delist"].fillna(0)
-    # # df = assets.merge(delist, on=["sid"], how="left")
-
-    # assets.to_csv("asset.csv", index=False)
-
-    # suspend = pd.read_csv("/Users/hengxinliu/Downloads/raw_data/assets/终止上市.csv", index_col=False, dtype={"sid": str})
-    # suspend["first_trading"] = pd.to_datetime(suspend["first_trading"], errors="coerce")
-    # suspend["first_trading"] = suspend["first_trading"].dt.strftime("%Y%m%d").astype(int)    
-    
-    # suspend["delist"] = pd.to_datetime(suspend["delist"], errors="coerce")
-    # suspend["delist"] = suspend["delist"].dt.strftime("%Y%m%d").astype(int)    
-    
-    # suspend["sid"] = suspend["sid"].astype(str).str.zfill(6)
-    
-    # suspend.to_csv("suspend.csv", index=False)
-    
-    # suspend_1 = pd.read_csv("/Users/hengxinliu/Downloads/raw_data/assets/delist.csv", index_col=False, dtype={"sid": str})
-    # suspend_2 = pd.read_csv("/Users/hengxinliu/Downloads/raw_data/assets/suspend_assets.csv", index_col=False, dtype={"sid": str})
-
-    # suspend = pd.concat([suspend_1, suspend_2])
-    # suspend["sid"] = suspend["sid"].astype(str).str.zfill(6)
-    # assets["delist"] = assets["delist"].fillna(0)
-    # # df = assets.merge(delist, on=["sid"], how="left") 
-
+    # assets = assets[~assets["sid"].isin(suspend_sid)]
+    # df = pd.concat(
+    #     [suspend, assets],
+    #     ignore_index=True,
+    #     copy=False,
+    # )
     # suspend = pd.merge(
     #     suspend_1,
     #     suspend_2[["sid", "first_trading"]],  # 右表切片，只取关联键和目标列
@@ -84,30 +51,22 @@ def write_benchmark(path: str, file):
     #     how="left"                              # 左连接：保持 df_main 的行数和顺序完全不变
     # )
     # print(suspend)
-    # suspend.to_csv("suspend.csv", index=False)
+    
+    # sz["first_trading"] = pd.to_datetime(sz["first_trading"], errors="coerce")
+    # sz["first_trading"] = sz["first_trading"].dt.strftime("%Y%m%d").astype(int)    
+    # suspend["sid"] = suspend["sid"].astype(str).str.zfill(6)
 
-
-def writer_asset():
-    assets = pd.read_csv("/Users/hengxinliu/Downloads/raw_data/assets/202605/asset.csv", index_col=False, dtype={"sid": str})
-    suspend = pd.read_csv("/Users/hengxinliu/Downloads/raw_data/assets/202605/suspend.csv", index_col=False, dtype={"sid": str})
-
-    suspend_sid = set(suspend["sid"])
-
-    assets = assets[~assets["sid"].isin(suspend_sid)]
-
-    df = pd.concat(
-        [suspend, assets],
-        ignore_index=True,
-        copy=False,
-    )
     # string --- bytes
-    df.to_csv("market_assets.csv", index=False)
     df["sid"] = df["sid"].str.encode("utf-8")
+    df["merger"] = df["merger"].str.encode("utf-8")
+
     df["name"] = df["name"].str.encode("utf-8")
     dup_values = df.loc[df["sid"].duplicated(), "sid"]
     print("dup_values: ", len(dup_values))
+    # NaN ---> Python None 
+    df_clean = df.astype(object).where(df.notna(), None)
     import pdb; pdb.set_trace()
-    return df
+    return df_clean
 
 
 def bulk_update(df: pd.DataFrame):

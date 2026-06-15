@@ -11,7 +11,8 @@ cdef enum:
 
 cdef class Instrument:
     
-    cdef object _flush(self, int count, list buf_sid, list buf_name, object buf_first_trading, object buf_delist)
+    cdef object _flush(self, int count, list buf_sid, list buf_name, object buf_first_trading, 
+                            object buf_delist, object buf_merger, object buf_ratio)
 
 
 cdef class Tick:
