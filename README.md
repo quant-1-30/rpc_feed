@@ -211,3 +211,33 @@ export AIRFLOW__CORE__DEFAULT_TIMEZONE=Asia/Shanghai
 
 poetry run airflow scheduler -D
 poetry run airflow webserver -p 8080 -D
+
+# 执行 crontab -e 加入以下配置
+0 2 * * * /usr/bin/env python3 /path/to/your/project/compact_parquet.py >> /path/to/your/project/logs/compaction.log 2>&1
+
+
+### 2. `pyarrow.parquet (pq)` vs `pyarrow.dataset (ds)` 的区别
+
+
+#### **`pyarrow.parquet (pq)`**
+*   **定位**：**单文件**底层操作。
+*   **特点**：
+    *   专门针对单个 `.parquet` 文件的读写。
+    *   提供最细粒度的控制（如：行组大小、压缩算法、字段元数据）。
+*   **适用场景**：
+    *   像你现在的 **Compaction（整合）脚本**。你已经明确知道了目标是一个具体的 `merged.parquet` 文件，不需要分区逻辑。
+    *   读取或写入单一的、已知路径的文件。
+
+#### **`pyarrow.dataset (ds)`**
+*   **定位**：**多文件/目录/分区**的高层抽象
+*   **特点**：
+    *   **自动分区**：它可以根据你提供的 `partitioning` 参数，自动把一个大的 Table 拆散并写入到 `year=2024/month=06/...` 这种 Hive 风格的文件夹结构中。
+    *   **统一读取**：它可以把成千上万个小 Parquet 文件看作一张虚拟的大表进行查询，支持谓词下推只读取符合条件的文件夹
+*   **适用场景**：
+    *   像你的 **Scrapy Pipeline**。爬虫抓下来的数据包含很多标的（sid）、很多日期，你希望通过一次调用，让程序自动把数据分发到不同的子目录里
+
+在 Linux/Unix 操作系统以及大多数底层编程语言（如 C, Python, Go）中，unlink（取消链接）
+
+Inode（索引节点）：文件的真实肉身 它在磁盘上占据固定的存储块里面装的是文件的实际内容、大小和权限
+
+Hard Link（硬链接）在 Linux 里，目录本身就是一个“名字与 Inode 编号的对照表”

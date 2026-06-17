@@ -231,13 +231,11 @@ class ParquetWriter(Node):
         data_fields = []
         for col in df.columns.difference(self.p.partition_cols):
             if col == "datetime":
-                data_fields.append(pa.field(col, pa.timestamp("ms"))) 
+                # data_fields.append(pa.field(col, pa.timestamp("ms"))) # default unix utc
+                data_fields.append(pa.field(col, pa.timestamp("ms", tz="UTC")))  
             else:
                 data_fields.append(pa.field(col, pa.from_numpy_dtype(df[col].dtype)))
         
-        # partition_fields = []
-        # for col in self.p.partition_cols:
-        #     partition_fields.append(pa.field(col, pa.string()))
         partition_fields = [pa.field(col, pa.string()) for col in self.p.partition_cols]
         return pa.schema(data_fields+partition_fields), pa.schema(partition_fields)
     
