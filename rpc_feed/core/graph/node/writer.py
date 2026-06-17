@@ -245,6 +245,9 @@ class ParquetWriter(Node):
         # meta["sid"] = meta["sid"].apply(lambda x: re.sub(r'[a-zA-Z\.]', '', x)) # 全局替换 2A01 -> 2021
         meta["sid"] = meta["sid"].str.replace(r'^[a-zA-Z]+\.|\.[a-zA-Z]+$', '', regex=True)
         meta["date"] = meta["datetime"].dt.strftime("%Y%m") # apply(lambda x: f"{x.month:02d}")
+
+        # 北京时区 -> UTC -> 剥离时区标签
+        meta["datetime"] = meta["datetime"].dt.tz_localize("Asia/Shanghai").dt.tz_convert("UTC").dt.tz_localize(None)
         return meta
 
     def _write_parquet(

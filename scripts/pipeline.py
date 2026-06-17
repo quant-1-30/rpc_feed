@@ -50,13 +50,13 @@ if __name__ == "__main__":
     args = parse_args()
 
     # struct
-    # dataset_path = Path("~/Downloads/rsync/202605").expanduser()
-    # xml = "../xml/tick.graphml"
-    # bt_feed.load(xml, str(dataset_path), prefix=".01_stock")
+    dataset_path = Path("~/Downloads/rsync/202605").expanduser()
+    xml = "../xml/tick.graphml"
+    bt_feed.load(xml, str(dataset_path), prefix=".01_stock")
 
-    dataset_path = Path("~/Downloads/rsync/202605").expanduser() 
-    xml = "../xml/fund.graphml"
-    bt_feed.load(xml, str(dataset_path), prefix=".01_fund")
+    # dataset_path = Path("~/Downloads/rsync/202605").expanduser() 
+    # xml = "../xml/fund.graphml"
+    # bt_feed.load(xml, str(dataset_path), prefix=".01_fund")
    
     # # dataset csv
     # year = 2007

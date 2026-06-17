@@ -7,10 +7,10 @@ def fix_quant_data(SOURCE_BASE, TARGET_BASE, TICK_OFFSET):
     # 1. DuckDB inmemory connection
     con = duckdb.connect(database=':memory:')
     
-    print(f"正在扫描目录: {SOURCE_BASE} ...")
+    print(f"Scan {SOURCE_BASE} ...")
     all_files = list(SOURCE_BASE.glob("**/*.parquet"))
     total_files = len(all_files)
-    print(f"共发现 {total_files} 个文件。")
+    print(f"found {total_files} files")
 
     start_time = time.time()
 
@@ -22,8 +22,8 @@ def fix_quant_data(SOURCE_BASE, TARGET_BASE, TICK_OFFSET):
         dst_file.parent.mkdir(parents=True, exist_ok=True)
 
         try:
-            # 4. DuckDB SQL REPLACE and ZSTD 
-            # DuckDB  Parquet default TIMESTAMP WITH TIME ZONE` (TIMESTAMPTZ)。`INTERVAL 8 HOUR`
+            # DuckDB SQL REPLACE and ZSTD 
+            # DuckDB  Parquet default TIMESTAMP WITH TIME ZONE` (TIMESTAMPTZ) `INTERVAL 8 HOUR`
             query = f"""
                 COPY (
                     SELECT * REPLACE (
@@ -36,14 +36,14 @@ def fix_quant_data(SOURCE_BASE, TARGET_BASE, TICK_OFFSET):
             con.execute(query)
             
             elapsed = time.time() - start_time
-            print(f"[{idx}/{total_files}] 成功: {rel_path} | 累计耗时: {elapsed:.1f}s")
+            print(f"[{idx}/{total_files}] Success: {rel_path} | Elpased: {elapsed:.1f}s")
 
         except Exception as e:
-            print(f"[{idx}/{total_files}] 失败: {rel_path} | 错误: {e}")
+            print(f"[{idx}/{total_files}] Failure: {rel_path} | Error: {e}")
 
     print("-" * 50)
-    print(f"任务完成！已保存至: {TARGET_BASE}")
-    print(f"总计耗时: {time.time() - start_time:.2f} 秒")
+    print(f"Completed: {TARGET_BASE}")
+    print(f"Elapsed: {time.time() - start_time:.2f} second")
 
 
 if __name__ == "__main__":

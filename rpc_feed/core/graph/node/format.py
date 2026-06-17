@@ -42,12 +42,10 @@ class StructDateParser(Node):
             # =======================================================
             # 2. timezone align
             # =======================================================
-            # tz_localize("Asia/Shanghai") 
             localized_dt = meta["datetime"].dt.tz_localize(self.p.tz)
             # Pandas auto calculate the offset to UTC Epoch, then get int64 tick
             meta["tick"] = (localized_dt.view("int64") // 10**9).astype("int64")
-            
-            # meta["datetime"] = localized_dt.dt.tz_convert("UTC") # tz_convert(None)
+            # Datetime Keep Native TimeZone 
             meta.drop(columns=["dates", "sub_dates"], inplace=True)
         return meta
 

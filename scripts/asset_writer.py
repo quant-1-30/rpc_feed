@@ -12,7 +12,7 @@ from bt_protocol.schema.asset import Asset
 from rpc_feed.core.gateway.pg.operator import async_ops
 
 
-def write_benchmark(path: str, file):
+def rename_benchmark(path: str, file):
     # engine="openpyxl"
     # encoding="utf-8" / "gbk" 
     df = pd.read_csv(os.path.join(path, file), encoding="utf-8")
