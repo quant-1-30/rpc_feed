@@ -9,28 +9,64 @@ cdef enum:
     TICK_PROCESS_TIMEOUT = 100
 
 
-cdef class Instrument:
+cdef class BaseBufferedProvider:
+    cdef bytes rpc_type
+
+    cdef object _flush_record_batch(self, bytes sid, object batch)
     
-    cdef object _flush(self, int count, list buf_sid, list buf_name, object buf_first_trading, 
-                            object buf_delist, object buf_merger, object buf_ratio)
+    cdef object _create_and_flush_arrays(self, bytes sid, list arrays, list names)
 
 
-cdef class Tick:
-
-    cdef _flush(self, bytes sid, object batch)
-
-
-cdef class Close:
+cdef class BaseDuckDBProvider(BaseBufferedProvider):
+    cdef object template
     
-    cdef object _flush(self, bytes sid, object batch)
+
+cdef class Tick(BaseDuckDBProvider):
+
+    pass
+
+cdef class Daily(BaseDuckDBProvider):
+
+    pass
 
 
-cdef class Adjust:
-    
-    cdef object _flush(self, int count, bytes sid, object buf_ex_date, object buf_register_date, object buf_bonus_share, object buf_transfer, object buf_bonus)
+cdef class Close(BaseDuckDBProvider):
+
+    pass
 
 
-cdef class Right:
+cdef class BaseSQLAlchemyProvider(BaseBufferedProvider):
+    cdef bint group_by_sid
 
-    cdef object _flush(self, int count, bytes sid, object buf_ex_date, object buf_register_date, object buf_price, object buf_ratio)
+    cdef object _build_statement(self, int32_t start_date, int32_t end_date, list sids)
+
+    cdef void _init_buffers(self)
+
+    cdef void _row_to_buffer(self, int i, object row)
+
+    cdef object _flush_buffer(self, int count, bytes sid)
+
+
+cdef class Instrument(BaseSQLAlchemyProvider):
+    cdef list buf_sid
+    cdef list buf_name
+    cdef object buf_first_trading
+    cdef object buf_delist
+    cdef object buf_ratio
+    cdef list buf_merger
+
+
+cdef class Adjust(BaseSQLAlchemyProvider):
+    cdef object buf_ex_date
+    cdef object buf_register_date
+    cdef object buf_bonus_share
+    cdef object buf_transfer
+    cdef object buf_bonus
+
+
+cdef class Right(BaseSQLAlchemyProvider):
+    cdef object buf_ex_date
+    cdef object buf_register_date
+    cdef object buf_price
+    cdef object buf_ratio
 

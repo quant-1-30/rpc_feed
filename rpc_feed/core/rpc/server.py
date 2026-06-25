@@ -5,10 +5,11 @@ import grpc
 import logging
 from google.protobuf.json_format import MessageToDict
 
-from core.rpc.feed import bt_feed
-from bt_protocol.serialize.pb import bt_service_pb2, bt_service_pb2_grpc 
+from rpc_feed.core.feed import bt_feed
+from bt_protocol.serialize.pb import service_pb2, service_pb2_grpc 
 
-class RpcServer(bt_service_pb2_grpc.btDataFeedServicer):
+
+class RpcServer(service_pb2_grpc.btDataFeedServicer):
 
     def __init__(self):
         self._id_counter = 0
@@ -27,9 +28,9 @@ class RpcServer(bt_service_pb2_grpc.btDataFeedServicer):
         
     async def CalendarCall(
         self,
-        request: bt_service_pb2.QuoteRequest,
+        request: service_pb2.QuoteRequest,
         context: grpc.ServicerContext,
-    ) -> bt_service_pb2.ArrowFrame: # type: ignore
+    ) -> service_pb2.ArrowFrame: # type: ignore
         
         await self._set_context(context)
 
@@ -51,9 +52,9 @@ class RpcServer(bt_service_pb2_grpc.btDataFeedServicer):
 
     async def InstrumentCall(
         self,
-        request: bt_service_pb2.QuoteRequest,
+        request: service_pb2.QuoteRequest,
         context: grpc.ServicerContext,
-    ) -> bt_service_pb2.ArrowFrame: # type: ignore
+    ) -> service_pb2.ArrowFrame: # type: ignore
         
         await self._set_context(context)
 
@@ -65,26 +66,26 @@ class RpcServer(bt_service_pb2_grpc.btDataFeedServicer):
             # print("InstrumentCall repsonse size ", response.ByteSize())
             yield response
     
-    async def IndexStreamCall(
+    async def DailyStreamCall(
         self,
-        request: bt_service_pb2.QuoteRequest,
+        request: service_pb2.QuoteRequest,
         context: grpc.ServicerContext,
-    ) -> bt_service_pb2.ArrowFrame: # type: ignore
+    ) -> service_pb2.ArrowFrame: # type: ignore
         
         await self._set_context(context)
 
         # logging.info("Received Index")
 
-        response_iterator = bt_feed.fetch("index", request.start_date, request.end_date, list(request.sid))
+        response_iterator = bt_feed.fetch("daily", request.start_date, request.end_date, list(request.sid))
         async for response in response_iterator:
             # print("IndexStreamCall repsonse size ", response.ByteSize())
             yield response
     
     async def TickStreamCall(
         self,
-        request: bt_service_pb2.QuoteRequest,
+        request: service_pb2.QuoteRequest,
         context: grpc.ServicerContext,
-    ) -> bt_service_pb2.ArrowFrame: # type: ignore
+    ) -> service_pb2.ArrowFrame: # type: ignore
         
         await self._set_context(context)
 
@@ -97,9 +98,9 @@ class RpcServer(bt_service_pb2_grpc.btDataFeedServicer):
 
     async def CloseStreamCall(
         self,
-        request: bt_service_pb2.QuoteRequest,
+        request: service_pb2.QuoteRequest,
         context: grpc.ServicerContext,
-    ) -> bt_service_pb2.ArrowFrame: # type: ignore
+    ) -> service_pb2.ArrowFrame: # type: ignore
         
         await self._set_context(context)
 
@@ -112,9 +113,9 @@ class RpcServer(bt_service_pb2_grpc.btDataFeedServicer):
 
     async def AdjustmentStreamCall(
         self,
-        request: bt_service_pb2.QuoteRequest,
+        request: service_pb2.QuoteRequest,
         context: grpc.ServicerContext,
-    ) -> bt_service_pb2.ArrowFrame: # type: ignore
+    ) -> service_pb2.ArrowFrame: # type: ignore
         
         await self._set_context(context)
 
@@ -127,9 +128,9 @@ class RpcServer(bt_service_pb2_grpc.btDataFeedServicer):
 
     async def RightStreamCall(
         self,
-        request: bt_service_pb2.QuoteRequest,
+        request: service_pb2.QuoteRequest,
         context: grpc.ServicerContext,
-    ) -> bt_service_pb2.ArrowFrame: # type: ignore
+    ) -> service_pb2.ArrowFrame: # type: ignore
         
         await self._set_context(context)
 

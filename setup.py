@@ -22,8 +22,8 @@ extensions = [
         # "-Wno-sign-compare", # O3 极致优化，C++11 标准
     ),
     Extension(
-        name="rpc_feed.core.rpc.feed", 
-        sources=["rpc_feed/core/rpc/feed.pyx"],
+        name="rpc_feed.core.feed", 
+        sources=["rpc_feed/core/feed.pyx"],
         include_dirs=[np.get_include(), current_dir],
         language="c++",
         extra_compile_args=["-O3", "-std=c++11", "-Wno-unreachable-code"],
