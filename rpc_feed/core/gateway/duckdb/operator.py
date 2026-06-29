@@ -122,7 +122,7 @@ class DuckDBManager:
                 return
               
             sql_meta = preprocess_req(req)
-            print("sql_meta :", sql_meta)
+            # print("sql_meta :", sql_meta)
             sids = sql_meta["sids"]
             if not sids:
                 return
