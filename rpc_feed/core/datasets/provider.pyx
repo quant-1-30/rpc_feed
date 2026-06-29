@@ -17,7 +17,7 @@ from rpc_feed.core.gateway.duckdb.utils cimport Request
 from rpc_feed.core.gateway import *
 from rpc_feed.utils.dateintern cimport intdt2ts
 
-from bt_protocol.serialize.pb import service_pb2
+from bt_protocol.serialize.pb import bt_protocol_service_pb2
 from bt_protocol.template.duckdb_template import *
 from bt_protocol.schema.asset import *
 
@@ -35,7 +35,7 @@ cdef object batch_to_resp(object batch):
         writer.write_batch(batch) # writer.write_table(batch)
 
     buf = sink.getvalue()
-    resp = service_pb2.ArrowFrame(
+    resp = bt_protocol_service_pb2.ArrowFrame(
         payload=buf.to_pybytes()  # $O(N)$ copy ops 
     )
     return resp

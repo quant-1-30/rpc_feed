@@ -6,10 +6,10 @@ import logging
 from google.protobuf.json_format import MessageToDict
 
 from rpc_feed.core.feed import bt_feed
-from bt_protocol.serialize.pb import service_pb2, service_pb2_grpc 
+from bt_protocol.serialize.pb import bt_protocol_service_pb2, bt_protocol_service_pb2_grpc 
 
 
-class RpcServer(service_pb2_grpc.btDataFeedServicer):
+class RpcServer(bt_protocol_service_pb2_grpc.btDataFeedServicer):
 
     def __init__(self):
         self._id_counter = 0
@@ -28,9 +28,9 @@ class RpcServer(service_pb2_grpc.btDataFeedServicer):
         
     async def CalendarCall(
         self,
-        request: service_pb2.QuoteRequest,
+        request: bt_protocol_service_pb2.QuoteRequest,
         context: grpc.ServicerContext,
-    ) -> service_pb2.ArrowFrame: # type: ignore
+    ) -> bt_protocol_service_pb2.ArrowFrame: # type: ignore
         
         await self._set_context(context)
 
@@ -52,9 +52,9 @@ class RpcServer(service_pb2_grpc.btDataFeedServicer):
 
     async def InstrumentCall(
         self,
-        request: service_pb2.QuoteRequest,
+        request: bt_protocol_service_pb2.QuoteRequest,
         context: grpc.ServicerContext,
-    ) -> service_pb2.ArrowFrame: # type: ignore
+    ) -> bt_protocol_service_pb2.ArrowFrame: # type: ignore
         
         await self._set_context(context)
 
@@ -68,9 +68,9 @@ class RpcServer(service_pb2_grpc.btDataFeedServicer):
     
     async def DailyStreamCall(
         self,
-        request: service_pb2.QuoteRequest,
+        request: bt_protocol_service_pb2.QuoteRequest,
         context: grpc.ServicerContext,
-    ) -> service_pb2.ArrowFrame: # type: ignore
+    ) -> bt_protocol_service_pb2.ArrowFrame: # type: ignore
         
         await self._set_context(context)
 
@@ -83,9 +83,9 @@ class RpcServer(service_pb2_grpc.btDataFeedServicer):
     
     async def TickStreamCall(
         self,
-        request: service_pb2.QuoteRequest,
+        request: bt_protocol_service_pb2.QuoteRequest,
         context: grpc.ServicerContext,
-    ) -> service_pb2.ArrowFrame: # type: ignore
+    ) -> bt_protocol_service_pb2.ArrowFrame: # type: ignore
         
         await self._set_context(context)
 
@@ -98,9 +98,9 @@ class RpcServer(service_pb2_grpc.btDataFeedServicer):
 
     async def CloseStreamCall(
         self,
-        request: service_pb2.QuoteRequest,
+        request: bt_protocol_service_pb2.QuoteRequest,
         context: grpc.ServicerContext,
-    ) -> service_pb2.ArrowFrame: # type: ignore
+    ) -> bt_protocol_service_pb2.ArrowFrame: # type: ignore
         
         await self._set_context(context)
 
@@ -113,9 +113,9 @@ class RpcServer(service_pb2_grpc.btDataFeedServicer):
 
     async def AdjustmentStreamCall(
         self,
-        request: service_pb2.QuoteRequest,
+        request: bt_protocol_service_pb2.QuoteRequest,
         context: grpc.ServicerContext,
-    ) -> service_pb2.ArrowFrame: # type: ignore
+    ) -> bt_protocol_service_pb2.ArrowFrame: # type: ignore
         
         await self._set_context(context)
 
@@ -128,9 +128,9 @@ class RpcServer(service_pb2_grpc.btDataFeedServicer):
 
     async def RightStreamCall(
         self,
-        request: service_pb2.QuoteRequest,
+        request: bt_protocol_service_pb2.QuoteRequest,
         context: grpc.ServicerContext,
-    ) -> service_pb2.ArrowFrame: # type: ignore
+    ) -> bt_protocol_service_pb2.ArrowFrame: # type: ignore
         
         await self._set_context(context)
 
