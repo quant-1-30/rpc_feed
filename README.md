@@ -27,6 +27,8 @@
 
 > 注意：`pyproject.toml` 使用 Poetry 依赖声明，但 `[build-system]` 明确指定 `setuptools.build_meta`，Cython 扩展由 `setup.py` 构建。
 
+poetry config http-basic.local-hub bt_sdk 20210718
+
 ---
 
 ## 3. 项目结构
