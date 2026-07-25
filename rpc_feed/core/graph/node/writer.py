@@ -3,6 +3,8 @@
 
 import io
 import re
+import asyncio
+import datetime
 import warnings
 import sys
 import avro.schema
@@ -35,15 +37,8 @@ class AvroWriter(Node):
     async def next(self, meta: pd.DataFrame) -> Any:
         # ticker.avsc
         schema = avro.schema.parse(open(self.p.schema_path, "rb").read())
-        # users.avro 
-        # reader = DataFileReader(open("users.avro", "rb"), DatumReader())
-        # for user in reader:
-        #     print (user)
-        # reader.close()
-        writer = DataFileWriter((open(self.p.data_path), "wb"), DatumWriter(), schema)
-        dicts = meta.to_dict()
-        for element in dicts.values:
-            # element --- {"name": "Ben", "favorite_number": 7, "favorite_color": "red"}
+        writer = DataFileWriter(open(self.p.data_path, "wb"), DatumWriter(), schema)
+        for element in meta.to_dict("records"): # column: value
             writer.append(element)
         writer.close()
 
@@ -109,27 +104,27 @@ class CsvWriter(Node):
         return out
     
     def __init__(self):
-        self.out = self._start_output
+        self.out = self._start_output()
 
     def stop(self):
         self.out.close()
 
-    async def _writeline(self, line):
-        await self.out.write(line + '\n')
+    def _writeline(self, line):
+        self.out.write(line + '\n')
 
     async def writelineseparator(self):
         if self.p.headers:
             headers = self.p.headers.split(self.p.separator)
             sep = ' ' * self.p.indent + self.p.separator
             csv_header = sep.join(headers)
-            await self._writeline(csv_header)
+            self._writeline(csv_header)
 
     async def next(self, meta):
         if meta:
             await self.writelineseparator()
             for l in meta:
-                await self._writeline(l + '\n')
-            self.stop() 
+                self._writeline(l + '\n')
+            self.stop()
 
         
 @registry
@@ -278,4 +273,4 @@ class ParquetWriter(Node):
         """
         Async entry point for writing parquet using `to_thread` to avoid blocking.
         """
-        self._write_parquet(meta)
+        await asyncio.to_thread(self._write_parquet, meta)

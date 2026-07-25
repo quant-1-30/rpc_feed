@@ -5,6 +5,9 @@ Created on Tue Mar 12 15:37:47 2019
 
 @author: python
 """
+import warnings
+import shutil
+from tempfile import mkdtemp
 from warnings import (
     catch_warnings,
     filterwarnings,
@@ -72,21 +75,10 @@ def ignore_pandas_nan_categorical_warning():
         )
         yield
 
-@contextmanager
-def ignore_pandas_nan_categorical_warning():
-    with warnings.catch_warnings():
-        # Pandas >= 0.18 doesn't like null-ish values in categories, but
-        # avoiding that requires a broader change to how missing values are
-        # handled in pipe, so for now just silence the warning.
-        warnings.filterwarnings(
-            'ignore',
-            category=FutureWarning,
-        )
-        yield
 
 @contextmanager
 def get_temp_dir():
     dirpath = mkdtemp()
     yield dirpath
     shutil.rmtree(dirpath)
-
+    

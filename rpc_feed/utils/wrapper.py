@@ -22,11 +22,12 @@ from contextlib import contextmanager
 
 
 def singleton(cls):
-
+    _lock = threading.Lock()
     instances = {}
+
     @functools.wraps(cls)
     def get_instance(*args, **kw):
-        with threading.Lock():
+        with _lock:
             if cls not in instances:
                 instances[cls] = cls(*args, **kw)
             return instances[cls]
@@ -129,13 +130,11 @@ class Deprecated(object):
 
 
 def warnings_filter(func):
-
     @functools.wraps(func)
     def wrapper(*args, **kwargs):
         warnings.simplefilter('ignore')
         ret = func(*args, **kwargs)
-        if not Env.g_ignore_all_warnings:
-            warnings.simplefilter('default')
+        warnings.simplefilter('default')
         return ret
     return wrapper
 
@@ -314,40 +313,20 @@ def remove_na(f):
 def coerce_numbers_to_my_dtype(f):
     """
     A decorator for methods whose signature is f(self, other) that coerces
-    ``other`` to ``self.dtype``.
+    numeric ``other`` to float before delegating to ``f``.
 
-    This is used to make comparison operations between numbers and `Factor`
-    instances work independently of whether the user supplies a float or
-    integer literal.
-
-    For example, if I write::
-
-        my_filter = my_factor > 3
-
-    my_factor probably has dtype float64, but 3 is an int, so we want to coerce
-    to float64 before doing the comparison.
+    NOTE: reference zipline 的 Number / coerce_to_dtype
     """
     @wraps(f)
     def method(self, other):
-        if isinstance(other, Number):
-            other = coerce_to_dtype(self.dtype, other)
+        if isinstance(other, (int, float)):
+            other = float(other)
         return f(self, other)
     return method
 
 
-def api_method(f): # patch func to instance func
-    # Decorator that adds the decorated class method as a callable
-    # function (wrapped) to zipline.api
-    @wraps(f)
-    def wrapped(*args, **kwargs):
-        # Get the instance and call the method
-        algo_instance = get_algo_instance()
-        if algo_instance is None:
-            raise RuntimeError(
-                'api method %s'
-                % f.__name__
-            )
-        return getattr(algo_instance, f.__name__)(*args, **kwargs)
+def api_method(f):
+    # zipline get_algo_instance()
     return f
 
 
@@ -376,8 +355,6 @@ class Registry():
         self._module_dict[module_name] = module_class
 
     def __call__(self, _obj):
-        # pdb.set_trace()
-        print("register _obj ", _obj)
         self._register_module(_obj)
         return _obj
     

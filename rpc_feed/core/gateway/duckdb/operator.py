@@ -3,6 +3,7 @@
 
 import re
 import os
+import logging
 import duckdb
 import threading
 import json
@@ -46,7 +47,8 @@ class ConnectionPool:
     def return_connection(self, conn):
         try:
             self._pool.put(conn, timeout=1)
-        except:
+        except queue.Full:
+            logging.warning("DuckDB connection pool full, closing connection")
             conn.close()
             
     def close_all(self):
@@ -65,6 +67,10 @@ class DuckDBManager:
     - Glob + Hive Partitioning
     - Parameters Binding solve AST Depth Limit
     """
+    # StopIteration not direct passed to run_in_executor Future replace sentinel 
+    # asyncio "StopIteration interacts badly with generators and cannot be raised into a Future"
+    _EXHAUSTED = "sentinel"
+
     def __init__(self):
         self.dataset_root = Path(os.getenv("DUCKDATASET")).expanduser()
         self.batch_size = int(os.getenv("DUCKBATCHSIZE", 100000))
@@ -113,31 +119,42 @@ class DuckDBManager:
                     exact_globs.append(os.path.join(dir_path, "*.parquet"))
         return exact_globs
     
+    @staticmethod
+    def _read_batch_safe(reader):
+        try:
+            return reader.read_next_batch()
+        except StopIteration:
+            return DuckDBManager._EXHAUSTED
+
     async def query(self, req: dict, raw_template: str):
+        loop = asyncio.get_running_loop()
         conn = self.connection_pool.get_connection()
         try:
             file_globs = self._glob_path(req)
             if not file_globs:
-                print("no file globs")
+                logging.info("DuckDB query: no file globs")
                 return
-              
+
             sql_meta = preprocess_req(req)
-            # print("sql_meta :", sql_meta)
             sids = sql_meta["sids"]
             if not sids:
                 return
 
-            # C++ Parameter Binding
-            reader = conn.execute(
-                raw_template, 
-                [file_globs, sids, sql_meta["start_str"], sql_meta["end_str"]]
-            ).fetch_record_batch(self.batch_size)
+            # conn.execute / fetch_record_batch / read_next_batch sync api block event_loop
+            reader = await loop.run_in_executor(
+                None,
+                lambda: conn.execute( # C++ Parameter Binding
+                    raw_template,
+                    [file_globs, sids, sql_meta["start_str"], sql_meta["end_str"]]
+                ).fetch_record_batch(self.batch_size)
+            )
 
             while True:
-                try:
-                    yield reader.read_next_batch()
-                except StopIteration:
+                # read_next_batch sync api block
+                batch = await loop.run_in_executor(None, self._read_batch_safe, reader)
+                if batch is self._EXHAUSTED:
                     break
+                yield batch
         finally:
             self.connection_pool.return_connection(conn)
     

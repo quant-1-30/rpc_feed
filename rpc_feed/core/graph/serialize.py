@@ -14,6 +14,8 @@ from rpc_feed.utils.io import build_from_cfg
 
 
 _WORKER_PIPELINE: List[Any] = []
+_GC_INTERVAL = 64
+_gc_counter = 0
 
 NamedNode = namedtuple("Node", ["instance", "params"])
 
@@ -41,7 +43,7 @@ def init_worker(serialized_configs: List[Tuple[str, Dict]]):
     print(f"🚀 [Worker] PID {os.getpid()} 初始化完成，加载了 {len(_WORKER_PIPELINE)} 个节点")
 
 def run_sync_pipeline_global(item: Any) -> Any:
-    global _WORKER_PIPELINE
+    global _WORKER_PIPELINE, _gc_counter
     if not _WORKER_PIPELINE:
         return item
     try:
@@ -56,4 +58,7 @@ def run_sync_pipeline_global(item: Any) -> Any:
         traceback.print_exc()
         return None
     finally:
-        gc.collect() # locky reuse process
+        _gc_counter += 1
+        if _gc_counter >= _GC_INTERVAL:
+            _gc_counter = 0
+            gc.collect() # locky reuse process

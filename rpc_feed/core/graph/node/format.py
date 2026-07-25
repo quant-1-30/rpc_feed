@@ -44,7 +44,7 @@ class StructDateParser(Node):
             # =======================================================
             localized_dt = meta["datetime"].dt.tz_localize(self.p.tz)
             # Pandas auto calculate the offset to UTC Epoch, then get int64 tick
-            meta["tick"] = (localized_dt.view("int64") // 10**9).astype("int64")
+            meta["tick"] = localized_dt.astype("int64") // 10**9 # .view("int64") api abandon
             # Datetime Keep Native TimeZone 
             meta.drop(columns=["dates", "sub_dates"], inplace=True)
         return meta
@@ -67,7 +67,8 @@ class UniverseDateParser(Node):
             # pd.to_datetime C vectorize
             meta[col] = pd.to_datetime(meta[col], format=self.p.format)
             
-            meta["tick"] = meta[col].view("int64") // 10**9 # view zero-copy
+            # 修复：.view("int64") 在新版 pandas 下弃用，改用 .astype("int64")（语义一致）
+            meta["tick"] = meta[col].astype("int64") // 10**9
         return meta
 
 

@@ -33,8 +33,8 @@ os.environ["NUMEXPR_NUM_THREADS"] = "1"
 class Graph(object):
     """
     DAG 调度引擎：
-    1. CPU 密集型任务由 loky ProcessPool
-    2. I/O 密集型/异步 Writer asyncio
+    1. CPU loky ProcessPool
+    2. I/O Writer asyncio
     """
     cfg_cache = {}
 
@@ -61,6 +61,11 @@ class Graph(object):
         self.loop = loop
         self.queue = asyncio.Queue(maxsize=self.q_size) # pressure control
 
+    def reset(self):
+        self.graph = []
+        self.w_node = None
+        self.edges = None
+
     @classmethod
     def get_cfg(cls, cfg_path):
         basename = os.path.basename(cfg_path)
@@ -68,7 +73,9 @@ class Graph(object):
             cls.cfg_cache[basename] = get_module_by_module_path(cfg_path)
         return cls.cfg_cache[basename]
     
-    def _build_graph(self, graph_xml):
+    def _build_graph(self, graph_xml): # @singleton，self.graph to_execute accumulate last node
+        self.reset()
+
         G = nx.read_graphml(graph_xml)
         self.edges = G.edges
         if not nx.is_directed_acyclic_graph(G):
@@ -91,7 +98,7 @@ class Graph(object):
             print("Warning: No writer node defined in the graph.")
 
     async def monitor_background(self):
-        """监控内存使用情况，必要时触发 GC"""
+        """monitor and trigger GC"""
         while not self._gc_event.is_set():
             await self.loop.run_in_executor(None, self.memory_mgr.check_memory_usage)
             await asyncio.sleep(self.memory_check_interval)
@@ -139,7 +146,7 @@ class Graph(object):
             pending_tasks.add(task)
             task.add_done_callback(pending_tasks.discard)  
 
-            if len(pending_tasks) >= self.procs * 2:
+            if len(pending_tasks) >= self.sem_size:
                 done, _ = await asyncio.wait(pending_tasks, return_when=asyncio.FIRST_COMPLETED) # core key --- one in one out
                 for t in done:
                     try:

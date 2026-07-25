@@ -29,16 +29,11 @@ cdef object arrow_options = pa.ipc.IpcWriteOptions(
     use_threads=True
 ) 
 
-cdef object batch_to_resp(object batch):
-    sink = pa.BufferOutputStream() # ipc stream bytes 
+cdef object batch_to_resp(object batch): # protobuf payload bytes
+    sink = pa.BufferOutputStream()
     with pa.ipc.new_stream(sink, batch.schema, options=arrow_options) as writer:
-        writer.write_batch(batch) # writer.write_table(batch)
-
-    buf = sink.getvalue()
-    resp = bt_protocol_service_pb2.ArrowFrame(
-        payload=buf.to_pybytes()  # $O(N)$ copy ops 
-    )
-    return resp
+        writer.write_batch(batch)
+    return bt_protocol_service_pb2.ArrowFrame(payload=sink.getvalue().to_pybytes())
 
 
 cdef inline tuple _slice_by_sid(object sid_col, Py_ssize_t num_rows):
@@ -115,22 +110,30 @@ cdef class BaseDuckDBProvider(BaseBufferedProvider):
     def _process_batch(self, object batch):
         cdef object sid_col = batch.column("sid")
         cdef Py_ssize_t num_rows = len(sid_col)
-        
+
         cdef tuple indices
         cdef object s_indices, e_indices, slice_batch
-        cdef Py_ssize_t start, end
+        cdef Py_ssize_t start, end, i
         cdef bytes sid
-        
-        if num_rows == 0: 
+        cdef list s_list, e_list, sid_list
+        cdef Py_ssize_t n_seg
+
+        if num_rows == 0:
             return
-            
+
         indices = _slice_by_sid(sid_col, num_rows)
         s_indices, e_indices = indices[0], indices[1]
 
-        for start_scalar, end_scalar in zip(s_indices, e_indices):
-            start = start_scalar.as_py()
-            end = end_scalar.as_py()
-            sid = sid_col[start].as_py()
+        # to_pylist avoid as_py() --- Arrow Scalar
+        s_list = s_indices.to_pylist()
+        e_list = e_indices.to_pylist()
+        sid_list = sid_col.to_pylist()
+        n_seg = len(s_list)
+
+        for i in range(n_seg):
+            start = s_list[i]
+            end = e_list[i]
+            sid = sid_list[start]
             slice_batch = batch.slice(start, end - start)
             yield self._flush_record_batch(sid, slice_batch)
 

@@ -112,8 +112,8 @@ class AsyncOps:
         
     @asynccontextmanager
     async def get_db(self):
-        """Get database session with proper lifecycle management"""
-        session = self._session_factory() # Create a new session for each context
+        """Get database session with proper lifecycle management / Create a new session for each context""" 
+        session = self._session_factory() 
         try:
             yield session
         except Exception as e:
@@ -153,8 +153,8 @@ class AsyncOps:
             async with session.begin():
                 if isinstance(data, pd.DataFrame):
                     inserts = list(data.T.to_dict().values())
-                    # Iterable 可迭代对象 __iter__ 使用for / Iterator 迭代器 __iter__ , __next__ yield
-                elif isinstance(data, Iterable):
+                    # Iterable __iter__ for / Iterator __iter__ , __next__ yield include str/bytes Iterable
+                elif isinstance(data, (list, tuple)):
                     inserts = data
                 else:
                     inserts = [data]

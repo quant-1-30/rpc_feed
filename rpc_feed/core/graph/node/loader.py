@@ -37,7 +37,7 @@ class StructUnpacker(Node):
             size = int(len(buf) / self.p.buflen)
             data = []
             for num in range(size):
-                idx = 32 * num
+                idx = self.p.buflen * num
                 line = struct.unpack(self.p.pack, buf[idx:idx + self.p.buflen])
                 data.append(line)
             frame = pd.DataFrame(data, columns=self.p.lines)
@@ -85,12 +85,13 @@ class TextLoader(Node):
         ("alias", ""),
         ("subset", []),
         ("rename", {}),
+        ("columns", []),
     )
 
     def prenext(self, input_path):
         lines = []
         with open(input_path, "r") as f:
-            for line in f.readlines:
+            for line in f.readlines():
                 lines.append(line)
             return lines
 
@@ -104,5 +105,5 @@ class TextLoader(Node):
             frame.drop_duplicates(subset=self.p.subset, inplace=True) if self.p.subset else frame.drop_duplicates(inplace=True)
         else:
             lines = self.prenext(input_path)
-            frame = pd.DataFrame(lines, columns=self.p.keys())
+            frame = pd.DataFrame(lines, columns=self.p.columns)
         return frame

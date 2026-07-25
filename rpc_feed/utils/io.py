@@ -98,7 +98,7 @@ def build_from_cfg(obj_type, params):
     return obj_cls(**params)
         
 def read_bin(file_path: Union[str, Path], start_index, end_index):
-    file_path = Path(file_path.expanduser().resolve())
+    file_path = Path(file_path).expanduser().resolve()
     with file_path.open("rb") as f:
         # read start_index
         ref_start_index = int(np.frombuffer(f.read(4), dtype="<f")[0])
@@ -120,15 +120,14 @@ def recursive_glob(root_path: str, suffix: str, pattern: str) -> Generator[str, 
         # sys.exit(0)
         raise FileNotFoundError(f'{expand_root_path} not found')
 
-    if os.path.isfile(expand_root_path) and filter(expand_root_path.split(os.sep)[-1]):
+    filename = expand_root_path.split(os.sep)[-1]
+    if os.path.isfile(expand_root_path) and re.match(pattern, filename):
         yield expand_root_path
     else:
-        print("expand_root_path ", expand_root_path)
         for root, _, files in os.walk(expand_root_path):
             for file in files:
                 file_path = os.path.join(root, file)
                 if file.endswith(suffix) and re.match(pattern, file):
-                    print("recursive_glob ", file_path)
                     yield file_path
 
 

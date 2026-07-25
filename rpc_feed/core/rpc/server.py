@@ -6,6 +6,7 @@ import logging
 from google.protobuf.json_format import MessageToDict
 
 from rpc_feed.core.feed import bt_feed
+from rpc_feed.core.datasets import _providers
 from bt_protocol.serialize.pb import bt_protocol_service_pb2, bt_protocol_service_pb2_grpc 
 
 
@@ -39,15 +40,13 @@ class RpcServer(bt_protocol_service_pb2_grpc.btDataFeedServicer):
         for key, value in context.invocation_metadata():
             print("Received initial metadata: key=%s value=%s" % (key, value))
 
-        # obj_map = MessageToDict(
-        #     request, 
-        #     preserving_proto_field_name=True, 
-        #     always_print_fields_with_no_presence=True
-        # )
-        # google._upb._message.RepeatedScalarContainer -> list
+        # calendar provider UNIMPLEMENTED avoid KeyError 
+        if "calendar" not in _providers:
+            await context.abort(grpc.StatusCode.UNIMPLEMENTED, "calendar provider is not registered")
+            return
+
         response_iterator = bt_feed.fetch("calendar", request.start_date, request.end_date, list(request.sid))
         async for response in response_iterator:
-            # print("CalendarCall repsonse size ", response.ByteSize())
             yield response
 
     async def InstrumentCall(
