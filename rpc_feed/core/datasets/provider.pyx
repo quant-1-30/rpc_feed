@@ -25,8 +25,8 @@ cdef cpp_string tz_info = b"Asia/Shanghai"
 
 
 cdef object arrow_options = pa.ipc.IpcWriteOptions(
-    compression='lz4', # lz4 internal / zstd public 
-    use_threads=True
+    compression='lz4',
+    use_threads=False  # 高并发下避免线程竞争
 ) 
 
 cdef object batch_to_resp(object batch): # protobuf payload bytes
@@ -87,7 +87,7 @@ cdef class BaseBufferedProvider:
 
 cdef class BaseDuckDBProvider(BaseBufferedProvider):
 
-    async def __call__(self, int32_t start_date, int32_t end_date, list sids=None): # avoid list=[] cause leak and None 
+    async def __call__(self, int32_t start_date, int32_t end_date, list sids=None, object context=None):
         cdef:
             list query_sids = sids if sids is not None else []
             Request req = Request(start_date=start_date, end_date=end_date, sid=query_sids)
@@ -95,6 +95,10 @@ cdef class BaseDuckDBProvider(BaseBufferedProvider):
 
         async with duck_mgr as ctx:
             async for batch in ctx.query(req, self.template):
+                # aviod grpc context leak is_active is grpc sync not aiogrpc
+                if context is not None and context.done():
+                    print(f"[{self.rpc_type.decode()}] client cancelled, stopping stream")
+                    return
                 if batch.num_rows == 0: 
                     continue
                 try:
@@ -115,7 +119,6 @@ cdef class BaseDuckDBProvider(BaseBufferedProvider):
         cdef object s_indices, e_indices, slice_batch
         cdef Py_ssize_t start, end, i
         cdef bytes sid
-        cdef list s_list, e_list, sid_list
         cdef Py_ssize_t n_seg
 
         if num_rows == 0:
@@ -124,16 +127,15 @@ cdef class BaseDuckDBProvider(BaseBufferedProvider):
         indices = _slice_by_sid(sid_col, num_rows)
         s_indices, e_indices = indices[0], indices[1]
 
-        # to_pylist avoid as_py() --- Arrow Scalar
-        s_list = s_indices.to_pylist()
-        e_list = e_indices.to_pylist()
-        sid_list = sid_col.to_pylist()
-        n_seg = len(s_list)
+        # to_numpy avoid to_pybytes multi python objects
+        cdef object s_np = s_indices.to_numpy(zero_copy_only=False)
+        cdef object e_np = e_indices.to_numpy(zero_copy_only=False)
+        n_seg = len(s_np)
 
         for i in range(n_seg):
-            start = s_list[i]
-            end = e_list[i]
-            sid = sid_list[start]
+            start = s_np[i]
+            end = e_np[i]
+            sid = sid_col[start].as_py()
             slice_batch = batch.slice(start, end - start)
             yield self._flush_record_batch(sid, slice_batch)
 
@@ -159,6 +161,37 @@ cdef class Close(BaseDuckDBProvider):
 
 
 # =====================================================================
+# Inner Buffer Container avoid abrupted when Conncurrency
+# =====================================================================
+
+cdef class InstrumentBuffer:
+    def __cinit__(self):
+        self.buf_sid = [b''] * CHUNK_SIZE
+        self.buf_name = [b''] * CHUNK_SIZE
+        self.buf_first_trading = np.empty(CHUNK_SIZE, dtype=np.int32)
+        self.buf_delist = np.empty(CHUNK_SIZE, dtype=np.int32)
+        self.buf_merger = [b''] * CHUNK_SIZE
+        self.buf_ratio = np.empty(CHUNK_SIZE, dtype=np.float32)
+
+
+cdef class AdjustBuffer:
+    def __cinit__(self):
+        self.buf_ex_date = np.empty(CHUNK_SIZE, dtype=np.int32)
+        self.buf_register_date = np.empty(CHUNK_SIZE, dtype=np.int32)
+        self.buf_bonus_share = np.empty(CHUNK_SIZE, dtype=np.int32)
+        self.buf_transfer = np.empty(CHUNK_SIZE, dtype=np.int32)
+        self.buf_bonus = np.empty(CHUNK_SIZE, dtype=np.int32)
+
+
+cdef class RightBuffer:
+    def __cinit__(self):
+        self.buf_ex_date = np.empty(CHUNK_SIZE, dtype=np.int32)
+        self.buf_register_date = np.empty(CHUNK_SIZE, dtype=np.int32)
+        self.buf_price = np.empty(CHUNK_SIZE, dtype=np.int32)
+        self.buf_ratio = np.empty(CHUNK_SIZE, dtype=np.int32)
+
+
+# =====================================================================
 # 3. SQLAlchemy Instrument, Adjust, Right
 # =====================================================================
 
@@ -167,22 +200,23 @@ cdef class BaseSQLAlchemyProvider(BaseBufferedProvider):
     cdef object _build_statement(self, int32_t start_date, int32_t end_date, list sids):
         raise NotImplementedError()
 
-    cdef void _init_buffers(self):
+    cdef object _init_buffers(self):
         raise NotImplementedError()
 
-    cdef void _row_to_buffer(self, int i, object row):
+    cdef void _row_to_buffer(self, object buf, int i, object row):
         raise NotImplementedError()
 
-    cdef object _flush_buffer(self, int count, bytes sid):
+    cdef object _flush_buffer(self, object buf, int count, bytes sid):
         raise NotImplementedError()
 
-    async def __call__(self, int32_t start_date, int32_t end_date, list sids=None):
+    async def __call__(self, int32_t start_date, int32_t end_date, list sids=None, object context=None):
         cdef:
             int i = 0
             object row, stream_wrap, stream_proxy
-            bytes r_sid, last_sid = None # cdef None is allowed
+            bytes r_sid, last_sid = None
+            object buf  
 
-        self._init_buffers()
+        buf = self._init_buffers()
 
         async with async_ops as ctx:
             stmt = self._build_statement(start_date, end_date, sids)
@@ -190,21 +224,25 @@ cdef class BaseSQLAlchemyProvider(BaseBufferedProvider):
 
             async with stream_wrap as stream_proxy:
                 async for row in stream_proxy:
+                    if context is not None and context.done():
+                        print(f"[{self.rpc_type.decode()}] client cancelled, stopping stream")
+                        return
+
                     r_sid = row[0] if self.group_by_sid else b''
 
                     # i >= CHUNK_SIZE avoid segment fault
                     if i >= CHUNK_SIZE or (self.group_by_sid and last_sid is not None and r_sid != last_sid):
-                        yield self._flush_buffer(i, last_sid)
-                        self._init_buffers()
+                        yield self._flush_buffer(buf, i, last_sid)
+                        buf = self._init_buffers()
                         i = 0
 
-                    self._row_to_buffer(i, row)
+                    self._row_to_buffer(buf, i, row)
                     if self.group_by_sid:
                         last_sid = r_sid
                     i += 1
 
                 if i > 0:
-                    yield self._flush_buffer(i, last_sid if self.group_by_sid else b'')
+                    yield self._flush_buffer(buf, i, last_sid if self.group_by_sid else b'')
 
 
 # -------------------------------- SQLAlchemy Dispatcher ----------------------------
@@ -225,30 +263,25 @@ cdef class Instrument(BaseSQLAlchemyProvider):
             stmt = stmt.where(Asset.first_trading.between(start_date, end_date))
         return stmt
 
-    cdef void _init_buffers(self):
-        self.buf_sid = [b''] * CHUNK_SIZE
-        self.buf_name = [b''] * CHUNK_SIZE
-        self.buf_first_trading = np.empty(CHUNK_SIZE, dtype=np.int32)
-        self.buf_delist = np.empty(CHUNK_SIZE, dtype=np.int32)
-        self.buf_merger = [b''] * CHUNK_SIZE
-        self.buf_ratio = np.empty(CHUNK_SIZE, dtype=np.float32)
+    cdef object _init_buffers(self):
+        return InstrumentBuffer()
 
-    cdef void _row_to_buffer(self, int i, object row):
-        self.buf_sid[i] = row[0]
-        self.buf_name[i] = row[1]
-        self.buf_first_trading[i] = row[2]
-        self.buf_delist[i] = row[3]
-        self.buf_merger[i] = row[4]
-        self.buf_ratio[i] = row[5]
+    cdef void _row_to_buffer(self, object buf, int i, object row):
+        buf.buf_sid[i] = row[0]
+        buf.buf_name[i] = row[1]
+        buf.buf_first_trading[i] = row[2]
+        buf.buf_delist[i] = row[3]
+        buf.buf_merger[i] = row[4]
+        buf.buf_ratio[i] = row[5]
 
-    cdef object _flush_buffer(self, int count, bytes sid):
+    cdef object _flush_buffer(self, object buf, int count, bytes sid):
         cdef list arrays = [
-            pa.array(self.buf_sid[:count], type=pa.binary()),
-            pa.array(self.buf_name[:count], type=pa.binary()),
-            pa.array(self.buf_first_trading[:count], type=pa.int32()),
-            pa.array(self.buf_delist[:count], type=pa.int32()),
-            pa.array(self.buf_merger[:count], type=pa.binary()),
-            pa.array(self.buf_ratio[:count], type=pa.float32()),
+            pa.array(buf.buf_sid[:count], type=pa.binary()),
+            pa.array(buf.buf_name[:count], type=pa.binary()),
+            pa.array(buf.buf_first_trading[:count], type=pa.int32()),
+            pa.array(buf.buf_delist[:count], type=pa.int32()),
+            pa.array(buf.buf_merger[:count], type=pa.binary()),
+            pa.array(buf.buf_ratio[:count], type=pa.float32()),
         ]
         cdef list names = ["sid", "name", "first_trading", "delist", "merger", "ratio"]
         return self._create_and_flush_arrays(None, arrays, names)
@@ -274,27 +307,23 @@ cdef class Adjust(BaseSQLAlchemyProvider):
             stmt = stmt.where(Adjustment.sid.in_(sids))
         return stmt
 
-    cdef void _init_buffers(self):
-        self.buf_ex_date = np.empty(CHUNK_SIZE, dtype=np.int32)
-        self.buf_register_date = np.empty(CHUNK_SIZE, dtype=np.int32)
-        self.buf_bonus_share = np.empty(CHUNK_SIZE, dtype=np.int32)
-        self.buf_transfer = np.empty(CHUNK_SIZE, dtype=np.int32)
-        self.buf_bonus = np.empty(CHUNK_SIZE, dtype=np.int32)
+    cdef object _init_buffers(self):
+        return AdjustBuffer()
 
-    cdef void _row_to_buffer(self, int i, object row):
-        self.buf_ex_date[i] = row[1]
-        self.buf_register_date[i] = row[2]
-        self.buf_bonus_share[i] = row[3]
-        self.buf_transfer[i] = row[4]
-        self.buf_bonus[i] = row[5]
+    cdef void _row_to_buffer(self, object buf, int i, object row):
+        buf.buf_ex_date[i] = row[1]
+        buf.buf_register_date[i] = row[2]
+        buf.buf_bonus_share[i] = row[3]
+        buf.buf_transfer[i] = row[4]
+        buf.buf_bonus[i] = row[5]
 
-    cdef object _flush_buffer(self, int count, bytes sid):
+    cdef object _flush_buffer(self, object buf, int count, bytes sid):
         cdef list arrays = [
-            pa.array(self.buf_ex_date[:count], type=pa.int32()),
-            pa.array(self.buf_register_date[:count], type=pa.int32()),
-            pa.array(self.buf_bonus_share[:count], type=pa.int32()),
-            pa.array(self.buf_transfer[:count], type=pa.int32()),
-            pa.array(self.buf_bonus[:count], type=pa.int32()),
+            pa.array(buf.buf_ex_date[:count], type=pa.int32()),
+            pa.array(buf.buf_register_date[:count], type=pa.int32()),
+            pa.array(buf.buf_bonus_share[:count], type=pa.int32()),
+            pa.array(buf.buf_transfer[:count], type=pa.int32()),
+            pa.array(buf.buf_bonus[:count], type=pa.int32()),
         ]
         cdef list names = ["ex_date", "register_date", "bonus_share", "transfer", "bonus"]
         return self._create_and_flush_arrays(sid, arrays, names)
@@ -319,24 +348,21 @@ cdef class Right(BaseSQLAlchemyProvider):
             stmt = stmt.where(Rightment.sid.in_(sids))
         return stmt
 
-    cdef void _init_buffers(self):
-        self.buf_ex_date = np.empty(CHUNK_SIZE, dtype=np.int32)
-        self.buf_register_date = np.empty(CHUNK_SIZE, dtype=np.int32)
-        self.buf_price = np.empty(CHUNK_SIZE, dtype=np.int32)
-        self.buf_ratio = np.empty(CHUNK_SIZE, dtype=np.int32)
+    cdef object _init_buffers(self):
+        return RightBuffer()
 
-    cdef void _row_to_buffer(self, int i, object row):
-        self.buf_ex_date[i] = row[1]
-        self.buf_register_date[i] = row[2]
-        self.buf_price[i] = row[3]
-        self.buf_ratio[i] = row[4]
+    cdef void _row_to_buffer(self, object buf, int i, object row):
+        buf.buf_ex_date[i] = row[1]
+        buf.buf_register_date[i] = row[2]
+        buf.buf_price[i] = row[3]
+        buf.buf_ratio[i] = row[4]
 
-    cdef object _flush_buffer(self, int count, bytes sid):
+    cdef object _flush_buffer(self, object buf, int count, bytes sid):
         cdef list arrays = [
-            pa.array(self.buf_ex_date[:count], type=pa.int32()),
-            pa.array(self.buf_register_date[:count], type=pa.int32()),
-            pa.array(self.buf_price[:count], type=pa.int32()),
-            pa.array(self.buf_ratio[:count], type=pa.int32()),
+            pa.array(buf.buf_ex_date[:count], type=pa.int32()),
+            pa.array(buf.buf_register_date[:count], type=pa.int32()),
+            pa.array(buf.buf_price[:count], type=pa.int32()),
+            pa.array(buf.buf_ratio[:count], type=pa.int32()),
         ]
         cdef list names = ["ex_date", "register_date", "price", "ratio"]
         return self._create_and_flush_arrays(sid, arrays, names)

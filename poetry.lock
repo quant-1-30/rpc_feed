@@ -156,19 +156,19 @@ reference = "tuna"
 
 [[package]]
 name = "bt-protocol"
-version = "0.2.5"
-description = "update positionbody"
+version = "0.2.6"
+description = "revise core bug: relationship lazy=raise / selectin replace select"
 optional = false
 python-versions = ">=3.11,<3.14"
 files = [
-    {file = "bt_protocol-0.2.5-cp311-cp311-macosx_27_0_arm64.whl", hash = "sha256:347b2bdece841a67567b1486ff872c090114ea2393de3e9beb141b3705d47aaf"},
+    {file = "bt_protocol-0.2.6-cp311-cp311-macosx_27_0_arm64.whl", hash = "sha256:43fbb69a39222a42980f2825db71e6cfc43fc3ab93b85a1bd9d6f6f2cbc25550"},
 ]
 
 [package.dependencies]
 alembic = ">=1.15.1,<2.0.0"
 asyncpg = ">=0.31.0,<0.32.0"
 greenlet = ">=3.5.1,<4.0.0"
-grpcio = ">=1.71.0,<2.0.0"
+grpcio = ">=1.83.0,<2.0"
 msgspec = ">=0.18.6,<0.19.0"
 sqlalchemy = ">=2.0.47,<3.0.0"
 
@@ -3666,4 +3666,4 @@ reference = "tuna"
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.11,<3.14"
-content-hash = "fe1cb2e162ac51e3e2a334c0bd1c254eabc1b1f4cba9c57ec884c241724ec5de"
+content-hash = "2e184d5d1e2fe91c9c74642770cd4175d6f0bd727ae03473d0026b0f2f95e47b"

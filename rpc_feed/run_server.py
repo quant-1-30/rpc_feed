@@ -20,6 +20,7 @@ import uvloop
 from concurrent.futures import ThreadPoolExecutor
 from core.rpc.server import RpcServer
 from core.gateway import async_ops
+from core.gateway.duckdb.operator import get_duckdb_manager
 
 from bt_protocol.serialize.pb import bt_protocol_service_pb2_grpc
 
@@ -44,10 +45,14 @@ async def serve() -> None:
         pings to be sent even if there are no calls in flight.
     For more details, check: https://github.com/grpc/grpc/blob/master/doc/keepalive.md
     """
-
+    # intialize postgres
     async with async_ops as ctx: 
         pass
 
+    # initialize duckdb manager
+    duck_mgr = get_duckdb_manager()
+
+    # initialize grpc server
     address = os.getenv("GRPC_SERVER")
     MAX_MESSAGE_LENGTH = int(os.getenv("MAX_MESSAGE_LENGTH", 512 * 1024 * 1024))
 
@@ -73,8 +78,13 @@ async def serve() -> None:
         ("grpc.max_connection_age_grace_ms", 86400000),  # 24h
     ]
 
-    server = grpc.aio.server(ThreadPoolExecutor(), compression=grpc.Compression.Gzip, 
-                             options=server_options, interceptors=[])
+    max_workers = int(os.getenv("GRPC_MAX_WORKERS", "16"))
+    server = grpc.aio.server(
+        ThreadPoolExecutor(max_workers=max_workers),
+        compression=grpc.Compression.Gzip, 
+        options=server_options,
+        interceptors=[]
+    )
     bt_protocol_service_pb2_grpc.add_btDataFeedServicer_to_server(RpcServer(), server)
     server.add_insecure_port(address)
     await server.start()
@@ -83,7 +93,18 @@ async def serve() -> None:
     stop_event = asyncio.Event()
 
     async def shutdown():
-        await server.stop(0)    
+        # release PG and DuckDB connection pool
+        logging.info("Cleaning up resources before shutdown...")
+        try:
+            await async_ops.cleanup()
+        except Exception as e:
+            logging.warning(f"AsyncOps cleanup error: {e}")
+        try:
+            duck_mgr.close()
+        except Exception as e:
+            logging.warning(f"DuckDB cleanup error: {e}")
+        
+        await server.stop(grace=5)    
         stop_event.set()
 
     loop = asyncio.get_running_loop()

@@ -1,3 +1,4 @@
+# cython: language_level=3
 cimport numpy as cnp
 cnp.import_array() # initialize numpy c_api
 from libc.stdint cimport uint8_t, int32_t, int64_t
@@ -35,38 +36,63 @@ cdef class Close(BaseDuckDBProvider):
     pass
 
 
+# =====================================================================
+# Buffer Container
+# =====================================================================
+
+cdef class InstrumentBuffer:
+    """Instrument Provider 的请求局部 buffer"""
+    cdef public list buf_sid
+    cdef public list buf_name
+    cdef public object buf_first_trading
+    cdef public object buf_delist
+    cdef public list buf_merger
+    cdef public object buf_ratio
+
+
+cdef class AdjustBuffer:
+    """Adjust Provider 的请求局部 buffer"""
+    cdef public object buf_ex_date
+    cdef public object buf_register_date
+    cdef public object buf_bonus_share
+    cdef public object buf_transfer
+    cdef public object buf_bonus
+
+
+cdef class RightBuffer:
+    """Right Provider 的请求局部 buffer"""
+    cdef public object buf_ex_date
+    cdef public object buf_register_date
+    cdef public object buf_price
+    cdef public object buf_ratio
+
+
+# =====================================================================
+# 3. SQLAlchemy Instrument, Adjust, Right
+# =====================================================================
+
 cdef class BaseSQLAlchemyProvider(BaseBufferedProvider):
     cdef bint group_by_sid
 
     cdef object _build_statement(self, int32_t start_date, int32_t end_date, list sids)
 
-    cdef void _init_buffers(self)
+    cdef object _init_buffers(self)
 
-    cdef void _row_to_buffer(self, int i, object row)
+    cdef void _row_to_buffer(self, object buf, int i, object row)
 
-    cdef object _flush_buffer(self, int count, bytes sid)
+    cdef object _flush_buffer(self, object buf, int count, bytes sid)
 
 
 cdef class Instrument(BaseSQLAlchemyProvider):
-    cdef list buf_sid
-    cdef list buf_name
-    cdef object buf_first_trading
-    cdef object buf_delist
-    cdef object buf_ratio
-    cdef list buf_merger
+
+    pass
 
 
 cdef class Adjust(BaseSQLAlchemyProvider):
-    cdef object buf_ex_date
-    cdef object buf_register_date
-    cdef object buf_bonus_share
-    cdef object buf_transfer
-    cdef object buf_bonus
+
+    pass
 
 
 cdef class Right(BaseSQLAlchemyProvider):
-    cdef object buf_ex_date
-    cdef object buf_register_date
-    cdef object buf_price
-    cdef object buf_ratio
 
+    pass

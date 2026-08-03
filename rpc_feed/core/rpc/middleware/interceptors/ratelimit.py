@@ -1,27 +1,50 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
+import time
+import threading
 import grpc
 
 
-# gRPC Interceptor for rate limiting
+class TokenBucketRateLimiter:
+    """
+    rate: Token
+    capacity: Bulk
+    """
+
+    def __init__(self, rate: float, capacity: int):
+        self._rate = rate
+        self._capacity = capacity
+        self._tokens = float(capacity)
+        self._last_refill = time.monotonic()
+        self._lock = threading.Lock()
+
+    def allow_request(self) -> bool:
+        with self._lock:
+            now = time.monotonic()
+            elapsed = now - self._last_refill
+            self._tokens = min(self._capacity, self._tokens + elapsed * self._rate)
+            self._last_refill = now
+
+            if self._tokens >= 1.0:
+                self._tokens -= 1.0
+                return True
+            return False
+
+
 class RateLimitInterceptor(grpc.ServerInterceptor):
 
-    def __init__(self, rate_limiter):
+    def __init__(self, rate_limiter=None):
+        if rate_limiter is None:
+            rate_limiter = TokenBucketRateLimiter(rate=100.0, capacity=200)
         self.rate_limiter = rate_limiter
 
     def intercept_service(self, continuation, handler_call_details):
-        # continuation is function that will be called to handle the request
-        # handler_call_details is the details of the call
         if not self.rate_limiter.allow_request():
-            # access metadatga
-            metadata = handler_call_details.invocation_metadata
-            # token from metadatqa
-            context = grpc.ServicerContext()
-            # error handle
-            context.set_code(grpc.StatusCode.RESOURCE_EXHAUSTED)
-            context.set_details('Rate limit exceeded')
-            # context.abort(grpc.StatusCode.UNAUTHENTICATED, "*****")
-            return lambda request, context: None  # Return an empty response or handle as needed
+            def deny_handler(request_or_iterator, context):
+                context.set_code(grpc.StatusCode.RESOURCE_EXHAUSTED)
+                context.set_details('Rate limit exceeded')
+                return None
+            return deny_handler
         return continuation(handler_call_details)
     

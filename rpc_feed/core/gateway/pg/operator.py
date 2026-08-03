@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 import os
+import asyncio
 import pandas as pd
 from sqlalchemy import Select
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, AsyncResult
@@ -55,16 +56,19 @@ class AsyncOps:
     def __init__(self):
         self._initialized = False
         self.engine = None
-        self._session_factory = None # singleton session cause bug when async
+        self._session_factory = None
+        self._init_lock = asyncio.Lock()  # 防止并发初始化
 
     async def __aenter__(self):
         await self._ensure_initialized()
         return self
  
     async def _ensure_initialized(self):
-        """Helper method to ensure initialization"""
+        """Helper method to ensure initialization — 加锁防止并发竞态"""
         if not self._initialized:
-            await self.initialize()
+            async with self._init_lock:
+                if not self._initialized:
+                    await self.initialize()
 
     async def initialize(self):
         """Async initialization method"""
@@ -92,7 +96,7 @@ class AsyncOps:
                                # autocommit = True/ False
                                # compiled_cache = True/ False
                                # async_creator=lambda: on_connect(url),
-                               echo=bool(int(os.getenv("PGECHO")))).execution_options(compiled_cache={}) 
+                               echo=bool(int(os.getenv("PGECHO"))))  # 移除 compiled_cache={},使用默认 SQL 缓存
         
         # Create tables and reflect schema asynchronously
         async with engine.begin() as conn:

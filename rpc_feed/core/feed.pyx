@@ -32,12 +32,12 @@ cdef class BtFeed:
         self.pipeline = Graph()
 
     # list sids=[] cause share by multi fetch 
-    async def fetch(self, str topic, int start_date, int end_date, list sids=None):
+    async def fetch(self, str topic, int start_date, int end_date, list sids=None, object context=None):
         cdef object iterator = self._providers[topic]
         cdef object c_obj
         cdef list sids_arg = sids if sids is not None else []
 
-        async for pb_obj in iterator(start_date, end_date, sids_arg):
+        async for pb_obj in iterator(start_date, end_date, sids_arg, context):
             yield pb_obj # protobuf object
 
     cpdef void load(self, str graph_xml, str dataset_path, str prefix, bint parallel=True) except *: # C无Python异常机制 --- except * Python 异常能被正确捕获和处理非导致程序崩溃或异常丢失
