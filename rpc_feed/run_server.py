@@ -54,29 +54,36 @@ async def serve() -> None:
 
     # initialize grpc server
     address = os.getenv("GRPC_SERVER")
-    MAX_MESSAGE_LENGTH = int(os.getenv("MAX_MESSAGE_LENGTH", 512 * 1024 * 1024))
+    MAX_MESSAGE_LENGTH = int(os.getenv("MAX_MESSAGE_LENGTH", 64 * 1024 * 1024))
 
     server_options = [
-        # message 512MB same as client
         ("grpc.max_send_message_length", MAX_MESSAGE_LENGTH),
         ("grpc.max_receive_message_length", MAX_MESSAGE_LENGTH),
 
-        # tcp stream control http2 
-        ("grpc.http2.initial_window_size", 64 * 1024 * 1024),       # 64MB Stream Window
-        ("grpc.http2.initial_connection_window_size", 128 * 1024 * 1024), # 128MB Connection Window 
+        # HTTP/2 flow control
+        # 64MB transfer >= apply layer otherwise large message will be blocked in HTTP/2 flow control layer
+        ("grpc.http2.initial_window_size", 64 * 1024 * 1024),            
+        # connection window >= concurrency * stream window 
+        ("grpc.http2.initial_connection_window_size", 512 * 1024 * 1024), 
 
-        # ⏱ Keepalive 
+        # ⏱ Keepalive
         ("grpc.keepalive_time_ms", 30000),             # Active Ping (30s)
         ("grpc.keepalive_timeout_ms", 10000),          # Ping Wait 10s
-        ("grpc.keepalive_permit_without_calls", 1),    # 
-        ("grpc.http2.min_time_between_pings_ms", 10000),# 10s Client Ping
-        ("grpc.http2.max_pings_without_data", 0),      # ideal Ping 
+        ("grpc.keepalive_permit_without_calls", 1),    #
+        ("grpc.http2.min_ping_interval_without_data_ms", 5000),  # 5s < client 30s keepalive
+        # 0 means abandon 
+        ("grpc.http2.max_pings_without_data", 0x7fffffff),
+        ("grpc.http2.max_ping_strikes", 0x7fffffff),
 
         # avoid break idle connection,
         ("grpc.max_connection_idle_ms", 86400000),       # 24h
         ("grpc.max_connection_age_ms", 86400000),        # 24h
         ("grpc.max_connection_age_grace_ms", 86400000),  # 24h
     ]
+
+    # logging.info("server_options (grpc %s):", grpc.__version__)
+    # for k, v in server_options:
+    #     logging.info("  %s = %r", k, v)
 
     max_workers = int(os.getenv("GRPC_MAX_WORKERS", "16"))
     server = grpc.aio.server(
@@ -100,7 +107,8 @@ async def serve() -> None:
         except Exception as e:
             logging.warning(f"AsyncOps cleanup error: {e}")
         try:
-            duck_mgr.close()
+            # DuckDBManager 委托 ConnectionPool.close_all() 释放所有连接
+            duck_mgr.connection_pool.close_all()
         except Exception as e:
             logging.warning(f"DuckDB cleanup error: {e}")
         
