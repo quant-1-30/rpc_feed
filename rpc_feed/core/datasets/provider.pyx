@@ -26,7 +26,7 @@ cdef cpp_string tz_info = b"Asia/Shanghai"
 
 cdef object arrow_options = pa.ipc.IpcWriteOptions(
     compression='lz4',
-    use_threads=False  # 高并发下避免线程竞争
+    use_threads=False  # avoid threads  
 ) 
 
 cdef object batch_to_resp(object batch): # protobuf payload bytes
@@ -112,6 +112,7 @@ cdef class BaseDuckDBProvider(BaseBufferedProvider):
                     raise 
 
     def _process_batch(self, object batch):
+        # frame size determined by DuckDB  DUCKBATCHSIZE 
         cdef object sid_col = batch.column("sid")
         cdef Py_ssize_t num_rows = len(sid_col)
 

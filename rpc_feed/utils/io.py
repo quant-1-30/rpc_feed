@@ -128,6 +128,7 @@ def recursive_glob(root_path: str, suffix: str, pattern: str) -> Generator[str, 
             for file in files:
                 file_path = os.path.join(root, file)
                 if file.endswith(suffix) and re.match(pattern, file):
+                    print(f"✅ Found file: {file_path}")
                     yield file_path
 
 

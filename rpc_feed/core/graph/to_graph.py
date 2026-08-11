@@ -120,7 +120,7 @@ class Graph(object):
                 else:
                     await self.loop.run_in_executor(None, instance.next, item)
             except Exception as e:
-                print(f"Error in consumer worker: {e}")
+                print(f"Error in consumer worker {item} encounter: {e}")
             finally:
                 self.queue.task_done()
 
