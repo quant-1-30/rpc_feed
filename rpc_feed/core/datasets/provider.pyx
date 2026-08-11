@@ -122,6 +122,7 @@ cdef class BaseDuckDBProvider(BaseBufferedProvider):
                     raise 
 
     def _process_batch(self, object batch):
+        # frame size determined by DuckDB  DUCKBATCHSIZE 
         cdef object sid_col = batch.column("sid")
         cdef Py_ssize_t num_rows = len(sid_col)
 
