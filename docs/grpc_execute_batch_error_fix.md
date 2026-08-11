@@ -218,11 +218,7 @@ async with _stream_semaphore:
 ### 4.3 改动 3：`rpc_feed/run_server.py` — 对齐窗口与消息上限
 
 ```python
-<<<<<<< HEAD
-# 应用层: 单条消息最大 64MB (配合 provider 二次切片, 单帧不超过此值)
-=======
 # 应用层: 单条消息最大 64MB
->>>>>>> dev
 MAX_MESSAGE_LENGTH = int(os.getenv("MAX_MESSAGE_LENGTH", 64 * 1024 * 1024))
 
 server_options = [
@@ -236,116 +232,6 @@ server_options = [
 ]
 ```
 
-<<<<<<< HEAD
-### 4.4 改动 4：`provider.pxd` + `provider.pyx` — 大帧二次切片（治本）
-
-**`.pxd` 新增常量**：
-
-```cython
-cdef enum:
-    CHUNK_SIZE = 1024
-    MULT = 1000
-    TICK_PROCESS_TIMEOUT = 100
-    # 单帧最大字节数(保守值, 留余量给 64MB 传输层窗口 + Gzip 压缩膨胀的边缘情况)
-    MAX_FRAME_BYTES = 16 * 1024 * 1024
-    # tick 行粗估字节数(保守上界, 实测后可回填精确值)
-    ESTIMATED_BYTES_PER_ROW = 64
-```
-
-**`.pyx` 新增辅助函数 + 重构 `_process_batch`**：
-
-```cython
-cdef inline Py_ssize_t _max_rows_per_frame():
-    """按 MAX_FRAME_BYTES / ESTIMATED_BYTES_PER_ROW 计算单帧最大行数。"""
-    cdef Py_ssize_t max_rows = MAX_FRAME_BYTES // ESTIMATED_BYTES_PER_ROW
-    if max_rows < 1:
-        max_rows = 1
-    return max_rows
-
-def _process_batch(self, object batch):
-    ...
-    max_rows_per_frame = _max_rows_per_frame()
-
-    for i in range(n_seg):
-        start = s_np[i]
-        end = e_np[i]
-        sid = sid_col[start].as_py()
-        seg_rows = end - start
-
-        # 二次切片: 按 MAX_FRAME_BYTES/ESTIMATED_BYTES_PER_ROW 限制每帧行数,
-        # 保证单帧 payload <= MAX_FRAME_BYTES, 避免超过 HTTP/2 流控窗口。
-        # 同一 sid 的多帧会共享 schema 和 sid 元数据, 客户端按 IPC stream 顺序拼接即可。
-        if seg_rows <= max_rows_per_frame:
-            slice_batch = batch.slice(start, seg_rows)
-            yield self._flush_record_batch(sid, slice_batch)
-        else:
-            sub_start = start
-            while sub_start < end:
-                sub_end = sub_start + max_rows_per_frame
-                if sub_end > end:
-                    sub_end = end
-                slice_batch = batch.slice(sub_start, sub_end - sub_start)
-                yield self._flush_record_batch(sid, slice_batch)
-                sub_start = sub_end
-```
-
-**设计要点**：
-- 同一 sid 的数据会被拆成多帧，每帧 schema 一致、metadata 里 `sid` 相同，客户端按流顺序拼接即可（IPC stream 天然支持）。
-- `ESTIMATED_BYTES_PER_ROW = 64` 是保守上界，切多了只是帧数多，切少了才会超窗。
-- 只影响 DuckDB 类 provider（Tick/Daily/Close），SQLAlchemy 类（Instrument/Adjust/Right）有 `CHUNK_SIZE=1024` 天然封顶，不动。
-
-#### 取值依据：为什么 `MAX_FRAME_BYTES=16MB` 而不是贴近 `max_message_length=64MB`
-
-这是**有意的保守设计**，不是矛盾。核心原因：**HTTP/2 流控是动态信用机制，不是静态上限**。
-
-```
-传输层窗口 (64MB) ≠ "能一次性发 64MB"
-传输层窗口      = "当前允许在途未确认的字节数"
-```
-
-**场景：如果单帧切到接近 64MB**
-
-假设 10 个客户端并发请求，每个流都要发一个 64MB 的帧：
-- 连接级窗口只有 256MB
-- 10 × 64MB = 640MB > 256MB
-- 后发的流会被**连接级窗口卡住**，进入背压等待
-- 如果客户端消费慢，窗口不回填 → **死锁/超时/ExecuteBatchError**
-
-**数学依据**：
-
-```
-连接窗口 256MB ÷ 单帧 16MB = 16 个帧可同时在途
-```
-
-- 并发 50 个流（`MAX_CONCURRENT_STREAMS`）：每个流平均 256/50 ≈ 5MB 在途额度
-- 单帧 16MB > 5MB，但 gRPC 窗口会**动态流转**：一个流发完 16MB、客户端 ack 后窗口回填，其他流就能用
-- 如果单帧设太大（如 32MB），并发流数多时多个流同时发 → 连接窗口瞬间打满 → 背压 → `ExecuteBatchError`
-
-**安全余量三重保险**（从内到外层层放大）：
-
-| 层级 | 上限 | 含义 |
-|------|------|------|
-| `MAX_FRAME_BYTES` (provider 切片) | **16MB** | 应用层主动控制，最保守 |
-| `max_send_message_length` (gRPC 应用层) | 64MB | gRPC 允许的单条消息上限 |
-| `initial_window_size` (HTTP/2 stream) | 64MB | 单条流的传输层窗口 |
-| `initial_connection_window_size` | 256MB | 整连接窗口 |
-
-**16MB 的额外好处**：
-1. **Gzip/lz4 压缩膨胀缓冲**：极端情况（高度随机的 tick）压缩后可能接近原大小，16MB × 安全系数 << 64MB
-2. **背压响应快**：小帧让出窗口快，其他流能更快拿到额度，整体并发更平滑
-3. **客户端内存友好**：客户端要先把整帧反序列化，16MB vs 64MB 内存压力差 4 倍
-
-**调参指引**：
-
-| 场景 | 建议 `MAX_FRAME_BYTES` | 理由 |
-|------|------------------------|------|
-| 并发流数多（50+） | 保持 16MB 或降到 8MB | 避免连接窗口打满 |
-| 并发流数少（< 10） | 可调到 32MB | 减少分片开销 |
-| 单 sid 数据量极大（一天 tick > 100MB） | 保持 16MB | 帧数多一点没关系 |
-| 客户端内存吃紧 / 弱网 | 降到 4-8MB | 降低单帧内存压力 |
-
-> 结论：**16MB 是当前「并发 50 流 + 连接窗口 256MB」下的合理保守默认**。它故意小于传输层窗口，给并发和动态信用流转留余量。若并发流数远小于 50，可适当调大以减少分片。
-=======
 ### 4.4 改动 4：单帧大小由 `DUCKBATCHSIZE` 在 DuckDB 层控制（放弃 provider 切片）
 
 > ⚠️ **重要教训**：最初版本曾在 `provider.pyx` 的 `_process_batch` 中按 `MAX_FRAME_BYTES` 做二次切片，结果导致**相同请求耗时从 100s 退化到 150s**。原因是每多一帧都会引入 IPC 序列化、protobuf 帧化、`replace_schema_metadata`、gRPC message framing 等固定开销，帧数增长 10-30 倍后开销被显著放大。
@@ -399,7 +285,7 @@ DUCKBATCHSIZE=100000
 | 客户端内存吃紧 | 降到 50000 | 降低单帧内存压力 |
 
 > 改 `.env` 后重启服务即可生效，**不需要重新编译 Cython**。
->>>>>>> dev
+=======
 
 ---
 
@@ -409,13 +295,10 @@ DUCKBATCHSIZE=100000
 |------|----------|----------|
 | `rpc_feed/run_server.py` | 局部修改 | keepalive 参数修复（`min_ping_interval_without_data_ms`/`max_pings_without_data`/`max_ping_strikes`，选项名经 `grep` 验证）；`MAX_MESSAGE_LENGTH` 默认 512MB→64MB；连接窗口 128MB→256MB；修复 shutdown 路径 `duck_mgr.close()` → `duck_mgr.connection_pool.close_all()`；启动打印 `server_options` 诊断日志 |
 | `rpc_feed/core/rpc/server.py` | 重构 | 新增 `_safe_stream` 统一兜底；7 个 RPC 方法去除重复代码，全部委托 |
-<<<<<<< HEAD
-| `rpc_feed/core/datasets/provider.pxd` | 局部修改 | 新增 `MAX_FRAME_BYTES`/`ESTIMATED_BYTES_PER_ROW` 常量 |
-| `rpc_feed/core/datasets/provider.pyx` | 局部修改 | 新增 `_max_rows_per_frame()`；`_process_batch` 按字节数二次切片 |
-=======
 | `rpc_feed/core/datasets/provider.pxd` | 局部修改 | 移除曾加的 `MAX_FRAME_BYTES`/`ESTIMATED_BYTES_PER_ROW` 常量（方案废弃） |
 | `rpc_feed/core/datasets/provider.pyx` | 局部修改 | 移除曾加的 `_max_rows_per_frame()` 和切片分支；`_process_batch` 恢复原始「一个 sid 段 → 一帧」行为，单帧大小由 `DUCKBATCHSIZE` 在 DuckDB 层控制 |
->>>>>>> dev
+| `rpc_feed/core/datasets/provider.pxd` | 局部修改 | 移除曾加的 `MAX_FRAME_BYTES`/`ESTIMATED_BYTES_PER_ROW` 常量（方案废弃） |
+| `rpc_feed/core/datasets/provider.pyx` | 局部修改 | 移除曾加的 `_max_rows_per_frame()` 和切片分支；`_process_batch` 恢复原始「一个 sid 段 → 一帧」行为，单帧大小由 `DUCKBATCHSIZE` 在 DuckDB 层控制 |
 
 ---
 
@@ -461,15 +344,6 @@ python -m py_compile rpc_feed/run_server.py rpc_feed/core/rpc/server.py
 
 ✅ Python 文件编译通过
 
-<<<<<<< HEAD
-### 运行时验证
-
-```bash
-poetry run python -c "from rpc_feed.core.datasets.provider import Tick, Daily, Close; print('provider import OK')"
-```
-
-✅ 导入成功
-=======
 ### 性能验证
 
 ```
@@ -477,18 +351,13 @@ poetry run python -c "from rpc_feed.core.datasets.provider import Tick, Daily, C
 ```
 
 ✅ 移除 provider 切片后性能恢复到原始水平
->>>>>>> dev
 
 ### 复现验证
 
 重启 `run_server.py` 后重跑客户端：
 1. 客户端不再出现 `GOAWAY ... too_many_pings`；
 2. 服务端不再出现 `ExecuteBatchError ... TickStreamCall`；
-<<<<<<< HEAD
-3. 若仍有 `ExecuteBatchError`（但无 too_many_pings），需排查别的方向（见第 8 节）。
-=======
 3. 性能不退化。
->>>>>>> dev
 
 ---
 
@@ -507,21 +376,12 @@ cdef object batch_to_resp(object batch):
         writer.write_batch(batch)
     cdef bytes payload = sink.getvalue().to_pybytes()
     cdef Py_ssize_t n = len(payload)
-<<<<<<< HEAD
-    if n > 16 * 1024 * 1024:   # > 16MB 就警告
-        print(f"[batch_to_resp] LARGE FRAME: {n/1024/1024:.1f}MB sid-maybe-over-window")
-    return bt_protocol_service_pb2.ArrowFrame(payload=payload)
-```
-
-> 注：本次改动 4 已经从源头按 `MAX_FRAME_BYTES=16MB` 二次切片，理论上单帧不会超此值。此日志用于验证切片是否生效。
-=======
     if n > 32 * 1024 * 1024:   # > 32MB 就警告
         print(f"[batch_to_resp] LARGE FRAME: {n/1024/1024:.1f}MB")
     return bt_protocol_service_pb2.ArrowFrame(payload=payload)
 ```
 
 如果出现大帧告警，**降低 `.env` 里的 `DUCKBATCHSIZE`**（如 100000 → 50000），而不是恢复 provider 切片。
->>>>>>> dev
 
 ### 8.2 其他可能成因
 
@@ -529,22 +389,14 @@ cdef object batch_to_resp(object batch):
 |------|---------|------|
 | 客户端 `deadline` 超时 | 检查客户端是否设了 timeout | 调大 deadline 或服务端优化查询 |
 | 连接被 NAT/防火墙静默 kill | 长空闲后断 | keepalive 30s 已覆盖，概率低 |
-<<<<<<< HEAD
-| Gzip 压缩后帧仍超 `max_send_message_length` | 极端大帧 | 调大上限或关压缩 |
-=======
 | `DUCKBATCHSIZE` 过大导致单帧超窗 | batch_to_resp 日志告警 | 降低 `DUCKBATCHSIZE` |
->>>>>>> dev
 | 客户端不读导致背压 | 客户端 CPU/内存打满 | 客户端侧优化消费速度 |
 
 ---
 
 ## 9. 后续建议
 
-<<<<<<< HEAD
-1. **校准 `ESTIMATED_BYTES_PER_ROW`**：跑一段时间后，在 `batch_to_resp` 里统计 `len(payload) / batch.num_rows` 拿到真实均值，回填此常量以减少不必要的分片。
-=======
 1. **监控 `DUCKBATCHSIZE` 与单帧大小**：在 `batch_to_resp` 里统计 `len(payload) / batch.num_rows`，确认默认 10 万行是否合适。
->>>>>>> dev
 2. **监控**：增加 Prometheus 指标导出，监控单帧大小分布、GOAWAY 频次、流式 RPC 失败率。
 3. **客户端对齐**：建议客户端把 `initial_window_size` 调到 ≥ 64MB，与服务端 stream window 对齐。
 4. **TLS**：当前使用 `add_insecure_port`，生产环境应启用 TLS。
