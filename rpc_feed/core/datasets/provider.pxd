@@ -8,8 +8,6 @@ cdef enum:
     CHUNK_SIZE = 1024
     MULT = 1000
     TICK_PROCESS_TIMEOUT = 100
-    MAX_FRAME_BYTES = 32 * 1024 * 1024
-    ESTIMATED_BYTES_PER_ROW = 64
 
 
 cdef class BaseBufferedProvider:
