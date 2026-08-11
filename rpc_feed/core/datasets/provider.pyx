@@ -26,7 +26,7 @@ cdef cpp_string tz_info = b"Asia/Shanghai"
 
 cdef object arrow_options = pa.ipc.IpcWriteOptions(
     compression='lz4',
-    use_threads=False  # 高并发下避免线程竞争
+    use_threads=False  # avoid threads  
 ) 
 
 cdef object batch_to_resp(object batch): # protobuf payload bytes
@@ -34,6 +34,16 @@ cdef object batch_to_resp(object batch): # protobuf payload bytes
     with pa.ipc.new_stream(sink, batch.schema, options=arrow_options) as writer:
         writer.write_batch(batch)
     return bt_protocol_service_pb2.ArrowFrame(payload=sink.getvalue().to_pybytes())
+
+
+cdef inline Py_ssize_t _max_rows_per_frame():
+    """
+    MAX_FRAME_BYTES / ESTIMATED_BYTES_PER_ROW 
+    """
+    cdef Py_ssize_t max_rows = MAX_FRAME_BYTES // ESTIMATED_BYTES_PER_ROW
+    if max_rows < 1:
+        max_rows = 1
+    return max_rows
 
 
 cdef inline tuple _slice_by_sid(object sid_col, Py_ssize_t num_rows):
@@ -120,6 +130,7 @@ cdef class BaseDuckDBProvider(BaseBufferedProvider):
         cdef Py_ssize_t start, end, i
         cdef bytes sid
         cdef Py_ssize_t n_seg
+        cdef Py_ssize_t seg_rows, max_rows_per_frame, sub_start, sub_end
 
         if num_rows == 0:
             return
@@ -132,12 +143,27 @@ cdef class BaseDuckDBProvider(BaseBufferedProvider):
         cdef object e_np = e_indices.to_numpy(zero_copy_only=False)
         n_seg = len(s_np)
 
+        max_rows_per_frame = _max_rows_per_frame()
+
         for i in range(n_seg):
             start = s_np[i]
             end = e_np[i]
             sid = sid_col[start].as_py()
-            slice_batch = batch.slice(start, end - start)
-            yield self._flush_record_batch(sid, slice_batch)
+            seg_rows = end - start
+
+            # payload <= MAX_FRAME_BYTES avoid exceed HTTP/2 stream window
+            if seg_rows <= max_rows_per_frame:
+                slice_batch = batch.slice(start, seg_rows)
+                yield self._flush_record_batch(sid, slice_batch)
+            else:
+                sub_start = start
+                while sub_start < end:
+                    sub_end = sub_start + max_rows_per_frame
+                    if sub_end > end:
+                        sub_end = end
+                    slice_batch = batch.slice(sub_start, sub_end - sub_start)
+                    yield self._flush_record_batch(sid, slice_batch)
+                    sub_start = sub_end
 
 
 # -------------------------------- DuckDB Dispatcher ----------------------------

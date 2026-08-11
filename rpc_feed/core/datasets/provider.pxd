@@ -8,6 +8,8 @@ cdef enum:
     CHUNK_SIZE = 1024
     MULT = 1000
     TICK_PROCESS_TIMEOUT = 100
+    MAX_FRAME_BYTES = 32 * 1024 * 1024
+    ESTIMATED_BYTES_PER_ROW = 64
 
 
 cdef class BaseBufferedProvider:
@@ -41,7 +43,6 @@ cdef class Close(BaseDuckDBProvider):
 # =====================================================================
 
 cdef class InstrumentBuffer:
-    """Instrument Provider 的请求局部 buffer"""
     cdef public list buf_sid
     cdef public list buf_name
     cdef public object buf_first_trading
@@ -51,7 +52,6 @@ cdef class InstrumentBuffer:
 
 
 cdef class AdjustBuffer:
-    """Adjust Provider 的请求局部 buffer"""
     cdef public object buf_ex_date
     cdef public object buf_register_date
     cdef public object buf_bonus_share
@@ -60,7 +60,6 @@ cdef class AdjustBuffer:
 
 
 cdef class RightBuffer:
-    """Right Provider 的请求局部 buffer"""
     cdef public object buf_ex_date
     cdef public object buf_register_date
     cdef public object buf_price
