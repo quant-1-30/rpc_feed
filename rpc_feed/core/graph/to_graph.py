@@ -10,7 +10,13 @@ from loky import get_reusable_executor, backend
 from pyvis.network import Network
 
 from .node import *
-from .serialize import NamedNode, init_worker, convert_node_to_serializable, run_sync_pipeline_global
+from .serialize import (
+    NamedNode,
+    init_worker,
+    convert_node_to_serializable,
+    run_pipeline_nodes,
+    run_sync_pipeline_global,
+)
 from .monitor import GraphMemoryManager
 
 from rpc_feed.utils.node_util import fix_macos_mp, signal_handler
@@ -40,22 +46,21 @@ class Graph(object):
     cfg_cache = {}
 
     def __init__(self) -> None:
-        self.graph: List[NamedNode] = [] 
-        self.w_node: NamedNode = None
-        self.edges = None
-        
+        self.reset()
+
         # concurrency settings
-        procs = int(os.getenv("CONCURRENT_PROCS", max(1, int(os.cpu_count() * 0.2))))
+        procs = int(os.getenv("CONCURRENT_PROCS", max(1, int(os.cpu_count() * 0.5))))
         self.sem_size = int(os.getenv("SEM_SIZE", procs * 2)) # control the number of concurrent tasks to avoid OOM
         self.q_size = int(os.getenv("QUEUE_SIZE", procs * 2))
         self.procs = procs
+        self.batch_size = int(os.getenv("PIPELINE_BATCH_SIZE", 64))
         self.consumer_workers = int(os.getenv("CONSUMER_WORKERS", 4))
         
         # memory management
         self.memory_mgr = GraphMemoryManager()
         self.queue = None
         self.loop = None
-        self._gc_event = asyncio.Event()
+        self._gc_event = None
         self.memory_check_interval = int(os.getenv("MEMORY_CHECK_INTERVAL", "5"))
 
     def _init_async_resource(self, loop):
@@ -64,8 +69,8 @@ class Graph(object):
         self._gc_event = asyncio.Event()
 
     def reset(self):
-        self.graph = []
-        self.w_node = None
+        self.graph: List[NamedNode] = []
+        self.w_node: NamedNode = None
         self.edges = None
 
     @classmethod
@@ -122,7 +127,12 @@ class Graph(object):
         """monitor and trigger GC"""
         while not self._gc_event.is_set():
             await self.loop.run_in_executor(None, self.memory_mgr.check_memory_usage)
-            await asyncio.sleep(self.memory_check_interval)
+            try:
+                await asyncio.wait_for(
+                    self._gc_event.wait(), timeout=self.memory_check_interval
+                )
+            except asyncio.TimeoutError:
+                pass
         self.memory_mgr.cleanup_gc()
 
     # --- Async Tail/Writer ---
@@ -192,17 +202,28 @@ class Graph(object):
         for _ in range(self.consumer_workers):
             await self.queue.put(None)
 
+    def _chunk_iterables(self, iterables: Iterable):
+        batch = []
+        for item in iterables:
+            batch.append(item)
+            if len(batch) >= self.batch_size:
+                yield batch
+                batch = []
+        if batch:
+            yield batch
+
     async def _run_engine(self, iterables, parallel):
+        batches = self._chunk_iterables(iterables)
         consumers = [asyncio.create_task(self.async_consume_worker()) 
                      for _ in range(self.consumer_workers)]
         
         monitor_task = asyncio.create_task(self.monitor_background())
         try:
             if parallel:
-                await self.async_produce_parallel(iterables)
+                await self.async_produce_parallel(batches)
             else:
-                for item in iterables:
-                    processed = self.run_sync_pipeline_local(item)
+                for batch in batches:
+                    processed = self.run_sync_pipeline_local(batch)
                     if processed is not None:
                         await self.queue.put(processed)
                 for _ in range(self.consumer_workers):
@@ -214,9 +235,7 @@ class Graph(object):
             await monitor_task
 
     def run_sync_pipeline_local(self, item):
-        for node in self.graph:
-            item = node.instance.next(item)
-        return item
+        return run_pipeline_nodes(item, [node.instance for node in self.graph])
     
     def run(self, iterables, parallel):
         loop = asyncio.new_event_loop()

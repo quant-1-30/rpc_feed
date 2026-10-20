@@ -132,18 +132,20 @@ class DuckDBManager:
 
     async def __aenter__(self):
         return self
-        
+     
+    def _match_type(self, sid_bytes: bytes):
+        for name, regex in self.regex_rules.items():
+            if regex.match(sid_bytes):
+                return name
+        return None
+
     def _glob_path(self, req: dict) -> list:
         root_str = str(self.dataset_root)
         ranges = schema_range(req) 
         
         exact_globs = []
         for sid_bytes in req["sid"]:
-            type_name = None
-            for name, regex in self.regex_rules.items():
-                if regex.match(sid_bytes):
-                    type_name = name
-                    break
+            type_name = self._match_type(sid_bytes)
             if not type_name:
                 continue 
                 
@@ -161,12 +163,10 @@ class DuckDBManager:
         req_types = []
         seen = set()
         for sid_bytes in req["sid"]:
-            for name, regex in self.regex_rules.items():
-                if regex.match(sid_bytes):
-                    if name not in seen:
-                        seen.add(name)
-                        req_types.append(name)
-                    break
+            type_name = self._match_type(sid_bytes)
+            if type_name and type_name not in seen:
+                seen.add(type_name)
+                req_types.append(type_name)
 
         daily_globs = []
         for type_name in req_types:
@@ -178,7 +178,12 @@ class DuckDBManager:
         return daily_globs
 
     def _resolve_query_plan(self, req: dict, raw_template: str):
-        if raw_template in (DAILY_TEMPLATE, CLOSE_TEMPLATE):
+        # 99991231 is the max date in the parquet dataset, so if the request is within this range, we can use the daily parquet files for faster access.
+        if (
+            raw_template in (DAILY_TEMPLATE, CLOSE_TEMPLATE)
+            and req["start_date"] <= 99991231
+            and req["end_date"] <= 99991231
+        ):
             daily_globs = self._glob_daily_path(req)
             if daily_globs:
                 fast_tpl = DAILY_FETCH_TEMPLATE if raw_template == DAILY_TEMPLATE else CLOSE_FETCH_TEMPLATE

@@ -120,19 +120,17 @@ def recursive_glob(root_path: str, suffix: str, pattern: str) -> Generator[str, 
     """Recursively find all files under `root_path` ending with `suffix` and matching `filter` condition."""
     expand_root_path = os.path.expanduser(root_path)
     if not os.path.exists(expand_root_path):
-        # sys.exit(0)
         raise FileNotFoundError(f'{expand_root_path} not found')
 
+    regex = re.compile(pattern)
     filename = expand_root_path.split(os.sep)[-1]
-    if os.path.isfile(expand_root_path) and re.match(pattern, filename):
+    if os.path.isfile(expand_root_path) and regex.match(filename):
         yield expand_root_path
     else:
         for root, _, files in os.walk(expand_root_path):
             for file in files:
-                file_path = os.path.join(root, file)
-                if file.endswith(suffix) and re.match(pattern, file):
-                    print(f"✅ Found file: {file_path}")
-                    yield file_path
+                if file.endswith(suffix) and regex.match(file):
+                    yield os.path.join(root, file)
 
 
 def hidden(path):

@@ -91,14 +91,9 @@ def fix_macos_mp(force: bool = True) -> bool:
         return True
         
     except RuntimeError as e:
-        if "context has already been set" in str(e):
-            if not force:
-                return False
-            else:
-                return False
-        else:
+        if "context has already been set" not in str(e):
             print(f"❌: {e}")
-            return False
+        return False
 
 
 def signal_handler(loop):

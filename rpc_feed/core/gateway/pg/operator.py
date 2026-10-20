@@ -57,27 +57,22 @@ class AsyncOps:
     def __init__(self):
         self._initialized = False
         self.engine = None
+        self._orm_map = None
         self._session_factory = None
-        self._init_lock = asyncio.Lock() 
+        self._init_lock = asyncio.Lock()
         self.batch_size = int(os.getenv("PGBATCHSIZE", 1024))
 
     async def __aenter__(self):
-        await self._ensure_initialized()
+        await self.initialize()
         return self
- 
-    async def _ensure_initialized(self):
-        """Helper method to ensure initialization — avoid race condition by using a lock"""
+
+    async def initialize(self):
+        """Async initialization method with double-checked locking"""
         if not self._initialized:
             async with self._init_lock:
                 if not self._initialized:
-                    await self.initialize()
-
-    async def initialize(self):
-        """Async initialization method"""
-        if self._initialized:
-            return
-        await self._build_engine()
-        self._initialized = True
+                    await self._build_engine()
+                    self._initialized = True
 
     async def _build_engine(self):
         """
@@ -173,11 +168,6 @@ class AsyncOps:
                 ]
                 session.add_all(inserts)
 
-    @staticmethod
-    def filter_valid_keys(base_obj, insert):
-        valid_keys = {column.name for column in base_obj.__table__.columns}
-        return {key: value for key, value in insert.items() if key in valid_keys}
-    
     async def on_query_obj(self, query: Select, params=None):
         # commit rollback / AsyncSession.execute()  BEGIN session and select not need
         # without commit() auto ROLLBACK to release connection to pool / just SQLAlchemy clean session for read 
@@ -217,6 +207,8 @@ class AsyncOps:
         if self.engine is not None:
             await self.engine.dispose()
             self.engine = None
+        self._session_factory = None
+        self._orm_map = None
         self._initialized = False
         print("cleanup")
 

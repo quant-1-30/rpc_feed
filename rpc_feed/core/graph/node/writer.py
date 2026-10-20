@@ -140,13 +140,6 @@ class WriterStringIO(Node):
         ("is_async", False),
     )
 
-    def __init__(self):
-        super(WriterStringIO, self).__init__()
-
-    def reset(self):
-        # Leave the file positioned at the beginning
-        self.out.seek(0)
-
     def next(self, meta):
         fd = self.p.fd()
         if isinstance(meta, str):
@@ -215,7 +208,7 @@ class ParquetWriter(Node):
 
     def __init__(self):
         self.existing_data_behavior = "overwrite_or_ignore" if self.p.incr else "delete_matching"
-        self.basename_template = None
+        self.basename_template = "part-{i}.parquet"
     
     def _make_schema(self, df: Union[pl.DataFrame, pd.DataFrame]) -> tuple[pa.Schema, pa.Schema]:
         df = ensure_polars(df)

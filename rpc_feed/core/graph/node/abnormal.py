@@ -8,6 +8,15 @@ from rpc_feed.utils.wrapper import registry
 from rpc_feed.utils.node_util import ensure_polars
 
 
+_STRATEGY_MAP = {
+    "forward": "forward",
+    "ffill": "forward",
+    "backward": "backward", # loopahead bias
+    "bfill": "backward", # loopahead bias
+    "zero": "zero",
+}
+
+
 @registry
 class ProcessNa(Node):
     """Process Nan / Null"""
@@ -32,9 +41,10 @@ class ProcessNa(Node):
 
 @registry
 class ProcessInf(Node):
-    """Process infinity"""
+    """Process infinity without lookahead bias"""
+
     params = (
-        ("inf", "mean"),
+        ("inf", "forward"),
         ("lines", ["open", "high", "low", "close", "volume", "amount"]),
     )
 
@@ -48,8 +58,9 @@ class ProcessInf(Node):
             return meta
 
         cols = pl.col(valid_cols)
-        finite = pl.when(cols.is_finite()).then(cols)
-        stat = getattr(finite, self.p.inf)() if hasattr(finite, str(self.p.inf)) else 0.0
-        return meta.with_columns(
-            pl.when(cols.is_infinite()).then(stat).otherwise(cols)
-        )
+        clean = pl.when(~cols.is_infinite()).then(cols)
+        strategy = _STRATEGY_MAP.get(str(self.p.inf).lower())
+        expr = clean.fill_null(strategy=strategy) if strategy else clean.fill_null(0.0)
+        if "sid" in meta.columns:
+            expr = expr.over("sid")
+        return meta.with_columns(expr.fill_null(0.0))
