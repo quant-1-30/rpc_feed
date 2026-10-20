@@ -1,53 +1,45 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-import datetime
-import pandas as pd
-import numpy as np
+import polars as pl
 
-from rpc_feed.utils.wrapper import registry
 from .node import Node
+from rpc_feed.utils.wrapper import registry
+from rpc_feed.utils.node_util import ensure_polars, to_polars_dtype
 
 
 @registry
 class StructDateParser(Node):
+    _TDX_YEAR_MOD = 2048
+    _TDX_YEAR_BASE = 2004
+    _TDX_MONTH_DIV = 100
+    _MINUTES_PER_HOUR = 60
+
     params = (
         ("lines", ["dates", "sub_dates"]),
         ("tz", "Asia/Shanghai"),
     )
 
-    def next(self, meta: pd.DataFrame):
-        if not meta.empty:
-            # =======================================================
-            # 1. vectorvize replace apply 
-            # =======================================================
-            dates_col = meta["dates"]
-            sub_dates_col = meta["sub_dates"]
+    def next(self, meta: pl.DataFrame) -> pl.DataFrame:
+        meta = ensure_polars(meta)
+        if meta.is_empty():
+            return meta
 
-            years = dates_col // 2048 + 2004
-            months = (dates_col % 2048) // 100
-            days = (dates_col % 2048) % 100
-            hours = sub_dates_col // 60
-            minutes = sub_dates_col % 60
+        d_name, s_name = self.p.lines[0], self.p.lines[1]
+        dates_col = pl.col(d_name).cast(pl.Int64)
+        sub_dates_col = pl.col(s_name).cast(pl.Int64)
 
-            # pd.to_datetime fast than apply and Naive Datetime
-            meta["datetime"] = pd.to_datetime(pd.DataFrame({
-                'year': years,
-                'month': months,
-                'day': days,
-                'hour': hours,
-                'minute': minutes
-            }))
-
-            # =======================================================
-            # 2. timezone align
-            # =======================================================
-            localized_dt = meta["datetime"].dt.tz_localize(self.p.tz)
-            # Pandas auto calculate the offset to UTC Epoch, then get int64 tick
-            meta["tick"] = localized_dt.astype("int64") // 10**9 # .view("int64") api abandon
-            # Datetime Keep Native TimeZone 
-            meta.drop(columns=["dates", "sub_dates"], inplace=True)
-        return meta
+        dt_expr = pl.datetime(
+            year=dates_col // self._TDX_YEAR_MOD + self._TDX_YEAR_BASE,
+            month=(dates_col % self._TDX_YEAR_MOD) // self._TDX_MONTH_DIV,
+            day=(dates_col % self._TDX_YEAR_MOD) % self._TDX_MONTH_DIV,
+            hour=sub_dates_col // self._MINUTES_PER_HOUR,
+            minute=sub_dates_col % self._MINUTES_PER_HOUR,
+            time_unit="ns",
+        )
+        tick_expr = dt_expr.dt.replace_time_zone(self.p.tz).dt.epoch("s")
+        drop_cols = [c for c in self.p.lines if c in meta.columns]
+        return meta.with_columns(datetime=dt_expr, tick=tick_expr).drop(drop_cols)
 
     def __repr__(self):
         return f"format: {self.__class__.__name__} (TZ: {self.p.tz})"
@@ -58,47 +50,50 @@ class UniverseDateParser(Node):
     params = (
         ("parser_col", "datetime"),
         ("format", "%Y%m%d %H:%M:%S"),
+        ("tz", "Asia/Shanghai"),
     )
 
-    def next(self, meta: pd.DataFrame): 
+    def next(self, meta: pl.DataFrame) -> pl.DataFrame:
+        meta = ensure_polars(meta)
         col = self.p.parser_col
-        if not meta.empty and col in meta.columns:
-            # abandon apply + strptime
-            # pd.to_datetime C vectorize
-            meta[col] = pd.to_datetime(meta[col], format=self.p.format)
-            
-            # 修复：.view("int64") 在新版 pandas 下弃用，改用 .astype("int64")（语义一致）
-            meta["tick"] = meta[col].astype("int64") // 10**9
-        return meta
+        if meta.is_empty() or col not in meta.columns:
+            return meta
+
+        dt_expr = pl.col(col).str.to_datetime(format=self.p.format, time_unit="ns")
+        tick_expr = dt_expr.dt.replace_time_zone(self.p.tz).dt.epoch("s")
+        return meta.with_columns(dt_expr.alias(col), tick=tick_expr)
 
 
 @registry
 class Multiply(Node):
     params = (
-        ("multiply", 1000), # int / map
+        ("multiply", 1000),  # int / float / dict
         ("exclude", ["sid", "datetime", "tick"]),
     )
 
-    def next(self, meta: pd.DataFrame):
-        if meta.empty:
-            return meta
-
-        cols_to_scale = meta.columns.difference(self.p.exclude)
-        numeric_cols = meta[cols_to_scale].select_dtypes(include=[np.number]).columns
-
-        if len(numeric_cols) == 0:
+    def next(self, meta: pl.DataFrame) -> pl.DataFrame:
+        meta = ensure_polars(meta)
+        exclude = set(self.p.exclude or ())
+        numeric_cols = [
+            c for c, dt in meta.schema.items()
+            if c not in exclude and dt.is_numeric()
+        ]
+        if meta.is_empty() or not numeric_cols:
             return meta
 
         if isinstance(self.p.multiply, (int, float)):
-            # DataFrame .mul() is vectorized
-            meta[numeric_cols] = meta[numeric_cols].mul(self.p.multiply).astype(np.int64)
-        else:
-            # multiply is dict and only apply to specified columns 
-            # pd.Series broadcasting: align index with numeric_cols and multiply, then astype once
-            mult_series = pd.Series({k: v for k, v in self.p.multiply.items() if k in numeric_cols})
-            if not mult_series.empty:
-                meta[mult_series.index] = meta[mult_series.index].mul(mult_series).astype(np.int64)
-        return meta
+            return meta.with_columns(
+                (pl.col(numeric_cols).cast(pl.Float64) * self.p.multiply)
+                .round(0, mode="half_to_even") # round to nearest even
+                .cast(pl.Int64)
+            )
+
+        exprs = [
+            (pl.col(c).cast(pl.Float64) * v).round(0, mode="half_to_even").cast(pl.Int64)
+            for c, v in self.p.multiply.items()
+            if c in numeric_cols
+        ]
+        return meta.with_columns(exprs) if exprs else meta
 
 
 @registry
@@ -114,30 +109,31 @@ class Dtypes(Node):
             "volume": "int64",
         }),
     )
-    
-    def next(self, meta: pd.DataFrame):
-        if meta.empty:
+
+    def next(self, meta: pl.DataFrame) -> pl.DataFrame:
+        meta = ensure_polars(meta)
+        if meta.is_empty():
             return meta
 
-        # avoid for 
-        valid_dtypes = {col: dtp for col, dtp in self.p.dtypes.items() if col in meta.columns}
-        if valid_dtypes:
-            meta = meta.astype(valid_dtypes)
-        
+        exprs = [
+            pl.col(col).cast(to_polars_dtype(dtp))
+            for col, dtp in self.p.dtypes.items()
+            if col in meta.columns
+        ]
+        if exprs:
+            meta = meta.with_columns(exprs)
+
         if self.p.pd_api_types:
-            # Pandas abandon api.types  
-            # is_datetime64tz_dtype
-            tz_cols = meta.select_dtypes(include=["datetimetz"]).columns
-            for col in tz_cols:
-                meta[col] = meta[col].dt.tz_localize(None)
-                
-            # is_categorical_dtype 
-            cat_cols = meta.select_dtypes(include=["category"]).columns
-            if not cat_cols.empty:
-                meta[cat_cols] = meta[cat_cols].astype(str)
-                
-            # is_object_dtype
-            obj_cols = meta.select_dtypes(include=["object"]).columns
-            if not obj_cols.empty:
-                meta[obj_cols] = meta[obj_cols].astype(str)
+            extra_exprs = []
+            for col, dt in meta.schema.items():
+                if isinstance(dt, pl.Datetime) and dt.time_zone is not None:
+                    extra_exprs.append(pl.col(col).dt.replace_time_zone(None))
+                elif isinstance(dt, (pl.Categorical, pl.Enum)):
+                    extra_exprs.append(pl.col(col).cast(pl.String))
+                elif isinstance(dt, pl.Object):
+                    # Object can not be directly cast, must call str element-wise
+                    extra_exprs.append(pl.col(col).map_elements(str, return_dtype=pl.String))
+
+            if extra_exprs:
+                meta = meta.with_columns(extra_exprs)
         return meta

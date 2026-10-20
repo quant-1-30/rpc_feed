@@ -18,9 +18,6 @@ _stream_semaphore = asyncio.Semaphore(_MAX_CONCURRENT_STREAMS)
 
 class RpcServer(bt_protocol_service_pb2_grpc.btDataFeedServicer):
 
-    def __init__(self):
-        self._id_counter = 0
-
     async def _set_context(self, context: grpc.ServicerContext) -> None:
 
         # NoCompression / Gzip

@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8; py-indent-offset:4 -*-
 
+import os
 import io
 import re
 import asyncio
@@ -8,37 +9,39 @@ import datetime
 import sys
 import avro.schema
 import pandas as pd
+import polars as pl
 import pyarrow as pa
 import pyarrow.parquet as pq
 import pyarrow.dataset as ds
 
+from pathlib import Path
 from typing import Any, Union, List, Optional
 from avro.datafile import DataFileReader, DataFileWriter
 from avro.io import DatumReader, DatumWriter
-from avro.datafile import DataFileWriter
 
 from .node import Node
 from rpc_feed.core.gateway import async_ops
 from rpc_feed.utils.wrapper import registry
-from rpc_feed.utils.io import expand_path
+from rpc_feed.utils.io import expand_path, upsert_daily_from_arrow_table
+from rpc_feed.utils.node_util import ensure_polars
 
 
 @registry
 class AvroWriter(Node):
 
     params = (
-            ("is_writer", True),
-            ("is_async", True),
-            ("schema_path", ""),
-            ("data_path", ""),
-              )
+        ("is_writer", True),
+        ("is_async", True),
+        ("schema_path", ""),
+        ("data_path", ""),
+    )
 
-    async def next(self, meta: pd.DataFrame) -> Any:
-        # ticker.avsc
+    async def next(self, meta: Union[pl.DataFrame, pd.DataFrame]) -> Any:
+        meta = ensure_polars(meta)
         with open(self.p.schema_path, "rb") as sf:
             schema = avro.schema.parse(sf.read())
         with DataFileWriter(open(self.p.data_path, "wb"), DatumWriter(), schema) as writer:
-            for element in meta.to_dict("records"): # column: value
+            for element in meta.to_dicts():
                 writer.append(element)
 
 
@@ -84,12 +87,12 @@ class CsvWriter(Node):
 
     '''
     params = (
-        ('out', None),
-        ('indent', 2),
+        ("out", None),
+        ("indent", 2),
         ("headers", ""),
         ("separator", ","),
         ("is_writer", True),
-        ("is_async", True)
+        ("is_async", True),
     )
 
     def _start_output(self):
@@ -97,7 +100,7 @@ class CsvWriter(Node):
         if self.p.out is None:
             out = sys.stdout
         elif isinstance(self.p.out, str):
-            out = open(self.p.out, 'w')
+            out = open(self.p.out, "w")
         else:
             out = self.p.out
         return out
@@ -109,12 +112,12 @@ class CsvWriter(Node):
         self.out.close()
 
     def _writeline(self, line):
-        self.out.write(line + '\n')
+        self.out.write(line + "\n")
 
     async def writelineseparator(self):
         if self.p.headers:
             headers = self.p.headers.split(self.p.separator)
-            sep = ' ' * self.p.indent + self.p.separator
+            sep = " " * self.p.indent + self.p.separator
             csv_header = sep.join(headers)
             self._writeline(csv_header)
 
@@ -122,7 +125,7 @@ class CsvWriter(Node):
         if meta:
             await self.writelineseparator()
             for l in meta:
-                self._writeline(l + '\n')
+                self._writeline(l + "\n")
             self.stop()
 
         
@@ -130,12 +133,12 @@ class CsvWriter(Node):
 class WriterStringIO(Node):
 
     params = (
-        ('fd', io.StringIO),
+        ("fd", io.StringIO),
         ("is_writer", True),
         # next() is sync: the engine would `await` it and swallow the TypeError,
         # so run it through the executor path instead
-        ("is_async", False)
-        )
+        ("is_async", False),
+    )
 
     def __init__(self):
         super(WriterStringIO, self).__init__()
@@ -145,17 +148,12 @@ class WriterStringIO(Node):
         self.out.seek(0)
 
     def next(self, meta):
-        # output.write('First line.\n')
-        # contents = output.getvalue()
-        # output.close()
-        # sys.stdout = output / print redirect to getvalue
         fd = self.p.fd()
         if isinstance(meta, str):
             fd.write(meta)
         else:
             for chunk in meta:
                 fd.write(str(chunk))
-        # self.fetch_size = fd.tell()
         fd.close()
 
 
@@ -168,7 +166,7 @@ class PgWriter(Node):
         ("table", ""),
         ("mode", "insert"),
         ("is_writer", True),
-        ("is_async", True)
+        ("is_async", True),
     )
 
     def __init__(self):
@@ -180,7 +178,7 @@ class PgWriter(Node):
                 f"(AsyncOps has no on_update/on_delete); only 'insert' works"
             )
 
-    async def next(self, meta: Union[pd.DataFrame, List[dict], dict]):
+    async def next(self, meta: Union[pl.DataFrame, pd.DataFrame, List[dict], dict]):
         async with async_ops as ctx:
             try:
                 await ctx.on_insert(self.p.table, meta)
@@ -210,81 +208,84 @@ class ParquetWriter(Node):
         ("write_statistics", True),  # 写入统计信息
         ("coerce_timestamps", "ms"),  # 时间戳精度
         ("allow_truncated_timestamps", False),  # 是否允许截断时间戳
+        ("sync_daily", True),  # 分钟线写入/更新时同步更新 daily parquet
         ("is_writer", True),
-        ("is_async", True)
-        )
+        ("is_async", True),
+    )
 
     def __init__(self):
-        if self.p.incr:
-            behavior = "overwrite_or_ignore" 
-            now_str = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
-            basename_template = f"day_{now_str}_{{i}}.parquet"
-        else:
-            behavior = "delete_matching"
-            basename_template = None
-        
-        self.existing_data_behavior = behavior
-        self.basename_template = basename_template
+        self.existing_data_behavior = "overwrite_or_ignore" if self.p.incr else "delete_matching"
+        self.basename_template = None
     
-    def _make_schema(self, df: pd.DataFrame) -> pa.Schema:
+    def _make_schema(self, df: Union[pl.DataFrame, pd.DataFrame]) -> tuple[pa.Schema, pa.Schema]:
+        df = ensure_polars(df)
+        arrow_schema = df.head(0).to_arrow().schema
         data_fields = []
-        for col in df.columns.difference(self.p.partition_cols):
+        # 注意: sorted(...) 产出字典序(amount, close, datetime, ...),
+        # 与数据湖存量 105 万个 parquet 文件的物理列序完全一致, 勿改顺序。
+        for col in sorted(set(df.columns) - set(self.p.partition_cols)):
             if col == "datetime":
-                # data_fields.append(pa.field(col, pa.timestamp("ms"))) # default unix utc
-                data_fields.append(pa.field(col, pa.timestamp("ms", tz="UTC")))  
+                data_fields.append(pa.field(col, pa.timestamp("ms", tz="UTC")))
             else:
-                data_fields.append(pa.field(col, pa.from_numpy_dtype(df[col].dtype)))
+                ftype = arrow_schema.field(col).type
+                if pa.types.is_large_string(ftype):
+                    ftype = pa.string()
+                elif pa.types.is_large_binary(ftype):
+                    ftype = pa.binary()
+                data_fields.append(pa.field(col, ftype))
         
         partition_fields = [pa.field(col, pa.string()) for col in self.p.partition_cols]
-        return pa.schema(data_fields+partition_fields), pa.schema(partition_fields)
+        return pa.schema(data_fields + partition_fields), pa.schema(partition_fields)
     
-    def _make_partition(self, meta: pd.DataFrame) -> pd.DataFrame:
-        # vectorized dt accessors replace per-row apply (identical values, C speed)
-        # pandas 2.1.x BlockManager occur  _blknos and blocks bug
-        #  assign avoid inplace modification of the original DataFrame, which can lead to unexpected behavior in subsequent operations.
-        dt = meta["datetime"]
-        year = dt.dt.year.astype(str)  # quarter == (month-1)//3 + 1
-        quarter = "Q" + dt.dt.quarter.astype(str)
-        # 2A01 -> 2021
-        sid = meta["sid"].str.replace(r'^[a-zA-Z]+\.|\.[a-zA-Z]+$', '', regex=True)
-        date = dt.dt.strftime("%Y%m")
-
-        # -> UTC 
-        datetime_utc = (
-            dt.dt.tz_localize("Asia/Shanghai")
-            .dt.tz_convert("UTC")
-            .dt.tz_localize(None)
+    def _make_partition(self, meta: Union[pl.DataFrame, pd.DataFrame]) -> pl.DataFrame:
+        meta = ensure_polars(meta)
+        dt = pl.col("datetime")
+        return meta.with_columns(
+            year=dt.dt.year().cast(pl.String),
+            quarter=pl.lit("Q") + dt.dt.quarter().cast(pl.String),
+            sid=pl.col("sid").cast(pl.String).str.replace_all(r"^[a-zA-Z]+\.|\.[a-zA-Z]+$", ""),
+            date=dt.dt.strftime("%Y%m"),
+            datetime=(
+                dt.dt.replace_time_zone("Asia/Shanghai")
+                .dt.convert_time_zone("UTC")
+                .dt.replace_time_zone(None)
+            ),
         )
-        meta = meta.assign(
-            year=year, quarter=quarter, sid=sid, date=date, datetime=datetime_utc
-        )
-        return meta
 
     def _write_parquet(
         self,
-        meta: pd.DataFrame,
+        meta: Union[pl.DataFrame, pd.DataFrame],
     ):
+        meta = ensure_polars(meta)
+        if meta.is_empty():
+            return
         meta = self._make_partition(meta)
         schema, partition_schema = self._make_schema(meta)
-        # import pdb; pdb.set_trace()
-        table = pa.Table.from_pandas(meta, schema=schema, preserve_index=False)
+        table = meta.to_arrow().select(schema.names).cast(schema)
 
+        basename_template = (
+            f"day_{int(meta['tick'].min())}_{int(meta['tick'].max())}_{{i}}.parquet"
+            if self.p.incr
+            else self.basename_template
+        )
+
+        base_dir = expand_path(self.p.root_path)
         ds.write_dataset(
             data=table,
-            base_dir=expand_path(self.p.root_path),
-            format="parquet", # "parquet", "ipc"/"arrow"/"feather", and "csv"
+            base_dir=base_dir,
+            format="parquet",
             partitioning=ds.partitioning(partition_schema, flavor="hive"),
-            # overwrite_or_ignore  --- overwrite same file or append
-            # delete_matching  --- overwrite all
-            # error --- strict no write when dir is not empty
-            basename_template=self.basename_template,
+            basename_template=basename_template,
             existing_data_behavior=self.existing_data_behavior,
             max_partitions=self.p.max_partitions,
             max_rows_per_file=self.p.max_rows_per_file,
             max_rows_per_group=self.p.max_rows_per_group,
         )
 
-    async def next(self, meta: pd.DataFrame):
+        if self.p.sync_daily:
+            upsert_daily_from_arrow_table(Path(base_dir), table)
+
+    async def next(self, meta: Union[pl.DataFrame, pd.DataFrame]):
         """
         Async entry point for writing parquet using `to_thread` to avoid blocking.
         """

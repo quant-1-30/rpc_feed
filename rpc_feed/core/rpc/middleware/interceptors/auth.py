@@ -1,27 +1,29 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
+import os
 import grpc
+import grpc.aio
+from rpc_feed.utils.wrapper import make_grpc_abort_handler
 
 
-class AuthInterceptor(grpc.ServerInterceptor):
-    def intercept_service(self, continuation, handler_call_details):
-        # Access the metadata
-        metadata = dict(handler_call_details.invocation_metadata)
+class AuthInterceptor(grpc.aio.ServerInterceptor):
 
-        # Retrieve an authorization token from the metadata
-        token = metadata.get('authorization')
+    def __init__(self, expected_token: str = None):
+        self._expected_token = expected_token or os.getenv("GRPC_AUTH_TOKEN", "valid_token")
 
-        # Perform some logic with the token
+    async def intercept_service(self, continuation, handler_call_details):
+        metadata = dict(handler_call_details.invocation_metadata or ())
+        token = metadata.get("authorization")
+
         if token is None or not self.is_valid_token(token):
-            # Abort the request if the token is invalid
-            context = grpc.ServicerContext()
-            context.abort(grpc.StatusCode.UNAUTHENTICATED, "Invalid or missing token")
-            return None
+            return make_grpc_abort_handler(
+                grpc.StatusCode.UNAUTHENTICATED,
+                "Invalid or missing token",
+                handler_call_details,
+            )
 
-        # Continue with the RPC if the token is valid
-        return continuation(handler_call_details)
+        return await continuation(handler_call_details)
 
-    def is_valid_token(self, token):
-        # Implement your token validation logic here
-        return token == "valid_token"
+    def is_valid_token(self, token: str) -> bool:
+        return token == self._expected_token

@@ -1,117 +1,86 @@
-#! /usr/bin/env python3
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 
-import os
+
+import sys
 import asyncio
-import pandas as pd
-from datetime import datetime
-from dotenv import load_dotenv
-from sqlalchemy import select, and_, or_ , text # SQLAlchemy 2.0.39 
+import argparse
 from pathlib import Path
+from dotenv import load_dotenv
+import pandas as pd
+from sqlalchemy import text
 
-from bt_protocol.schema.asset import Asset
+_REPO_ROOT = str(Path(__file__).resolve().parent.parent)
+if _REPO_ROOT not in sys.path:
+    sys.path.insert(0, _REPO_ROOT)
+
 from rpc_feed.core.gateway.pg.operator import async_ops
 
 
-def rename_benchmark(path: str, file):
-    # engine="openpyxl"
-    # encoding="utf-8" / "gbk" 
-    df = pd.read_csv(os.path.join(path, file), encoding="utf-8")
-    
-    if df.empty:
-        return 0
-
-    mapping = {
-        "SH.000001": "SH.1A0001",
-        "SH.000688": "SH.1B0688",
-        "SZ.399001": "SZ.2A01",
-        "SZ.399006": "SZ.399006",
-    }
-
-    df["代码"] = df["代码"].map(mapping).fillna(df["代码"])
-
-    file = file.replace(".csv", "")
-    _p_str = os.path.join(path, "regenerate", f"{mapping[file]}.csv")
-    df.to_csv(_p_str, index=False)
+def load_asset_csv(csv_path: str) -> pd.DataFrame:
+    df = pd.read_csv(
+        Path(csv_path).expanduser().resolve(),
+        index_col=False,
+        dtype={"sid": str, "merger": str, "ratio": float},
+    )
+    for col in ("sid", "name", "merger"):
+        if col in df.columns:
+            df[col] = df[col].where(df[col].isna(), df[col].astype(str).str.encode("utf-8"))
+    df = df.drop_duplicates(subset=["sid"], keep="first")
+    return df.astype(object).where(df.notna(), None)
 
 
-def writer_asset():
-    # df = pd.read_csv("/Users/hengxinliu/Downloads/raw_data/assets/202605/assets.csv", index_col=False, dtype={"sid": str})
-    df = pd.read_csv("/Users/hengxinliu/Downloads/raw_data/assets/202605/delist_assets.csv", index_col=False, dtype={"sid": str, "merger": str, "ratio": float})
-
-    # assets = assets[~assets["sid"].isin(suspend_sid)]
-    # df = pd.concat(
-    #     [suspend, assets],
-    #     ignore_index=True,
-    #     copy=False,
-    # )
-    # suspend = pd.merge(
-    #     suspend_1,
-    #     suspend_2[["sid", "first_trading"]],  # 右表切片，只取关联键和目标列
-    #     on="sid",
-    #     how="left"                              # 左连接：保持 df_main 的行数和顺序完全不变
-    # )
-    # print(suspend)
-    
-    # sz["first_trading"] = pd.to_datetime(sz["first_trading"], errors="coerce")
-    # sz["first_trading"] = sz["first_trading"].dt.strftime("%Y%m%d").astype(int)    
-    # suspend["sid"] = suspend["sid"].astype(str).str.zfill(6)
-
-    # string --- bytes
-    df["sid"] = df["sid"].str.encode("utf-8")
-    df["merger"] = df["merger"].str.encode("utf-8")
-
-    df["name"] = df["name"].str.encode("utf-8")
-    dup_values = df.loc[df["sid"].duplicated(), "sid"]
-    print("dup_values: ", len(dup_values))
-    # NaN ---> Python None
-    df_clean = df.astype(object).where(df.notna(), None)
-    return df_clean
-
-
-def bulk_update(df: pd.DataFrame):
-    meta = df.to_dict(orient="records") # row to dict
-    if not meta:
-        return 0
+def build_bulk_update(df: pd.DataFrame):
+    records = [r for r in df.to_dict(orient="records") if r.get("sid") and r.get("delist") is not None]
+    if not records:
+        return None, {}
 
     value_expr = []
     params = {}
-    
-    for i, data in enumerate(meta):
-        sid_param = f"sid_{i}"
-        delist_param = f"delist_{i}"
-        value_expr.append(f"(:{sid_param}, CAST(:{delist_param} AS INTEGER))")  # hint cast type
-        params[sid_param] = data["sid"]
-        params[delist_param] = int(data["delist"])  
-    
-    values_clause = ", ".join(value_expr)
-    stmt = text(f"""
+    for i, row in enumerate(records):
+        sid_k, delist_k = f"sid_{i}", f"delist_{i}"
+        value_expr.append(f"(:{sid_k}, CAST(:{delist_k} AS INTEGER))")
+        params[sid_k] = row["sid"]
+        params[delist_k] = int(row["delist"])
+
+    stmt = text(
+        f"""
         UPDATE asset
         SET delist = v.delist
-        FROM (VALUES {values_clause}) AS v(sid, delist)
+        FROM (VALUES {', '.join(value_expr)}) AS v(sid, delist)
         WHERE asset.sid = v.sid
-    """) # postgres sql length has limit and need to split 
+        """
+    )
     return stmt, params
 
-async def update_execute(df: pd.DataFrame):
-    """Update asset data."""
-    stmt, params = bulk_update(df)
-    async with async_ops as ctx: 
-        await ctx.on_execute(stmt, params)
 
-async def _execute(table: str, df: pd.DataFrame):
+async def run_asset_job(csv_path: str, mode: str) -> None:
+    df = load_asset_csv(csv_path)
     async with async_ops as ctx:
-        await ctx.on_insert(table, df)
+        if mode == "insert":
+            await ctx.on_insert("asset", df)
+            print(f"[asset_writer] Inserted {len(df)} asset rows.")
+        else:
+            stmt, params = build_bulk_update(df)
+            if stmt is not None:
+                await ctx.on_execute(stmt, params)
+            print(f"[asset_writer] Updated delist status for {len(params) // 2} asset rows.")
+    await async_ops.cleanup()
 
 
 if __name__ == "__main__":
+
+    """
+        PostgreSQL asset 元数据离线维护工具(用于冷启动导入或退市日期批量更新;
+        日常增量由 Plugin/spider 的 asset/adj/rgt 爬虫直接入库):
+        用法示例:
+            poetry run python scripts/asset_writer.py --csv ~/Downloads/assets.csv --mode insert
+            poetry run python scripts/asset_writer.py --csv ~/Downloads/delist_assets.csv --mode update-delist
+    """
+
     load_dotenv()
-
-    # insert sid
-    df = writer_asset()
-    asyncio.run(_execute("asset", df))
-
-    # # write benchmark csv
-    # path = "/Users/hengxinliu/Downloads/raw/benchmark2026"
-    # for file in os.listdir(path):
-    #     if file.endswith(".csv"):
-    #         rewrite_benchmark(path, file)
+    parser = argparse.ArgumentParser(description="PostgreSQL asset table import & delist update tool")
+    parser.add_argument("--csv", required=True, help="CSV 文件路径")
+    parser.add_argument("--mode", choices=("insert", "update-delist"), default="insert")
+    args = parser.parse_args()
+    asyncio.run(run_asset_job(args.csv, args.mode))

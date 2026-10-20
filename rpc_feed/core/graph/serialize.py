@@ -14,7 +14,7 @@ from rpc_feed.utils.io import build_from_cfg
 
 
 _WORKER_PIPELINE: List[Any] = []
-_GC_INTERVAL = 64
+_GC_INTERVAL = int(os.getenv("WORKER_GC_INTERVAL", 64))
 _gc_counter = 0
 
 NamedNode = namedtuple("Node", ["instance", "params"])

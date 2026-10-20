@@ -2,10 +2,14 @@ from libcpp.vector cimport vector
 from libcpp.string cimport string as cpp_string
 from libc.stdint cimport int64_t
 
+cdef enum:
+    MAX_YYYYMMDD = 99991231
+    UTC8_OFFSET_SEC = 28800
+
 cdef struct Request:
     int64_t start_date
     int64_t end_date
-    vector[cpp_string] sid # bytes in python
+    vector[cpp_string] sid  # bytes in python
 
 
 cdef void _parse_to_ymd(int64_t val, int* y, int* m, int* d)

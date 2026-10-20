@@ -1,9 +1,12 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
+import os
 import time
 import threading
 import grpc
+import grpc.aio
+from rpc_feed.utils.wrapper import make_grpc_abort_handler
 
 
 class TokenBucketRateLimiter:
@@ -32,19 +35,21 @@ class TokenBucketRateLimiter:
             return False
 
 
-class RateLimitInterceptor(grpc.ServerInterceptor):
+class RateLimitInterceptor(grpc.aio.ServerInterceptor):
 
     def __init__(self, rate_limiter=None):
         if rate_limiter is None:
-            rate_limiter = TokenBucketRateLimiter(rate=100.0, capacity=200)
+            rate = float(os.getenv("GRPC_RATE_LIMIT", "100.0"))
+            capacity = int(os.getenv("GRPC_RATE_CAPACITY", "200"))
+            rate_limiter = TokenBucketRateLimiter(rate=rate, capacity=capacity)
         self.rate_limiter = rate_limiter
 
-    def intercept_service(self, continuation, handler_call_details):
-        if not self.rate_limiter.allow_request():
-            def deny_handler(request_or_iterator, context):
-                context.set_code(grpc.StatusCode.RESOURCE_EXHAUSTED)
-                context.set_details('Rate limit exceeded')
-                return None
-            return deny_handler
-        return continuation(handler_call_details)
-    
+    async def intercept_service(self, continuation, handler_call_details):
+        if self.rate_limiter.allow_request():
+            return await continuation(handler_call_details)
+
+        return make_grpc_abort_handler(
+            grpc.StatusCode.RESOURCE_EXHAUSTED,
+            "Rate limit exceeded",
+            handler_call_details,
+        )

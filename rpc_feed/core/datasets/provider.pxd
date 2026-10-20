@@ -7,7 +7,6 @@ from libcpp.string cimport string as cpp_string
 cdef enum:
     CHUNK_SIZE = 1024
     MULT = 1000
-    TICK_PROCESS_TIMEOUT = 100
 
 
 cdef class BaseBufferedProvider:

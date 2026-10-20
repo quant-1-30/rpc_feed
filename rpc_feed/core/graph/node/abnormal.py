@@ -1,33 +1,33 @@
 # !/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-import numpy as np
-import pandas as pd
+import polars as pl
 
 from .node import Node
 from rpc_feed.utils.wrapper import registry
+from rpc_feed.utils.node_util import ensure_polars
 
 
 @registry
 class ProcessNa(Node):
-    """Process Nan"""
+    """Process Nan / Null"""
     params = (
         ("na", 0),
-        ("exclude", ["tick"]), 
+        ("exclude", ["tick"]),
     )
 
-    def next(self, meta: pd.DataFrame):
-        if meta.empty:
+    def next(self, meta: pl.DataFrame) -> pl.DataFrame:
+        meta = ensure_polars(meta)
+        exclude = set(self.p.exclude or ())
+        numeric_cols = [
+            c for c, dt in meta.schema.items()
+            if c not in exclude and dt.is_numeric()
+        ]
+        if meta.is_empty() or not numeric_cols:
             return meta
-            
-        # abandon Numpy boolean mask 
-        cols_to_fill = meta.columns.difference(self.p.exclude)
-        numeric_cols = meta[cols_to_fill].select_dtypes(include=[np.number]).columns
-        
-        # Pandas fillna
-        if len(numeric_cols) > 0:
-            meta[numeric_cols] = meta[numeric_cols].fillna(self.p.na)
-        return meta
+        return meta.with_columns(
+            pl.col(numeric_cols).fill_nan(self.p.na).fill_null(self.p.na)
+        )
 
 
 @registry
@@ -35,32 +35,21 @@ class ProcessInf(Node):
     """Process infinity"""
     params = (
         ("inf", "mean"),
-        ("lines", ["open", "high", "low", "close", "volume", "amount"])
+        ("lines", ["open", "high", "low", "close", "volume", "amount"]),
     )
 
-    def next(self, meta: pd.DataFrame):
-        if meta.empty:
-            return meta
-            
-        valid_cols = [c for c in self.p.lines if c in meta.columns]
-        if not valid_cols:
+    def next(self, meta: pl.DataFrame) -> pl.DataFrame:
+        meta = ensure_polars(meta)
+        valid_cols = [
+            c for c in self.p.lines
+            if c in meta.columns and meta.schema[c].is_float()
+        ]
+        if meta.is_empty() or not valid_cols:
             return meta
 
-        # inf -> nan optimized C 
-        meta[valid_cols] = meta[valid_cols].replace([np.inf, -np.inf], np.nan)
-        
-        # mean() median() ...  auto ignore Nan ---> ~np.isinf() avoid slice 
-        if self.p.inf in ['mean', 'median', 'min', 'max']:
-            replacement_vals = getattr(meta[valid_cols], self.p.inf)()
-        else:
-            # fallback
-            try:
-                proc = getattr(np, self.p.inf)
-                replacement_vals = {col: proc(meta[col].dropna()) for col in valid_cols}
-            except AttributeError:
-                replacement_vals = {col: 0 for col in valid_cols}
-
-        # bulk fill with fillna 
-        meta[valid_cols] = meta[valid_cols].fillna(replacement_vals)
-        meta.sort_index(inplace=True)
-        return meta
+        cols = pl.col(valid_cols)
+        finite = pl.when(cols.is_finite()).then(cols)
+        stat = getattr(finite, self.p.inf)() if hasattr(finite, str(self.p.inf)) else 0.0
+        return meta.with_columns(
+            pl.when(cols.is_infinite()).then(stat).otherwise(cols)
+        )

@@ -4,6 +4,7 @@
 import os
 import asyncio
 import pandas as pd
+import polars as pl
 from sqlalchemy import Select
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, AsyncResult
 from sqlalchemy.ext.automap import automap_base
@@ -57,14 +58,15 @@ class AsyncOps:
         self._initialized = False
         self.engine = None
         self._session_factory = None
-        self._init_lock = asyncio.Lock()  # 防止并发初始化
+        self._init_lock = asyncio.Lock() 
+        self.batch_size = int(os.getenv("PGBATCHSIZE", 1024))
 
     async def __aenter__(self):
         await self._ensure_initialized()
         return self
  
     async def _ensure_initialized(self):
-        """Helper method to ensure initialization — 加锁防止并发竞态"""
+        """Helper method to ensure initialization — avoid race condition by using a lock"""
         if not self._initialized:
             async with self._init_lock:
                 if not self._initialized:
@@ -84,19 +86,19 @@ class AsyncOps:
             c. bug --- every restart service result scan model to recreate (rollback)
         """
         # asyncpg / psycopg2 / pycopy2cffi
-        url = f'postgresql+{os.getenv("PGENGINE")}://{os.getenv("PGUSER")}:{os.getenv("PGPWD")}@{os.getenv("PGHOST")}:{os.getenv("PGPORT")}/{os.getenv("PGDB")}'
+        url = f'postgresql+{os.getenv("PGENGINE", "asyncpg")}://{os.getenv("PGUSER")}:{os.getenv("PGPWD")}@{os.getenv("PGHOST")}:{os.getenv("PGPORT", 5432)}/{os.getenv("PGDB")}'
         engine = create_async_engine(url, 
-                               pool_size=int(os.getenv("PGPOOLSIZE")),
-                               pool_timeout=int(os.getenv("PGTIMEOUT")),
-                               max_overflow=int(os.getenv("PGMAXOVERFLOW")),
-                               pool_recycle=int(os.getenv("PGPOOLRECYCLE")), 
-                               pool_pre_ping=bool(int(os.getenv("PGPREPING"))),
+                               pool_size=int(os.getenv("PGPOOLSIZE", 10)),
+                               pool_timeout=int(os.getenv("PGTIMEOUT", 30)),
+                               max_overflow=int(os.getenv("PGMAXOVERFLOW", 10)),
+                               pool_recycle=int(os.getenv("PGPOOLRECYCLE", 1800)), 
+                               pool_pre_ping=bool(int(os.getenv("PGPREPING", 1))),
                                # isolation_level="AUTOCOMMIT"
                                # stream_results = True/ False
                                # autocommit = True/ False
                                # compiled_cache = True/ False
                                # async_creator=lambda: on_connect(url),
-                               echo=bool(int(os.getenv("PGECHO"))))  # 移除 compiled_cache={},使用默认 SQL 缓存
+                               echo=bool(int(os.getenv("PGECHO", 0))))  # 移除 compiled_cache={},使用默认 SQL 缓存
         
         # Create tables and reflect schema asynchronously
         async with engine.begin() as conn:
@@ -137,7 +139,7 @@ class AsyncOps:
         session = self._session_factory()
         try:
             await session.begin()
-            result = await session.stream(query)
+            result = await session.stream(query.execution_options(yield_per=self.batch_size))
             return AsyncStreamProxy(session, result) # session control move to Proxy
         except Exception as e:
             await session.close()
@@ -152,23 +154,28 @@ class AsyncOps:
     #         finally:
     #             await result.close()  # ensure result is close
 
-    async def on_insert(self, table_name: str, data: Union[pd.DataFrame, List[dict], dict]):
+    async def on_insert(self, table_name: str, data: Union[pl.DataFrame, pd.DataFrame, List[dict], dict]):
         async with self.get_db() as session:
             async with session.begin():
-                if isinstance(data, pd.DataFrame):
-                    inserts = list(data.T.to_dict().values())
-                    # Iterable __iter__ for / Iterator __iter__ , __next__ yield include str/bytes Iterable
+                if isinstance(data, pl.DataFrame):
+                    inserts = data.to_dicts()
+                elif isinstance(data, pd.DataFrame):
+                    inserts = data.to_dict(orient="records")
                 elif isinstance(data, (list, tuple)):
                     inserts = data
                 else:
                     inserts = [data]
                 base_obj = self._orm_map[table_name]
-                inserts = [base_obj(**self.filter_valid_keys(base_obj, insert)) for insert in inserts]
+                valid_keys = {column.name for column in base_obj.__table__.columns}
+                inserts = [
+                    base_obj(**{k: v for k, v in insert.items() if k in valid_keys})
+                    for insert in inserts
+                ]
                 session.add_all(inserts)
 
     @staticmethod
     def filter_valid_keys(base_obj, insert):
-        valid_keys = [column.name for column in base_obj.__table__.columns]
+        valid_keys = {column.name for column in base_obj.__table__.columns}
         return {key: value for key, value in insert.items() if key in valid_keys}
     
     async def on_query_obj(self, query: Select, params=None):

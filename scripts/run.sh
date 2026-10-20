@@ -23,8 +23,6 @@ if [ ! -d "$(poetry env info --path 2>/dev/null)" ]; then
     poetry install --no-root
 fi
 
-echo "Starting Initialzie database in Poetry environment..."
-poetry run python script/pg_init.py
-
+# ORM AsyncOps._build_engine autocreate
 echo "Starting server in Poetry environment..."
 poetry run python rpc_feed/run_server.py

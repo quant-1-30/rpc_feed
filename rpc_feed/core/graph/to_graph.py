@@ -10,9 +10,10 @@ from loky import get_reusable_executor, backend
 from pyvis.network import Network
 
 from .node import *
-from .util import fix_macos_mp, signal_handler
 from .serialize import NamedNode, init_worker, convert_node_to_serializable, run_sync_pipeline_global
 from .monitor import GraphMemoryManager
+
+from rpc_feed.utils.node_util import fix_macos_mp, signal_handler
 from rpc_feed.utils.loader import get_module_by_module_path
 from rpc_feed.utils.io import build_from_cfg
 from rpc_feed.utils.wrapper import singleton
@@ -32,7 +33,7 @@ os.environ["NUMEXPR_NUM_THREADS"] = "1"
 @singleton
 class Graph(object):
     """
-    DAG 调度引擎：
+    DAG
     1. CPU loky ProcessPool
     2. I/O Writer asyncio
     """
@@ -45,7 +46,7 @@ class Graph(object):
         
         # concurrency settings
         procs = int(os.getenv("CONCURRENT_PROCS", max(1, int(os.cpu_count() * 0.2))))
-        self.sem_size = procs * 2 # control the number of concurrent tasks to avoid OOM
+        self.sem_size = int(os.getenv("SEM_SIZE", procs * 2)) # control the number of concurrent tasks to avoid OOM
         self.q_size = int(os.getenv("QUEUE_SIZE", procs * 2))
         self.procs = procs
         self.consumer_workers = int(os.getenv("CONSUMER_WORKERS", 4))
@@ -60,6 +61,7 @@ class Graph(object):
     def _init_async_resource(self, loop):
         self.loop = loop
         self.queue = asyncio.Queue(maxsize=self.q_size) # pressure control
+        self._gc_event = asyncio.Event()
 
     def reset(self):
         self.graph = []
@@ -166,21 +168,21 @@ class Graph(object):
         for item in iterables:
             task = asyncio.create_task(wrapped_task(item))
             pending_tasks.add(task)
-            task.add_done_callback(pending_tasks.discard)  
 
             if len(pending_tasks) >= self.sem_size:
-                done, _ = await asyncio.wait(pending_tasks, return_when=asyncio.FIRST_COMPLETED) # core key --- one in one out
+                done, pending_tasks = await asyncio.wait(
+                    pending_tasks, return_when=asyncio.FIRST_COMPLETED
+                )
                 for t in done:
                     try:
-                        processed_item = await t 
+                        processed_item = await t
                         if processed_item is not None:
                             await self.queue.put(processed_item)
                     except Exception as e:
-                        # 重点：捕获到 TerminatedWorkerError，记录日志，而不是让整个程序崩溃或丢弃
                         print(f"[Worker Error] 任务执行失败: {type(e).__name__} - {e}")
 
         if pending_tasks:
-            results = await asyncio.gather(*pending_tasks, return_exceptions=True) # waited to be completed
+            results = await asyncio.gather(*pending_tasks, return_exceptions=True)
             for processed_item in results:
                 if isinstance(processed_item, Exception):
                     print(f"[Worker Error] 任务执行失败: {type(processed_item).__name__} - {processed_item}")
@@ -201,7 +203,8 @@ class Graph(object):
             else:
                 for item in iterables:
                     processed = self.run_sync_pipeline_local(item)
-                    await self.queue.put(processed)
+                    if processed is not None:
+                        await self.queue.put(processed)
                 for _ in range(self.consumer_workers):
                     await self.queue.put(None)
 

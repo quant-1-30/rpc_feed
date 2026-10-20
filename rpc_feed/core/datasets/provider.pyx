@@ -3,13 +3,13 @@
 # cython: wraparound=False 
 # cython: cdivision=True
 
+import os
 import asyncio
 import numpy as np
 import pyarrow as pa
 import pyarrow.compute as pc
 from sqlalchemy import select, and_, or_, func, cast, Integer, BigInteger
 
-from libc.math cimport round 
 from libc.stdint cimport uint8_t, int32_t, int64_t
 from libcpp.string cimport string as cpp_string
 
@@ -20,7 +20,7 @@ from bt_protocol.serialize.pb import bt_protocol_service_pb2
 from bt_protocol.template.duckdb_template import *
 from bt_protocol.schema.asset import *
 
-cdef cpp_string tz_info = b"Asia/Shanghai"
+cdef int PG_BATCH_SIZE = int(os.getenv("PGBATCHSIZE", CHUNK_SIZE))
 
 
 cdef object arrow_options = pa.ipc.IpcWriteOptions(
@@ -33,31 +33,6 @@ cdef object batch_to_resp(object batch): # protobuf payload bytes
     with pa.ipc.new_stream(sink, batch.schema, options=arrow_options) as writer:
         writer.write_batch(batch)
     return bt_protocol_service_pb2.ArrowFrame(payload=sink.getvalue().to_pybytes())
-
-
-cdef inline tuple _slice_by_sid(object sid_col, Py_ssize_t num_rows):
-    """
-        PyArrow Compute sid boundary and return (s_indices, e_indices)
-    """
-    cdef object equal_mask, lslice, rslice, bound_mask, bound_indices
-    cdef object s_indices, e_indices
-
-    if num_rows == 1:
-        return (pa.array([0], type=pa.int64()), pa.array([1], type=pa.int64()))
-        
-    equal_mask = pc.equal(sid_col, sid_col[0])
-    if pc.all(equal_mask).as_py():
-        return (pa.array([0], type=pa.int64()), pa.array([num_rows], type=pa.int64()))
-        
-    lslice = sid_col.slice(offset=0, length=num_rows - 1)
-    rslice = sid_col.slice(offset=1, length=num_rows - 1)
-    bound_mask = pc.not_equal(lslice, rslice)
-    bound_indices = pc.add(pc.indices_nonzero(bound_mask), 1)
-    
-    # indices_nonzero ---> uint64
-    s_indices = pa.concat_arrays([pa.array([0], type=pa.int64()), bound_indices])
-    e_indices = pa.concat_arrays([bound_indices, pa.array([num_rows], type=pa.int64())])
-    return s_indices, e_indices
 
 
 # =====================================================================
@@ -94,50 +69,12 @@ cdef class BaseDuckDBProvider(BaseBufferedProvider):
 
         async with duck_mgr as ctx:
             async for batch in ctx.query(req, self.template):
-                # aviod grpc context leak is_active is grpc sync not aiogrpc
                 if context is not None and context.done():
                     print(f"[{self.rpc_type.decode()}] client cancelled, stopping stream")
                     return
                 if batch.num_rows == 0: 
                     continue
-                try:
-                    for resp in self._process_batch(batch):
-                        yield resp 
-                except asyncio.TimeoutError:
-                    print(f"[{self.rpc_type.decode()}] _process_batch Timeout")
-                    continue 
-                except asyncio.CancelledError:
-                    print(f"[{self.rpc_type.decode()}] _process_batch CancelledError")
-                    raise 
-
-    def _process_batch(self, object batch):
-        # frame size determined by DuckDB  DUCKBATCHSIZE 
-        cdef object sid_col = batch.column("sid")
-        cdef Py_ssize_t num_rows = len(sid_col)
-
-        cdef tuple indices
-        cdef object s_indices, e_indices, slice_batch
-        cdef Py_ssize_t start, end, i
-        cdef bytes sid
-        cdef Py_ssize_t n_seg
-
-        if num_rows == 0:
-            return
-
-        indices = _slice_by_sid(sid_col, num_rows)
-        s_indices, e_indices = indices[0], indices[1]
-
-        # to_numpy avoid to_pybytes multi python objects
-        cdef object s_np = s_indices.to_numpy(zero_copy_only=False)
-        cdef object e_np = e_indices.to_numpy(zero_copy_only=False)
-        n_seg = len(s_np)
-
-        for i in range(n_seg):
-            start = s_np[i]
-            end = e_np[i]
-            sid = sid_col[start].as_py()
-            slice_batch = batch.slice(start, end - start)
-            yield self._flush_record_batch(sid, slice_batch)
+                yield self._flush_record_batch(None, batch)
 
 
 # -------------------------------- DuckDB Dispatcher ----------------------------
@@ -166,29 +103,29 @@ cdef class Close(BaseDuckDBProvider):
 
 cdef class InstrumentBuffer:
     def __cinit__(self):
-        self.buf_sid = [b''] * CHUNK_SIZE
-        self.buf_name = [b''] * CHUNK_SIZE
-        self.buf_first_trading = np.empty(CHUNK_SIZE, dtype=np.int32)
-        self.buf_delist = np.empty(CHUNK_SIZE, dtype=np.int32)
-        self.buf_merger = [b''] * CHUNK_SIZE
-        self.buf_ratio = np.empty(CHUNK_SIZE, dtype=np.float32)
+        self.buf_sid = [b''] * PG_BATCH_SIZE
+        self.buf_name = [b''] * PG_BATCH_SIZE
+        self.buf_first_trading = np.empty(PG_BATCH_SIZE, dtype=np.int32)
+        self.buf_delist = np.empty(PG_BATCH_SIZE, dtype=np.int32)
+        self.buf_merger = [b''] * PG_BATCH_SIZE
+        self.buf_ratio = np.empty(PG_BATCH_SIZE, dtype=np.float32)
 
 
 cdef class AdjustBuffer:
     def __cinit__(self):
-        self.buf_ex_date = np.empty(CHUNK_SIZE, dtype=np.int32)
-        self.buf_register_date = np.empty(CHUNK_SIZE, dtype=np.int32)
-        self.buf_bonus_share = np.empty(CHUNK_SIZE, dtype=np.int32)
-        self.buf_transfer = np.empty(CHUNK_SIZE, dtype=np.int32)
-        self.buf_bonus = np.empty(CHUNK_SIZE, dtype=np.int32)
+        self.buf_ex_date = np.empty(PG_BATCH_SIZE, dtype=np.int32)
+        self.buf_register_date = np.empty(PG_BATCH_SIZE, dtype=np.int32)
+        self.buf_bonus_share = np.empty(PG_BATCH_SIZE, dtype=np.int32)
+        self.buf_transfer = np.empty(PG_BATCH_SIZE, dtype=np.int32)
+        self.buf_bonus = np.empty(PG_BATCH_SIZE, dtype=np.int32)
 
 
 cdef class RightBuffer:
     def __cinit__(self):
-        self.buf_ex_date = np.empty(CHUNK_SIZE, dtype=np.int32)
-        self.buf_register_date = np.empty(CHUNK_SIZE, dtype=np.int32)
-        self.buf_price = np.empty(CHUNK_SIZE, dtype=np.int32)
-        self.buf_ratio = np.empty(CHUNK_SIZE, dtype=np.int32)
+        self.buf_ex_date = np.empty(PG_BATCH_SIZE, dtype=np.int32)
+        self.buf_register_date = np.empty(PG_BATCH_SIZE, dtype=np.int32)
+        self.buf_price = np.empty(PG_BATCH_SIZE, dtype=np.int32)
+        self.buf_ratio = np.empty(PG_BATCH_SIZE, dtype=np.int32)
 
 
 # =====================================================================
@@ -230,8 +167,8 @@ cdef class BaseSQLAlchemyProvider(BaseBufferedProvider):
 
                     r_sid = row[0] if self.group_by_sid else b''
 
-                    # i >= CHUNK_SIZE avoid segment fault
-                    if i >= CHUNK_SIZE or (self.group_by_sid and last_sid is not None and r_sid != last_sid):
+                    # i >= PG_BATCH_SIZE avoid segment fault
+                    if i >= PG_BATCH_SIZE or (self.group_by_sid and last_sid is not None and r_sid != last_sid):
                         yield self._flush_buffer(buf, i, last_sid)
                         buf = self._init_buffers()
                         i = 0
@@ -254,13 +191,26 @@ cdef class Instrument(BaseSQLAlchemyProvider):
 
     cdef object _build_statement(self, int32_t start_date, int32_t end_date, list sids):
         stmt = select(
-            Asset.sid, Asset.name, Asset.first_trading, 
-            Asset.delist, Asset.merger, Asset.ratio
+            Asset.sid,
+            Asset.name,
+            Asset.first_trading,
+            func.coalesce(Asset.delist, 0).label("delist"), # It checks the value of the delist column on the Asset table. If delist is NULL, it falls back to 0. If delist is not NULL, it keeps its original value.
+            Asset.merger,
+            func.coalesce(Asset.ratio, 0.0).label("ratio"),
         )
         if sids:
             stmt = stmt.where(Asset.sid.in_(sids))
         else:
-            stmt = stmt.where(Asset.first_trading.between(start_date, end_date))
+            stmt = stmt.where(
+                and_(
+                    Asset.first_trading <= end_date,
+                    or_(
+                        Asset.delist.is_(None),
+                        Asset.delist == 0,
+                        Asset.delist >= start_date,
+                    ),
+                )
+            )
         return stmt
 
     cdef object _init_buffers(self):

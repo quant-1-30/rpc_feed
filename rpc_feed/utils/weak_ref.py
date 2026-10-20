@@ -88,10 +88,11 @@ class _WeakArgsOrderedDict(_WeakArgsDict, object):
         self.data = OrderedDict()
 
     def popitem(self, last=True):
-        while True:
+        while self.data:
             key, value = self.data.popitem(last)
             if key.alive:
                 return tuple(key), value
+        return None, None
 
     def move_to_end(self, key):
         """Move an existing element to the end.
@@ -118,6 +119,10 @@ def weak_lru_cache(maxsize=100):
 
     """
     class desc(object):
+        def __init__(self, get):
+            self._get = get
+            self._cache = WeakKeyDictionary()
+
         def __get__(self, instance, owner):
             if instance is None:
                 return self

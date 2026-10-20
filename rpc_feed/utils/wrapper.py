@@ -330,6 +330,23 @@ def api_method(f):
     return f
 
 
+def make_grpc_abort_handler(code, details: str, handler_call_details):
+    """unary_unary / unary_stream """
+    import grpc
+
+    method = getattr(handler_call_details, "method", "") or ""
+    if method.endswith("/HeartBeat"):
+        async def deny_unary(request, context):
+            await context.abort(code, details)
+        return grpc.unary_unary_rpc_method_handler(deny_unary)
+
+    async def deny_stream(request_or_iterator, context):
+        await context.abort(code, details)
+        yield
+
+    return grpc.unary_stream_rpc_method_handler(deny_stream)
+
+
 class Registry():
         
     _module_dict = dict()

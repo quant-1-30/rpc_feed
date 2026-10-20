@@ -33,7 +33,7 @@ cython = "^3.2.3"
 polar = "^0.0.127"
 polars = "^1.39.2"
 loky = "^3.5.6"
-protobuf = "^7.35.0"
+protobuf = ">=7.35.1,<8.0"
 bt-protocol = "0.2.6"
 
 [[tool.poetry.source]]

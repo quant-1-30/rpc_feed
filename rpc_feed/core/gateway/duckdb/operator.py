@@ -1,20 +1,25 @@
 # !/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-import re
 import os
+import atexit
 import logging
 import duckdb
-import threading
-import json
 import asyncio
 import queue
 from pathlib import Path
-from dotenv import load_dotenv
 from concurrent.futures import ThreadPoolExecutor
+
 from .utils import schema_range, preprocess_req 
 
+from rpc_feed.utils.io import SID_REGEX_BYTES
 from rpc_feed.utils.wrapper import singleton
+from bt_protocol.template.duckdb_template import (
+    DAILY_TEMPLATE,
+    CLOSE_TEMPLATE,
+    DAILY_FETCH_TEMPLATE,
+    CLOSE_FETCH_TEMPLATE,
+)
 
 
 class ConnectionPoolExhausted(RuntimeError):
@@ -22,33 +27,50 @@ class ConnectionPoolExhausted(RuntimeError):
 
 
 class ConnectionPool:
-    def __init__(self, db_path, max_connections):
+    def __init__(self, db_path, max_connections, timeout=None, threads=None):
         self.db_path = db_path
         self.max_connections = max_connections
+        self.timeout = int(os.getenv("DUCKTIMEOUT", 5)) if timeout is None else timeout
+
+        default_threads = max(1, (os.cpu_count() or 4) // max(1, max_connections))
+        self.threads = int(os.getenv("DUCKTHREADS", default_threads)) if threads is None else threads
+        
         self._pool = queue.Queue(max_connections)
         self._initialize_pool()
     
     def _initialize_pool(self):
-        """初始化连接池"""
+        self._ensure_httpfs_installed()
         for _ in range(self.max_connections):
             conn = duckdb.connect(self.db_path)
             self._init_connection(conn)
             self._pool.put(conn)
+
+    def _ensure_httpfs_installed(self):
+        try:
+            with duckdb.connect(self.db_path) as conn:
+                conn.execute("INSTALL httpfs;")
+        except Exception as e:
+            logging.warning("DuckDB INSTALL httpfs skipped (offline or already installed): %s", e)
     
     def _init_connection(self, conn):
-        """load plugins"""
+        """load plugins & tune per-connection concurrency"""
         try:
-            conn.execute("INSTALL httpfs;")  # downloads from network on first use
-        except Exception as e:  # offline / already installed locally
-            logging.warning("DuckDB INSTALL httpfs failed offline or maybe already installed, trying LOAD only: %s", e)
-        conn.execute("LOAD httpfs;")
+            conn.execute("LOAD httpfs;")
+        except Exception as e:
+            logging.warning("DuckDB LOAD httpfs failed: %s", e)
+        # DUckDB 1.x based on mmap, so os.replace atomic update will trigger inode/mtime change;    
+        # enable_object_cache DuckDB >=0.10 no-op
         conn.execute("SET enable_object_cache=true;")
         # Parquet TIMESTAMP(tz) vs naive TIMESTAMP comparison resolves the naive side
         # in the session timezone -> pin it so the query window never drifts with host TZ
         conn.execute("SET TimeZone='UTC';")
-        # conn.execute("SET max_expression_depth = 2000;") # not UNION ALL
+        # 1) DuckDB 1.x default every conn binds cpu_count() thread
+        conn.execute(f"SET threads={self.threads};")
+        # SQL template ORDER BY and LIMIT are preserved, but the scan phase does not need to preserve order, reducing peak memory by about 30%
+        conn.execute("SET preserve_insertion_order=false;")
 
-    def get_connection(self, timeout=5):
+    def get_connection(self, timeout=None):
+        timeout = self.timeout if timeout is None else timeout
         try:
             return self._pool.get(timeout=timeout)
         except queue.Empty:
@@ -85,59 +107,84 @@ class DuckDBManager:
     _EXHAUSTED = "sentinel"
 
     def __init__(self):
-        self.dataset_root = Path(os.getenv("DUCKDATASET")).expanduser()
+        self.dataset_root = Path(os.getenv("DUCKDATASET", "~/Downloads/quant/parquet")).expanduser()
         self.batch_size = int(os.getenv("DUCKBATCHSIZE", 100000))
-
-        # benchmark must be matched FIRST and anchored: b"399006" also matches
-        # the stock pattern ^(6|0|3)\d{5} and would be silently routed to a
-        # nonexistent stock/ partition (empty result, no error)
-        self.regex_rules = {
-            "benchmark": re.compile(b"^(1A0001|1B0688|2A01|399006)$"), # 上证/科创/深证/创业
-            "stock": re.compile(b"^(6|0|3)\d{5}"), # encode('ascii')
-            "fund": re.compile(b"^(51|15|16)\d{4}"),
-        }
+        self.regex_rules = SID_REGEX_BYTES
 
         max_connections = int(os.getenv("DUCKCONNECTION", 10))
         # bound concurrent parquet scans to the pool size so the N+1th stream
         # queues instead of raising "pool exhausted" (stream semaphore may be larger)
         self._query_sema = asyncio.Semaphore(max_connections)
-        cache_path = Path(__file__).resolve().parent / "cache" / os.getenv("DUCKDB")
-        self.connection_pool = ConnectionPool(cache_path, max_connections)
+        # match max_connections avoid asyncio default thread pool (cpu_count + 4) throttling causing concurrent queries to starve each other
+        self._executor = ThreadPoolExecutor(
+            max_workers=max_connections, thread_name_prefix="duckdb"
+        )
+
+        # exclusive write lock, avoid concurrent processes corrupting the same duckdb_macro.db
+        if os.getenv("DUCKDB_FILE", "0") == "1": 
+            db_target = str(Path(__file__).resolve().parent / "cache" / os.getenv("DUCKDB", "duckdb_macro.db"))
+        else:
+        # default sqlite DuckDB :memory:db_name is shared across connections in the same process.
+        # mtime/size change of the parquet files will trigger DuckDB to refresh the cache automatically.
+            db_target = ":memory:rpc_feed_cache"
+        self.connection_pool = ConnectionPool(db_target, max_connections)
+        atexit.register(self.close)
 
     async def __aenter__(self):
         return self
         
     def _glob_path(self, req: dict) -> list:
+        root_str = str(self.dataset_root)
         ranges = schema_range(req) 
-        exact_globs =[]
         
+        exact_globs = []
         for sid_bytes in req["sid"]:
-
-            # Determine category based on regex matching
             type_name = None
             for name, regex in self.regex_rules.items():
                 if regex.match(sid_bytes):
                     type_name = name
                     break
-                    
             if not type_name:
                 continue 
                 
             sid_str = sid_bytes.decode("utf-8")
+            base_prefix = f"{root_str}/{type_name}"
             for y, q, ym in ranges:
-                dir_path = os.path.join(
-                    self.dataset_root, 
-                    type_name, 
-                    f"year={y}", 
-                    f"quarter={q}", 
-                    f"sid={sid_str}", 
-                    f"date={ym}"
-                )
-                
-                if os.path.exists(dir_path): # os cache
-                    exact_globs.append(os.path.join(dir_path, "*.parquet"))
+                dir_path = f"{base_prefix}/year={y}/quarter={q}/sid={sid_str}/date={ym}"
+                if os.path.exists(dir_path):
+                    exact_globs.append(f"{dir_path}/*.parquet")
         return exact_globs
-    
+
+    def _glob_daily_path(self, req: dict) -> list:
+        root_str = str(self.dataset_root)
+        ranges = schema_range(req)
+        req_types = []
+        seen = set()
+        for sid_bytes in req["sid"]:
+            for name, regex in self.regex_rules.items():
+                if regex.match(sid_bytes):
+                    if name not in seen:
+                        seen.add(name)
+                        req_types.append(name)
+                    break
+
+        daily_globs = []
+        for type_name in req_types:
+            base_prefix = f"{root_str}/daily/{type_name}"
+            for y, q, ym in ranges:
+                daily_file = f"{base_prefix}/year={y}/quarter={q}/date={ym}/part-0.parquet"
+                if os.path.exists(daily_file):
+                    daily_globs.append(daily_file)
+        return daily_globs
+
+    def _resolve_query_plan(self, req: dict, raw_template: str):
+        if raw_template in (DAILY_TEMPLATE, CLOSE_TEMPLATE):
+            daily_globs = self._glob_daily_path(req)
+            if daily_globs:
+                fast_tpl = DAILY_FETCH_TEMPLATE if raw_template == DAILY_TEMPLATE else CLOSE_FETCH_TEMPLATE
+                return daily_globs, fast_tpl
+        return self._glob_path(req), raw_template
+
     @staticmethod
     def _read_batch_safe(reader):
         try:
@@ -147,49 +194,54 @@ class DuckDBManager:
 
     async def query(self, req: dict, raw_template: str):
         loop = asyncio.get_running_loop()
+        sql_meta = preprocess_req(req)
+        sids = sql_meta["sids"]
+        if not sids:
+            return
+
+        # _resolve_query_plan not occupyDuckDB connection slot  
+        file_globs, effective_template = await loop.run_in_executor(
+            self._executor, self._resolve_query_plan, req, raw_template
+        )
+        if not file_globs:
+            logging.info("DuckDB query: no file globs")
+            return
+
         async with self._query_sema:
-            # _glob_path stats one dir per sid*month -> keep the stat storm off the event loop
-            file_globs = await loop.run_in_executor(None, self._glob_path, req)
-            if not file_globs:
-                logging.info("DuckDB query: no file globs")
-                return
-
-            sql_meta = preprocess_req(req)
-            sids = sql_meta["sids"]
-            if not sids:
-                return
-
+            # avoid await run_in_executor(get_connection) when semaphore acquired, otherwise the connection may be exhausted and raise ConnectionPoolExhausted
             conn = self.connection_pool.get_connection()
+            reader = None
             try:
-                # conn.execute / fetch_record_batch / read_next_batch sync api block event_loop
+                # conn.execute / to_arrow_reader / read_next_batch sync api block event_loop
                 reader = await loop.run_in_executor(
-                    None,
+                    self._executor,
                     lambda: conn.execute( # C++ Parameter Binding
-                        raw_template,
+                        effective_template,
                         [file_globs, sids, sql_meta["start_str"], sql_meta["end_str"]]
-                    ).fetch_record_batch(self.batch_size)
+                    ).to_arrow_reader(self.batch_size)
                 )
 
                 while True:
                     # read_next_batch sync api block
-                    batch = await loop.run_in_executor(None, self._read_batch_safe, reader)
+                    batch = await loop.run_in_executor(self._executor, self._read_batch_safe, reader)
                     if batch is self._EXHAUSTED:
                         break
                     yield batch
             finally:
-                self.connection_pool.return_connection(conn)
+                if reader is not None:
+                    try:
+                        reader.close()
+                    except Exception:
+                        logging.debug("arrow reader close failed", exc_info=True)
+                self.connection_pool.return_connection(conn) # avoid connection leak when exception raised in yield
     
+    def close(self):
+        self.connection_pool.close_all()
+        self._executor.shutdown(wait=False)
+
     async def __aexit__(self, exc_type, exc_val, exc_tb):
         return False
 
 
-_duck_inst = None
-_duck_lock = threading.Lock()
-
-
 def get_duckdb_manager():
-    global _duck_inst
-    with _duck_lock:
-        if _duck_inst is None:
-            _duck_inst = DuckDBManager()
-    return _duck_inst
+    return DuckDBManager()
