@@ -553,18 +553,18 @@ def _merge_and_write_daily(
         if out_file.exists():
             con.register("_merge_new_daily", new_table)
             try:
-                escaped = str(out_file).replace("'", "''")
                 merged = con.execute(
-                    f"""
+                    """
                     SELECT sid, day, open, high, low, close, volume, amount
                     FROM (
                         SELECT *, 1 AS __pri FROM _merge_new_daily
                         UNION ALL BY NAME
-                        SELECT *, 0 AS __pri FROM read_parquet('{escaped}', hive_partitioning=false)
+                        SELECT *, 0 AS __pri FROM read_parquet(?, hive_partitioning=false)
                     )
                     QUALIFY row_number() OVER (PARTITION BY sid, day ORDER BY __pri DESC) = 1
                     ORDER BY sid, day ASC
-                    """
+                    """,
+                    [str(out_file)],
                 ).to_arrow_table()
             finally:
                 con.unregister("_merge_new_daily")

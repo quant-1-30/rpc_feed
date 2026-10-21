@@ -3,6 +3,7 @@
 
 import signal
 import asyncio
+import logging
 import platform
 import multiprocessing
 import numpy as np
@@ -76,12 +77,12 @@ def fix_macos_mp(force: bool = True) -> bool:
     - force=True: recommand
     """
     if platform.system() != "Darwin":
-        print("ℹ️ nan macOS and skip multiprocessing bugfix")
+        logging.debug("non-macOS system, skipping multiprocessing spawn fix")
         return True
     
     try:
         current_method = multiprocessing.get_start_method(allow_none=True)
-        print(f"🔍multiprocessing : {current_method}")
+        logging.debug("multiprocessing start_method: %s", current_method)
         
         if current_method == 'spawn':
             return True
@@ -92,14 +93,14 @@ def fix_macos_mp(force: bool = True) -> bool:
         
     except RuntimeError as e:
         if "context has already been set" not in str(e):
-            print(f"❌: {e}")
+            logging.warning("fix_macos_mp failed: %s", e)
         return False
 
 
 def signal_handler(loop):
 
     def _shutdown_handler(loop):
-        print("Signal received, cancelling tasks...")
+        logging.info("Signal received, cancelling tasks...")
         for task in asyncio.all_tasks(loop):
             task.cancel()
         
@@ -108,4 +109,4 @@ def signal_handler(loop):
         for sig in (signal.SIGINT, signal.SIGTERM):
             loop.add_signal_handler(sig, lambda: _shutdown_handler(loop))
     else:
-        print("Windows system, no signal handler")
+        logging.debug("Windows system, no signal handler")

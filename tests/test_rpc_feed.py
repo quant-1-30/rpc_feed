@@ -195,3 +195,37 @@ def test_weak_lru_cache_dead_ref_eviction():
     gc.collect()
     b = Item()
     assert compute(b) == id(b)
+
+
+def test_cython_so_freshness_and_audit_guards(monkeypatch):
+    repo_root = Path(__file__).resolve().parent.parent
+    for pyx in (repo_root / "rpc_feed").rglob("*.pyx"):
+        so_files = list(pyx.parent.glob(f"{pyx.stem}.*.so"))
+        assert so_files, f"Missing compiled .so for {pyx}"
+        so_mtime = max(s.stat().st_mtime for s in so_files)
+        assert so_mtime >= pyx.stat().st_mtime, f"Stale .so for {pyx}"
+        pxd = pyx.with_suffix(".pxd")
+        if pxd.exists():
+            assert so_mtime >= pxd.stat().st_mtime, f"Stale .so vs {pxd}"
+
+    # @singleton preserves class identity and isolates subclasses
+    assert isinstance(get_duckdb_manager(), DuckDBManager)
+    from rpc_feed.utils.wrapper import singleton
+    @singleton
+    class _BaseS:
+        pass
+    class _SubS(_BaseS):
+        pass
+    assert _BaseS() is not _SubS()
+    assert isinstance(_SubS(), _SubS)
+
+    # AuthInterceptor fails fast when token is missing
+    monkeypatch.delenv("GRPC_AUTH_TOKEN", raising=False)
+    with pytest.raises(ValueError, match="GRPC_AUTH_TOKEN"):
+        AuthInterceptor()
+
+    # _parse_date unifies YYYYMMDD and epoch seconds to +08:00
+    from rpc_feed.core.gateway.duckdb.utils import preprocess_req
+    meta = preprocess_req({"start_date": 1704038400, "end_date": 20240101, "sid": [b"000001"]})
+    assert meta["start_str"].endswith("+08:00")
+    assert meta["end_str"].endswith("+08:00")

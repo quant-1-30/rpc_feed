@@ -17,7 +17,7 @@ class MetaNode(MetaParams):
         _obj.alias = alias
 
         if not hasattr(_obj, "prenext"):
-            _obj.prenext = lambda: None
+            _obj.prenext = lambda *args, **kwargs: None
 
         if not hasattr(_obj, "next"):
             raise NotImplementedError("next")
@@ -54,6 +54,8 @@ class Node(with_metaclass(MetaNode, object)):
         return self
     
     def __eq__(self, other):
-        is_same = self.next == other.next
-        return is_same
+        return isinstance(other, Node) and self.next == other.next
+
+    def __hash__(self):
+        return object.__hash__(self)
     

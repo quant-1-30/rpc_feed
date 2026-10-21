@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 import os
+import logging
 import asyncio
 import pandas as pd
 import polars as pl
@@ -12,7 +13,7 @@ from sqlalchemy.orm import sessionmaker
 from contextlib import asynccontextmanager, AbstractAsyncContextManager
 from typing import Union, List, Iterable, Any, AsyncGenerator
 
-from rpc_feed.utils.wrapper import singleton
+from rpc_feed.utils.wrapper import env_int, singleton
 from bt_protocol.schema.asset import Base
 
 
@@ -60,7 +61,7 @@ class AsyncOps:
         self._orm_map = None
         self._session_factory = None
         self._init_lock = asyncio.Lock()
-        self.batch_size = int(os.getenv("PGBATCHSIZE", 1024))
+        self.batch_size = env_int("PGBATCHSIZE", 1024)
 
     async def __aenter__(self):
         await self.initialize()
@@ -81,19 +82,14 @@ class AsyncOps:
             c. bug --- every restart service result scan model to recreate (rollback)
         """
         # asyncpg / psycopg2 / pycopy2cffi
-        url = f'postgresql+{os.getenv("PGENGINE", "asyncpg")}://{os.getenv("PGUSER")}:{os.getenv("PGPWD")}@{os.getenv("PGHOST")}:{os.getenv("PGPORT", 5432)}/{os.getenv("PGDB")}'
+        url = f'postgresql+{os.getenv("PGENGINE", "asyncpg")}://{os.getenv("PGUSER")}:{os.getenv("PGPWD")}@{os.getenv("PGHOST")}:{env_int("PGPORT", 5432)}/{os.getenv("PGDB")}'
         engine = create_async_engine(url, 
-                               pool_size=int(os.getenv("PGPOOLSIZE", 10)),
-                               pool_timeout=int(os.getenv("PGTIMEOUT", 30)),
-                               max_overflow=int(os.getenv("PGMAXOVERFLOW", 10)),
-                               pool_recycle=int(os.getenv("PGPOOLRECYCLE", 1800)), 
-                               pool_pre_ping=bool(int(os.getenv("PGPREPING", 1))),
-                               # isolation_level="AUTOCOMMIT"
-                               # stream_results = True/ False
-                               # autocommit = True/ False
-                               # compiled_cache = True/ False
-                               # async_creator=lambda: on_connect(url),
-                               echo=bool(int(os.getenv("PGECHO", 0))))  # 移除 compiled_cache={},使用默认 SQL 缓存
+                               pool_size=env_int("PGPOOLSIZE", 10),
+                               pool_timeout=env_int("PGTIMEOUT", 30),
+                               max_overflow=env_int("PGMAXOVERFLOW", 10),
+                               pool_recycle=env_int("PGPOOLRECYCLE", 1800), 
+                               pool_pre_ping=bool(env_int("PGPREPING", 1)),
+                               echo=bool(env_int("PGECHO", 0)))
         
         # Create tables and reflect schema asynchronously
         async with engine.begin() as conn:
@@ -199,10 +195,10 @@ class AsyncOps:
                 await session.execute(stmt, params=params)
 
     async def __aexit__(self, exc_type, exc_value, traceback): # bool
-            if exc_type is not None:
-                print(f"AsyncOps Error: {exc_type}, {exc_value}, {traceback}") # __aexit__  True mean suppress exception
-            return False
-    
+        if exc_type is not None:
+            logging.error("AsyncOps Error: %s, %s", exc_type, exc_value)
+        return False
+
     async def cleanup(self):
         if self.engine is not None:
             await self.engine.dispose()
@@ -210,6 +206,6 @@ class AsyncOps:
         self._session_factory = None
         self._orm_map = None
         self._initialized = False
-        print("cleanup")
+        logging.info("AsyncOps cleanup finished")
 
 async_ops = AsyncOps()

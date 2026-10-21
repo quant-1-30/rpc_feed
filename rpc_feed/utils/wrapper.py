@@ -5,6 +5,7 @@ Created on Sat Feb 16 13:56:19 2019
 
 @author: python
 """
+import os
 import pandas as pd
 import contextlib
 import functools
@@ -21,17 +22,56 @@ from functools import wraps
 from contextlib import contextmanager
 
 
+def env_int(name: str, default: int) -> int:
+    raw = os.getenv(name)
+    if raw is None or not raw.strip():
+        return default
+    try:
+        return int(raw)
+    except ValueError as e:
+        raise ValueError(f"Invalid integer for environment variable {name}={raw!r}") from e
+
+
+def env_float(name: str, default: float) -> float:
+    raw = os.getenv(name)
+    if raw is None or not raw.strip():
+        return default
+    try:
+        return float(raw)
+    except ValueError as e:
+        raise ValueError(f"Invalid float for environment variable {name}={raw!r}") from e
+
+
 def singleton(cls):
     _lock = threading.Lock()
-    instances = {}
+    _instances = {}
+    _initialized = set()
+    orig_new = cls.__new__
+    orig_init = cls.__init__
 
-    @functools.wraps(cls)
-    def get_instance(*args, **kw):
-        with _lock:
-            if cls not in instances:
-                instances[cls] = cls(*args, **kw)
-            return instances[cls]
-    return get_instance
+    def __new__(subcls, *args, **kwargs):
+        if subcls not in _instances:
+            with _lock:
+                if subcls not in _instances:
+                    _instances[subcls] = (
+                        orig_new(subcls)
+                        if orig_new is object.__new__
+                        else orig_new(subcls, *args, **kwargs)
+                    )
+        return _instances[subcls]
+
+    @functools.wraps(orig_init)
+    def __init__(self, *args, **kwargs):
+        subcls = type(self)
+        if subcls not in _initialized:
+            with _lock:
+                if subcls not in _initialized:
+                    orig_init(self, *args, **kwargs)
+                    _initialized.add(subcls)
+
+    cls.__new__ = staticmethod(__new__)
+    cls.__init__ = __init__
+    return cls
 
 
 def async_method_warning(sync_method):
@@ -342,7 +382,9 @@ def make_grpc_abort_handler(code, details: str, handler_call_details):
 
     async def deny_stream(request_or_iterator, context):
         await context.abort(code, details)
-        yield
+        # Required by Python syntax so deny_stream is compiled as an async
+        # generator function expected by grpc.unary_stream_rpc_method_handler.
+        yield  # pragma: no cover
 
     return grpc.unary_stream_rpc_method_handler(deny_stream)
 

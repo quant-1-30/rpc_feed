@@ -1,12 +1,11 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-import os
 import time
 import threading
 import grpc
 import grpc.aio
-from rpc_feed.utils.wrapper import make_grpc_abort_handler
+from rpc_feed.utils.wrapper import env_float, env_int, make_grpc_abort_handler
 
 
 class TokenBucketRateLimiter:
@@ -39,8 +38,8 @@ class RateLimitInterceptor(grpc.aio.ServerInterceptor):
 
     def __init__(self, rate_limiter=None):
         if rate_limiter is None:
-            rate = float(os.getenv("GRPC_RATE_LIMIT", "100.0"))
-            capacity = int(os.getenv("GRPC_RATE_CAPACITY", "200"))
+            rate = env_float("GRPC_RATE_LIMIT", 100.0)
+            capacity = env_int("GRPC_RATE_CAPACITY", 200)
             rate_limiter = TokenBucketRateLimiter(rate=rate, capacity=capacity)
         self.rate_limiter = rate_limiter
 

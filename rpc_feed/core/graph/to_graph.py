@@ -3,9 +3,10 @@
 
 import json
 import asyncio
+import logging
 import os
 import networkx as nx
-from typing import List, Any, Iterable
+from typing import List, Any, Iterable, Tuple, Union
 from loky import get_reusable_executor, backend
 from pyvis.network import Network
 
@@ -22,18 +23,20 @@ from .monitor import GraphMemoryManager
 from rpc_feed.utils.node_util import fix_macos_mp, signal_handler
 from rpc_feed.utils.loader import get_module_by_module_path
 from rpc_feed.utils.io import build_from_cfg
-from rpc_feed.utils.wrapper import singleton
+from rpc_feed.utils.wrapper import env_int, singleton
 
-# spawn not fork
-fix_macos_mp()
-backend.context.set_start_method('spawn', force=True) 
 
-# avoid deadlock due to mp in child process
-os.environ["OMP_NUM_THREADS"] = "1"
-os.environ["OPENBLAS_NUM_THREADS"] = "1"
-os.environ["MKL_NUM_THREADS"] = "1"
-os.environ["VECLIB_MAXIMUM_THREADS"] = "1"
-os.environ["NUMEXPR_NUM_THREADS"] = "1"
+def _configure_mp_runtime():
+    fix_macos_mp()
+    backend.context.set_start_method("spawn", force=True)
+    for var in (
+        "OMP_NUM_THREADS",
+        "OPENBLAS_NUM_THREADS",
+        "MKL_NUM_THREADS",
+        "VECLIB_MAXIMUM_THREADS",
+        "NUMEXPR_NUM_THREADS",
+    ):
+        os.environ.setdefault(var, "1")
 
 
 @singleton
@@ -49,19 +52,19 @@ class Graph(object):
         self.reset()
 
         # concurrency settings
-        procs = int(os.getenv("CONCURRENT_PROCS", max(1, int(os.cpu_count() * 0.5))))
-        self.sem_size = int(os.getenv("SEM_SIZE", procs * 2)) # control the number of concurrent tasks to avoid OOM
-        self.q_size = int(os.getenv("QUEUE_SIZE", procs * 2))
+        procs = env_int("CONCURRENT_PROCS", max(1, int(os.cpu_count() * 0.5)))
+        self.sem_size = env_int("SEM_SIZE", procs * 2) # control the number of concurrent tasks to avoid OOM
+        self.q_size = env_int("QUEUE_SIZE", procs * 2)
         self.procs = procs
-        self.batch_size = int(os.getenv("PIPELINE_BATCH_SIZE", 64))
-        self.consumer_workers = int(os.getenv("CONSUMER_WORKERS", 4))
+        self.batch_size = env_int("PIPELINE_BATCH_SIZE", 64)
+        self.consumer_workers = env_int("CONSUMER_WORKERS", 4)
         
         # memory management
         self.memory_mgr = GraphMemoryManager()
         self.queue = None
         self.loop = None
         self._gc_event = None
-        self.memory_check_interval = int(os.getenv("MEMORY_CHECK_INTERVAL", "5"))
+        self.memory_check_interval = env_int("MEMORY_CHECK_INTERVAL", 5)
 
     def _init_async_resource(self, loop):
         self.loop = loop
@@ -72,13 +75,14 @@ class Graph(object):
         self.graph: List[NamedNode] = []
         self.w_node: NamedNode = None
         self.edges = None
+        self.failed_items: List[Any] = []
 
     @classmethod
     def get_cfg(cls, cfg_path):
-        basename = os.path.basename(cfg_path)
-        if basename not in cls.cfg_cache:
-            cls.cfg_cache[basename] = get_module_by_module_path(cfg_path)
-        return cls.cfg_cache[basename]
+        key = os.path.abspath(os.path.expanduser(cfg_path))
+        if key not in cls.cfg_cache:
+            cls.cfg_cache[key] = get_module_by_module_path(key)
+        return cls.cfg_cache[key]
     
     def _build_graph(self, graph_xml): # @singleton，self.graph to_execute accumulate last node
         self.reset()
@@ -89,7 +93,7 @@ class Graph(object):
             raise ValueError("Graph configuration is not a DAG")
 
         # the executor runs nodes as one linear chain (each node feeds the next,
-        # see run_sync_pipeline_local); anything but a simple path would silently
+        # see run_pipeline_nodes); anything but a simple path would silently
         # misroute data through the wrong transforms
         fan_out = [n for n in G.nodes if G.out_degree(n) > 1]
         fan_in = [n for n in G.nodes if G.in_degree(n) > 1]
@@ -152,11 +156,26 @@ class Graph(object):
                     result = await self.loop.run_in_executor(None, instance.next, item)
                 # writers like PgWriter report failures via {"status": 1, ...} instead of raising
                 if isinstance(result, dict) and result.get("status"):
-                    print(f"Writer reported failure: {result.get('error')}")
+                    err_msg = result.get("error")
+                    logging.error("Writer reported failure: %s", err_msg)
+                    self.failed_items.append(f"writer:{err_msg}")
             except Exception as e:
-                print(f"Error in consumer worker on {type(item).__name__} encounter: {e!r}")
+                logging.exception("Error in consumer worker on %s: %r", type(item).__name__, e)
+                self.failed_items.append(f"writer:{type(item).__name__}")
             finally:
                 self.queue.task_done()
+
+    async def _handle_worker_output(
+        self, output: Union[Any, Tuple[Any, List[Any]]]
+    ) -> None:
+        if isinstance(output, tuple) and len(output) == 2:
+            processed_item, failed = output
+            if failed:
+                self.failed_items.extend(failed)
+        else:
+            processed_item = output
+        if processed_item is not None:
+            await self.queue.put(processed_item)
 
     async def async_produce_parallel(self, iterables: Iterable):
         pending_tasks = set()
@@ -173,7 +192,12 @@ class Graph(object):
         sem = asyncio.Semaphore(self.sem_size) # avoid oom cause task killed
         async def wrapped_task(item):
             async with sem:
-                return await loop.run_in_executor(executor, run_sync_pipeline_global, item)
+                try:
+                    return await loop.run_in_executor(executor, run_sync_pipeline_global, item)
+                except Exception as e:
+                    logging.exception("[Worker Error] task execution failed on %r: %s", item, e)
+                    items = item if isinstance(item, (list, tuple)) else [item]
+                    return None, list(items)
     
         for item in iterables:
             task = asyncio.create_task(wrapped_task(item))
@@ -184,20 +208,11 @@ class Graph(object):
                     pending_tasks, return_when=asyncio.FIRST_COMPLETED
                 )
                 for t in done:
-                    try:
-                        processed_item = await t
-                        if processed_item is not None:
-                            await self.queue.put(processed_item)
-                    except Exception as e:
-                        print(f"[Worker Error] 任务执行失败: {type(e).__name__} - {e}")
+                    await self._handle_worker_output(await t)
 
         if pending_tasks:
-            results = await asyncio.gather(*pending_tasks, return_exceptions=True)
-            for processed_item in results:
-                if isinstance(processed_item, Exception):
-                    print(f"[Worker Error] 任务执行失败: {type(processed_item).__name__} - {processed_item}")
-                elif processed_item is not None:
-                    await self.queue.put(processed_item)
+            for res in await asyncio.gather(*pending_tasks):
+                await self._handle_worker_output(res)
 
         for _ in range(self.consumer_workers):
             await self.queue.put(None)
@@ -213,6 +228,7 @@ class Graph(object):
             yield batch
 
     async def _run_engine(self, iterables, parallel):
+        self.failed_items.clear()
         batches = self._chunk_iterables(iterables)
         consumers = [asyncio.create_task(self.async_consume_worker()) 
                      for _ in range(self.consumer_workers)]
@@ -223,21 +239,37 @@ class Graph(object):
                 await self.async_produce_parallel(batches)
             else:
                 for batch in batches:
-                    processed = self.run_sync_pipeline_local(batch)
+                    processed = run_pipeline_nodes(
+                        batch,
+                        [node.instance for node in self.graph],
+                        failed_out=self.failed_items,
+                    )
                     if processed is not None:
                         await self.queue.put(processed)
                 for _ in range(self.consumer_workers):
                     await self.queue.put(None)
 
             await asyncio.gather(*consumers)
+            if self.failed_items:
+                logging.error(
+                    "Pipeline finished with %d failed item(s): %s",
+                    len(self.failed_items),
+                    self.failed_items,
+                )
+                report_path = os.getenv("PIPELINE_FAILED_REPORT")
+                if report_path:
+                    out_path = os.path.abspath(os.path.expanduser(report_path))
+                    os.makedirs(os.path.dirname(out_path) or ".", exist_ok=True)
+                    with open(out_path, "w", encoding="utf-8") as rf:
+                        json.dump(self.failed_items, rf, ensure_ascii=False, indent=2)
+                    logging.info("Failed items report saved to %s", out_path)
         finally:
             self._gc_event.set()
             await monitor_task
 
-    def run_sync_pipeline_local(self, item):
-        return run_pipeline_nodes(item, [node.instance for node in self.graph])
-    
     def run(self, iterables, parallel):
+        if parallel:
+            _configure_mp_runtime()
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
         self._init_async_resource(loop)

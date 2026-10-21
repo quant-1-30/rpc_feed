@@ -12,7 +12,7 @@ cdef enum:
 cdef class BaseBufferedProvider:
     cdef bytes rpc_type
 
-    cdef object _flush_record_batch(self, bytes sid, object batch)
+    cdef object _flush_record_batch(self, bytes sid, object batch, bytes asset_type=*)
     
     cdef object _create_and_flush_arrays(self, bytes sid, list arrays, list names)
 

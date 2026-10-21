@@ -4,6 +4,7 @@
 # cython: cdivision=True
 
 import os
+import logging
 import asyncio
 import numpy as np
 import pyarrow as pa
@@ -41,12 +42,14 @@ cdef object batch_to_resp(object batch): # protobuf payload bytes
 
 cdef class BaseBufferedProvider:
 
-    cdef object _flush_record_batch(self, bytes sid, object batch):
+    cdef object _flush_record_batch(self, bytes sid, object batch, bytes asset_type=None):
         cdef dict metadata = {
             b"rpc_type": self.rpc_type
         }
         if sid is not None and len(sid) > 0:
             metadata[b"sid"] = sid
+        if asset_type is not None:
+            metadata[b"asset_type"] = asset_type
         batch = batch.replace_schema_metadata(metadata)
         return batch_to_resp(batch)
 
@@ -66,15 +69,21 @@ cdef class BaseDuckDBProvider(BaseBufferedProvider):
             list query_sids = sids if sids is not None else []
             Request req = Request(start_date=start_date, end_date=end_date, sid=query_sids)
             object batch, duck_mgr = get_duckdb_manager()
+            object bm_regex = duck_mgr.regex_rules["benchmark"]
+            bytes asset_type = (
+                b"benchmark"
+                if (query_sids and all(bm_regex.match(s) for s in query_sids))
+                else None
+            )
 
         async with duck_mgr as ctx:
             async for batch in ctx.query(req, self.template):
                 if context is not None and context.done():
-                    print(f"[{self.rpc_type.decode()}] client cancelled, stopping stream")
+                    logging.info("[%s] client cancelled, stopping stream", self.rpc_type.decode())
                     return
                 if batch.num_rows == 0: 
                     continue
-                yield self._flush_record_batch(None, batch)
+                yield self._flush_record_batch(None, batch, asset_type)
 
 
 # -------------------------------- DuckDB Dispatcher ----------------------------
@@ -162,7 +171,7 @@ cdef class BaseSQLAlchemyProvider(BaseBufferedProvider):
             async with stream_wrap as stream_proxy:
                 async for row in stream_proxy:
                     if context is not None and context.done():
-                        print(f"[{self.rpc_type.decode()}] client cancelled, stopping stream")
+                        logging.info("[%s] client cancelled, stopping stream", self.rpc_type.decode())
                         return
 
                     r_sid = row[0] if self.group_by_sid else b''

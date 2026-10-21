@@ -31,6 +31,7 @@ if _REPO_ROOT not in sys.path:
 from rpc_feed.core.rpc.server import RpcServer
 from rpc_feed.core.gateway import async_ops, get_duckdb_manager
 from rpc_feed.core.rpc.middleware.interceptors import AuthInterceptor, RateLimitInterceptor
+from rpc_feed.utils.wrapper import env_int
 
 from bt_protocol.serialize.pb import bt_protocol_service_pb2_grpc
 
@@ -67,16 +68,16 @@ async def serve() -> None:
     if not address:
         raise RuntimeError("GRPC_SERVER env var is not set (expected host:port)")
 
-    MAX_MESSAGE_LENGTH = int(os.getenv("MAX_MESSAGE_LENGTH", 64 * 1024 * 1024))
-    STREAM_WINDOW_SIZE = int(os.getenv("GRPC_STREAM_WINDOW_SIZE", 64 * 1024 * 1024))
-    CONNECTION_WINDOW_SIZE = int(os.getenv("GRPC_CONNECTION_WINDOW_SIZE", 512 * 1024 * 1024))
-    KEEPALIVE_TIME_MS = int(os.getenv("GRPC_KEEPALIVE_TIME_MS", 30000))
-    KEEPALIVE_TIMEOUT_MS = int(os.getenv("GRPC_KEEPALIVE_TIMEOUT_MS", 10000))
-    MIN_PING_INTERVAL_MS = int(os.getenv("GRPC_MIN_PING_INTERVAL_MS", 5000))
-    MAX_CONN_IDLE_MS = int(os.getenv("GRPC_MAX_CONN_IDLE_MS", 86400000))
-    MAX_CONN_AGE_MS = int(os.getenv("GRPC_MAX_CONN_AGE_MS", 86400000))
-    MAX_CONN_AGE_GRACE_MS = int(os.getenv("GRPC_MAX_CONN_AGE_GRACE_MS", 86400000))
-    SHUTDOWN_GRACE = int(os.getenv("GRPC_SHUTDOWN_GRACE", 5))
+    MAX_MESSAGE_LENGTH = env_int("MAX_MESSAGE_LENGTH", 64 * 1024 * 1024)
+    STREAM_WINDOW_SIZE = env_int("GRPC_STREAM_WINDOW_SIZE", 64 * 1024 * 1024)
+    CONNECTION_WINDOW_SIZE = env_int("GRPC_CONNECTION_WINDOW_SIZE", 512 * 1024 * 1024)
+    KEEPALIVE_TIME_MS = env_int("GRPC_KEEPALIVE_TIME_MS", 30000)
+    KEEPALIVE_TIMEOUT_MS = env_int("GRPC_KEEPALIVE_TIMEOUT_MS", 10000)
+    MIN_PING_INTERVAL_MS = env_int("GRPC_MIN_PING_INTERVAL_MS", 5000)
+    MAX_CONN_IDLE_MS = env_int("GRPC_MAX_CONN_IDLE_MS", 86400000)
+    MAX_CONN_AGE_MS = env_int("GRPC_MAX_CONN_AGE_MS", 86400000)
+    MAX_CONN_AGE_GRACE_MS = env_int("GRPC_MAX_CONN_AGE_GRACE_MS", 86400000)
+    SHUTDOWN_GRACE = env_int("GRPC_SHUTDOWN_GRACE", 5)
 
     server_options = [
         ("grpc.max_send_message_length", MAX_MESSAGE_LENGTH),
@@ -107,7 +108,7 @@ async def serve() -> None:
     # for k, v in server_options:
     #     logging.info("  %s = %r", k, v)
 
-    max_workers = int(os.getenv("GRPC_MAX_WORKERS", "16"))
+    max_workers = env_int("GRPC_MAX_WORKERS", 16)
     # Arrow IPC payload is already lz4-compressed; a server-wide gzip pass costs
     # CPU for ~zero ratio. Opt in with GRPC_COMPRESSION=gzip if a WAN link needs it.
     compression = (
@@ -189,11 +190,8 @@ async def serve() -> None:
 
 @atexit.register
 def cleanup_before_exit(): # sys.exit(0)# SystemExit ---> atexit
-    
     sys.stdout.flush()
     sys.stderr.flush()
-
-    print("gc atexit") 
     gc.collect()
 
 

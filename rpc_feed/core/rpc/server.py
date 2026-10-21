@@ -9,26 +9,18 @@ from google.protobuf.json_format import MessageToDict
 
 from rpc_feed.core.feed import bt_feed
 from rpc_feed.core.datasets import _providers
+from rpc_feed.utils.wrapper import env_int
 from bt_protocol.serialize.pb import bt_protocol_service_pb2, bt_protocol_service_pb2_grpc
 
 # Semaphore
-_MAX_CONCURRENT_STREAMS = int(os.getenv("MAX_CONCURRENT_STREAMS", "50"))
+_MAX_CONCURRENT_STREAMS = env_int("MAX_CONCURRENT_STREAMS", 50)
 _stream_semaphore = asyncio.Semaphore(_MAX_CONCURRENT_STREAMS)
 
 
 class RpcServer(bt_protocol_service_pb2_grpc.btDataFeedServicer):
 
     async def _set_context(self, context: grpc.ServicerContext) -> None:
-
-        # NoCompression / Gzip
-        # context is_active to check if the request is cancelled
-        # context.set_compression(grpc.Compression.Deflate)
-        context.set_trailing_metadata(
-            (
-                ("checksum-bin", b"I agree"),
-                ("retry", "false"),
-            )
-        )
+        context.set_trailing_metadata((("retry", "false"),))
 
     async def _safe_stream(self, name: str, response_iterator, context: grpc.ServicerContext):
         """
@@ -58,9 +50,6 @@ class RpcServer(bt_protocol_service_pb2_grpc.btDataFeedServicer):
     ) -> bt_protocol_service_pb2.ArrowFrame: # type: ignore
         
         await self._set_context(context)
-
-        for key, value in context.invocation_metadata():
-            print("Received initial metadata: key=%s value=%s" % (key, value))
 
         # calendar provider UNIMPLEMENTED avoid KeyError 
         if "calendar" not in _providers:

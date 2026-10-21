@@ -69,12 +69,12 @@ cdef str _parse_date(int64_t val, bint is_end):
             return f"{y:04d}-{m:02d}-{d:02d} 23:59:59+08:00"
         return f"{y:04d}-{m:02d}-{d:02d} 00:00:00+08:00"
 
-    t_val = <time_t>_normalize_epoch_sec(val)
+    t_val = <time_t>(_normalize_epoch_sec(val) + UTC8_OFFSET_SEC)
     ret_ptr = gmtime_r(&t_val, &timeinfo)
     if ret_ptr == NULL:
-        return "1970-01-01 23:59:59+00:00" if is_end else "1970-01-01 00:00:00+00:00"
+        return "1970-01-01 23:59:59+08:00" if is_end else "1970-01-01 00:00:00+08:00"
 
-    strftime(buffer, sizeof(buffer), "%Y-%m-%d %H:%M:%S+00:00", &timeinfo)
+    strftime(buffer, sizeof(buffer), "%Y-%m-%d %H:%M:%S+08:00", &timeinfo)
     return buffer.decode("utf-8")
 
 

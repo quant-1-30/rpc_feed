@@ -36,11 +36,19 @@ class AvroWriter(Node):
         ("data_path", ""),
     )
 
+    def __init__(self):
+        self._schema = None
+
+    def _get_schema(self):
+        if self._schema is None:
+            with open(self.p.schema_path, "rb") as sf:
+                self._schema = avro.schema.parse(sf.read())
+        return self._schema
+
     async def next(self, meta: Union[pl.DataFrame, pd.DataFrame]) -> Any:
         meta = ensure_polars(meta)
-        with open(self.p.schema_path, "rb") as sf:
-            schema = avro.schema.parse(sf.read())
-        with DataFileWriter(open(self.p.data_path, "wb"), DatumWriter(), schema) as writer:
+        schema = self._get_schema()
+        with open(self.p.data_path, "wb") as df, DataFileWriter(df, DatumWriter(), schema) as writer:
             for element in meta.to_dicts():
                 writer.append(element)
 
@@ -123,10 +131,12 @@ class CsvWriter(Node):
 
     async def next(self, meta):
         if meta:
-            await self.writelineseparator()
-            for l in meta:
-                self._writeline(l + "\n")
-            self.stop()
+            try:
+                await self.writelineseparator()
+                for l in meta:
+                    self._writeline(l + "\n")
+            finally:
+                self.stop()
 
         
 @registry

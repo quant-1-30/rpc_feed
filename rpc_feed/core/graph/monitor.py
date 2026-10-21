@@ -12,19 +12,21 @@ from dataclasses import dataclass
 from contextlib import contextmanager
 
 
+from rpc_feed.utils.wrapper import env_float
+
 @dataclass
 class MemorySnapshot:
     timestamp: float
     process_memory_mb: float
     system_memory_percent: float
     gc_count: tuple
-    obj_count: int
+    gc_count_total: int
 
 
 class GraphMemoryManager:
     
     def __init__(self):
-        self.threshold = float(os.getenv("GRAPH_MAX_MEMORY_PERCENT", "80")) / 100
+        self.threshold = env_float("GRAPH_MAX_MEMORY_PERCENT", 80.0) / 100
         self.gc_threads = []
 
     def check_memory_usage(self) -> Dict[str, Any]:
@@ -92,12 +94,13 @@ class MemoryMonitor:
             
             system_memory = psutil.virtual_memory()
             
+            gc_counts = gc.get_count()
             return MemorySnapshot(
                 timestamp=time.time(),
                 process_memory_mb=memory_info.rss / (1024 * 1024),
                 system_memory_percent=system_memory.percent,
-                gc_count=gc.get_count(),
-                obj_count=len(gc.get_objects())
+                gc_count=gc_counts,
+                gc_count_total=sum(gc_counts),
             )
         except Exception as e:
             print(f"❌: {e}")
@@ -119,7 +122,7 @@ class MemoryMonitor:
             'system_memory_percent': round(snapshot.system_memory_percent, 1),
             'memory_usage_ratio': round(memory_usage_ratio, 3),
             'gc_count': snapshot.gc_count,
-            'obj_count': snapshot.obj_count,
+            'gc_count_total': snapshot.gc_count_total,
             'is_warning': memory_usage_ratio >= self.warning_threshold,
             'is_critical': memory_usage_ratio >= self.critical_threshold,
             'status': 'normal'
@@ -242,7 +245,7 @@ class MemoryMonitor:
             'time_span_minutes': round(time_span / 60, 1),
             'memory_change_mb': round(memory_change, 2),
             'rate_mb_per_minute': round(memory_change / (time_span / 60), 2) if time_span > 0 else 0,
-            'obj_count_change': last.obj_count - first.obj_count,
+            'gc_count_total_change': last.gc_count_total - first.gc_count_total,
             'trend': 'increasing' if memory_change > 0 else 'decreasing' if memory_change < 0 else 'stable'
         }
         
@@ -266,7 +269,7 @@ class MemoryMonitor:
         print(f"Process Memory: {status.get('process_memory_mb', 0):.1f}MB")
         print(f"System Memory: {status.get('system_memory_percent', 0):.1f}%")
         print(f"Memory Limit: {self.max_memory_mb}MB")
-        print(f"Object Count: {status.get('obj_count', 0):,}")
+        print(f"GC Count Total: {status.get('gc_count_total', 0):,}")
         
         if not trend.get('error'):
             print(f"\n📈 Memory Trend (Recent {trend.get('time_span_minutes', 0):.1f} Minutes):")
@@ -319,13 +322,13 @@ def diagnose_memory_issue() -> Dict:
             'system_used_percent': round(system_memory.percent, 1),
             'gc_counts': gc_counts,
             'gc_stats': gc_stats,
-            'obj_count': len(gc.get_objects())
+            'gc_count_total': sum(gc_counts),
         }
         
         print(f"Process Memory Usage: {diagnosis['process_memory_mb']}MB")
         print(f"System Available Memory: {diagnosis['system_available_mb']}MB")
         print(f"System Memory Usage: {diagnosis['system_used_percent']}%")
-        print(f"Python Object Count: {diagnosis['obj_count']:,}")
+        print(f"GC Count Total: {diagnosis['gc_count_total']:,}")
         print(f"Garbage Collection Counts: {diagnosis['gc_counts']}")
         
         # Suggestions
@@ -337,8 +340,8 @@ def diagnose_memory_issue() -> Dict:
         if diagnosis['system_used_percent'] > 80:
             suggestions.append("System memory usage is high, close other programs or add more memory")
         
-        if diagnosis['obj_count'] > 100000:
-            suggestions.append("Python object count is high, consider forcing garbage collection")
+        if diagnosis['gc_count_total'] > 100000:
+            suggestions.append("GC count is high, consider forcing garbage collection")
         
         if suggestions:
             print(f"\n💡 Suggestions:")

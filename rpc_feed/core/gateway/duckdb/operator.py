@@ -13,7 +13,7 @@ from concurrent.futures import ThreadPoolExecutor
 from .utils import schema_range, preprocess_req 
 
 from rpc_feed.utils.io import SID_REGEX_BYTES
-from rpc_feed.utils.wrapper import singleton
+from rpc_feed.utils.wrapper import env_int, singleton
 from bt_protocol.template.duckdb_template import (
     DAILY_TEMPLATE,
     CLOSE_TEMPLATE,
@@ -30,10 +30,10 @@ class ConnectionPool:
     def __init__(self, db_path, max_connections, timeout=None, threads=None):
         self.db_path = db_path
         self.max_connections = max_connections
-        self.timeout = int(os.getenv("DUCKTIMEOUT", 5)) if timeout is None else timeout
+        self.timeout = env_int("DUCKTIMEOUT", 5) if timeout is None else timeout
 
         default_threads = max(1, (os.cpu_count() or 4) // max(1, max_connections))
-        self.threads = int(os.getenv("DUCKTHREADS", default_threads)) if threads is None else threads
+        self.threads = env_int("DUCKTHREADS", default_threads) if threads is None else threads
         
         self._pool = queue.Queue(max_connections)
         self._initialize_pool()
@@ -108,10 +108,10 @@ class DuckDBManager:
 
     def __init__(self):
         self.dataset_root = Path(os.getenv("DUCKDATASET", "~/Downloads/quant/parquet")).expanduser()
-        self.batch_size = int(os.getenv("DUCKBATCHSIZE", 100000))
+        self.batch_size = env_int("DUCKBATCHSIZE", 100000)
         self.regex_rules = SID_REGEX_BYTES
 
-        max_connections = int(os.getenv("DUCKCONNECTION", 10))
+        max_connections = env_int("DUCKCONNECTION", 10)
         # bound concurrent parquet scans to the pool size so the N+1th stream
         # queues instead of raising "pool exhausted" (stream semaphore may be larger)
         self._query_sema = asyncio.Semaphore(max_connections)
@@ -133,48 +133,48 @@ class DuckDBManager:
     async def __aenter__(self):
         return self
      
-    def _match_type(self, sid_bytes: bytes):
-        for name, regex in self.regex_rules.items():
-            if regex.match(sid_bytes):
-                return name
-        return None
+    def _group_sids_by_type(self, raw_sids: list) -> dict:
+        grouped = {}
+        for sid_bytes in raw_sids:
+            for name, regex in self.regex_rules.items():
+                if regex.match(sid_bytes):
+                    grouped.setdefault(name, []).append(sid_bytes.decode("utf-8"))
+                    break
+        return grouped
+
+    @staticmethod
+    def _existing_years(base_prefix: str) -> set:
+        if not os.path.isdir(base_prefix):
+            return set()
+        return {e[5:] for e in os.listdir(base_prefix) if e.startswith("year=")}
 
     def _glob_path(self, req: dict) -> list:
         root_str = str(self.dataset_root)
-        ranges = schema_range(req) 
-        
+        ranges = schema_range(req)
         exact_globs = []
-        for sid_bytes in req["sid"]:
-            type_name = self._match_type(sid_bytes)
-            if not type_name:
-                continue 
-                
-            sid_str = sid_bytes.decode("utf-8")
+        for type_name, sids in self._group_sids_by_type(req["sid"]).items():
             base_prefix = f"{root_str}/{type_name}"
-            for y, q, ym in ranges:
-                dir_path = f"{base_prefix}/year={y}/quarter={q}/sid={sid_str}/date={ym}"
-                if os.path.exists(dir_path):
-                    exact_globs.append(f"{dir_path}/*.parquet")
+            valid_years = self._existing_years(base_prefix)
+            active_ranges = [(y, q, ym) for y, q, ym in ranges if str(y) in valid_years]
+            for sid_str in sids:
+                for y, q, ym in active_ranges:
+                    dir_path = f"{base_prefix}/year={y}/quarter={q}/sid={sid_str}/date={ym}"
+                    if os.path.isdir(dir_path):
+                        exact_globs.append(f"{dir_path}/*.parquet")
         return exact_globs
 
     def _glob_daily_path(self, req: dict) -> list:
         root_str = str(self.dataset_root)
         ranges = schema_range(req)
-        req_types = []
-        seen = set()
-        for sid_bytes in req["sid"]:
-            type_name = self._match_type(sid_bytes)
-            if type_name and type_name not in seen:
-                seen.add(type_name)
-                req_types.append(type_name)
-
         daily_globs = []
-        for type_name in req_types:
+        for type_name in self._group_sids_by_type(req["sid"]):
             base_prefix = f"{root_str}/daily/{type_name}"
+            valid_years = self._existing_years(base_prefix)
             for y, q, ym in ranges:
-                daily_file = f"{base_prefix}/year={y}/quarter={q}/date={ym}/part-0.parquet"
-                if os.path.exists(daily_file):
-                    daily_globs.append(daily_file)
+                if str(y) in valid_years:
+                    daily_file = f"{base_prefix}/year={y}/quarter={q}/date={ym}/part-0.parquet"
+                    if os.path.exists(daily_file):
+                        daily_globs.append(daily_file)
         return daily_globs
 
     def _resolve_query_plan(self, req: dict, raw_template: str):
